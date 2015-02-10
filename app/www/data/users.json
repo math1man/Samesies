@@ -1,0 +1,55 @@
+[
+	{
+		"uid": 0,
+		"email": "ari@samesies.com",
+		"password": "samesies123",
+		"location": "Saint Paul, MN",
+		"alias": "Ajawa",	
+		"name": "Ari Weiland",
+		"age": "20",
+		"gender": "Male",
+		"aboutMe": "I am a junior Physics and Computer Science major at Macalester College.",
+		"questions": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis urna magna, tincidunt vel laoreet vel.", "", "", "", ""],
+		"friends": [1, 2, 3],
+		"connections": []
+	}, {
+		"uid": 1,
+		"email": "luke@samesies.com",
+		"password": "samesies456",
+		"location": "Saint Paul, MN",
+		"alias": "KobaldForeman",	
+		"name": "Luke Gehman",
+		"age": "20",
+		"gender": "Male",
+		"aboutMe": "I am a junior Biology major at Macalester College. Get Trolled!",
+		"questions": ["", "", "", "", ""],
+		"friends": [0, 2, 3],
+		"connections": []
+	}, {
+		"uid": 2,
+		"email": "carlos@samesies.com",
+		"password": "samesies789",
+		"location": "Urbana, IL", 
+		"alias": "Legacycf",	
+		"name": "",
+		"age": "",
+		"gender": "Male",
+		"aboutMe": "I am a Computer Science major at University of Illinois. I play too much Dota 2.",
+		"questions": ["", "", "", "", ""],
+		"friends": [0, 1],
+		"connections": []
+	}, {
+		"uid": 3,
+		"email": "alie@samesies.com",
+		"password": "samesies012",
+		"location": "Saint Paul, MN", 
+		"alias": "fishgirl",	
+		"name": "Alie Fisher",
+		"age": "21",
+		"gender": "Female",
+		"aboutMe": "I am a Biology major at Macalester College. I enjoy all things cute and adorable.",
+		"questions": ["", "", "", "", ""],
+		"friends": [0, 1],
+		"connections": []
+	}
+]

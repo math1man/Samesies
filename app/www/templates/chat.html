@@ -1,0 +1,10 @@
+<div class="chat" ng-show="is('chat')" ng-repeat="blurb in chat.history track by $index">
+	<div class="item item-avatar-left item-text-wrap" ng-show="blurb.isYou">
+		<img src="img/lone_icon.png">
+		{{blurb.text}}
+	</div>
+	<div class="item item-avatar-right item-text-wrap align-right" ng-show="!blurb.isYou">
+		<img src="img/lone_icon.png">
+		{{blurb.text}}
+	</div>
+</div>

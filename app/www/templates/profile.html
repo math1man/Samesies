@@ -1,0 +1,36 @@
+<ion-modal-view>
+	<ion-header-bar class="bar-royal">
+		<button class="button button-icon" ng-click="close('profile')">
+			<i class="icon ion-chevron-left"></i>
+		</button>
+		<h1 class="title">Profile</h1>
+	</ion-header-bar>
+	<ion-content on-swipe-right="close('profile')">
+		<div class="list card">
+			<div class="item item-avatar">
+				<img src="img/lone_icon.png">
+				<h2>{{displayName(tempUser)}}</h2>
+				<p ng-show="tempUser.name">{{tempUser.alias}}</p>
+			</div>
+			<div class="item item-body">
+				<span ng-show="tempUser.aboutMe">{{tempUser.aboutMe}}</span>
+				<p>
+					<span ng-show="tempUser.age">Age: {{tempUser.age}}</span>
+					<span class="float-right">{{tempUser.location}}</span>
+				</p>
+				<p><span ng-show="tempUser.gender">Gender: {{tempUser.gender}}</span></p>
+			</div>
+			<div class="item item-body" ng-show="hasQuestions(tempUser)">
+				Personal Questions:
+				<p ng-repeat="question in tempUser.questions track by $index" ng-show="question">{{question}}</p>
+			</div>
+		</div>
+		<div class="item" ng-show="is('friends')">
+			<div class="button-bar bar-royal">
+				<a class="button" ng-click="challenge(tempUser)">Challenge!</a>
+				<a class="button" ng-click="message(tempUser)">Message</a>
+			</div>
+		</div>
+	</ion-content>
+</ion-modal-view>
+

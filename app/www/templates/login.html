@@ -1,0 +1,41 @@
+<ion-modal-view>
+  <ion-header-bar class="bar-royal">
+    <h1 class="title">Login</h1>
+  </ion-header-bar>
+  <ion-content>
+    <form name="loginForm" ng-submit="loginForm.$valid && doLogin()" novalidate>
+      <div class="list">
+        <label class="item item-input">
+          <span class="input-label">Email</span>
+          <input type="email" ng-model="loginData.email" placeholder="johndoe@samesies.com" required>
+        </label>
+        <label class="item item-input">
+          <span class="input-label">Password</span>
+          <input type="password" ng-model="loginData.password" placeholder="••••••••" required>
+        </label>
+        <label class="item">
+          <button class="button button-block button-royal" type="submit">Log in</button>
+        </label>
+        <div class="item">
+          <a href="" ng-click="createAccount()">Create Account</a>
+          <span class="float-right"><a href="" ng-click="recoverPassword()">Forgot your Password?</a></span>
+        </div>
+        <div class="item">
+          <a href="" ng-click="quickLogin()">Debug Quick Login</a>
+        </div>
+      </div>
+    </form>
+    
+		<div class="card" ng-hide="true">
+			<div class="item item-divider">
+				Debug:
+			</div>
+			<div class="item item-text-wrap">
+				<p>{{loginData}}</p>
+				<p>{{user}}</p>
+				<p>{{users}}</p>
+			</div>
+		</div>
+
+  </ion-content>
+</ion-modal-view>
