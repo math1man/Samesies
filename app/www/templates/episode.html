@@ -1,12 +1,12 @@
 <!-- matching info -->
 <div class="item item-divider" ng-show="is('episode')">
-	{{match()}} <span class="item-note">{{episode.stage}}/5</span>
+	{{matchText()}} <span class="item-note">{{episode.stage}}/5</span>
 </div>
 
 <!-- question -->
 <div class="card" ng-show="is('episode') && !is('matching')">
 	<div class="item item-text-wrap">
-		{{question()}}
+		{{getQuestion()}}
 	</div>
 </div>
 
@@ -20,7 +20,7 @@
 	<form name="answerForm" ng-submit="answerForm.$valid && answer()" novalidate>
 		<div class="item item-input-inset">
 			<label class="item-input-wrapper">
-				<input type="text" maxlength="140" placeholder="Your Answer" ng-model="episode.myAnswer" required></input>
+				<input type="text" maxlength="140" placeholder="Your Answer" ng-model="episode.myAnswer" required/>
 			</label>
 			<button class="button button-small button-royal" type="submit">
 				Send

@@ -1,0 +1,6 @@
+<ion-content ng-show="is('nearby')">
+    <div class="item" ng-repeat="user in getNearby()" ng-click="challenge(user)">
+        <img class="full-image" src="img/lone_icon.png">
+        <h2>{{user.alias}}</h2>
+    </div>
+</ion-content>

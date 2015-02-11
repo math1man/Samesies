@@ -4,7 +4,7 @@
 // angular.module is a global place for creating, registering and retrieving Angular modules
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
-	var app = angular.module('samesies', ['ionic']);
+	var app = angular.module('samesies', ['ionic', 'directives']);
 	
 	app.run(function($ionicPlatform) {
 		$ionicPlatform.ready(function() {
@@ -18,64 +18,29 @@
 			}
 		});
 	});
-	
-	//----------------------------
-	//         Directives
-	//----------------------------
 
-	app.directive('ssMenu', function() {
-		return {
-			restrict: 'E',
-			templateUrl: 'templates/menu.html'
+	app.filter('checkName', function () {
+		return function (items, string) {
+			var filtered = [];
+			for (var i = 0; i < items.length; i++) {
+				var item = items[i];
+				var regex = new RegExp(".*" + string + ".*", 'i');
+				if (regex.test(item.name) || regex.test(item.alias)) {
+					filtered.push(item);
+				}
+			}
+			return filtered;
 		};
 	});
 
-	app.directive('ssProfile', function() {
-		return {
-			restrict: 'E',
-			templateUrl: 'templates/edit-profile.html'
-		};
-	});
+	app.controller('MainController', function($scope, $ionicPopup, $ionicGesture,
+			$ionicModal, $http, $timeout, $interval, $ionicScrollDelegate) {
 
-	app.directive('ssEpisode', function() {
-		return {
-			restrict: 'E',
-			templateUrl: 'templates/episode.html'
-		};
-	});
-
-	app.directive('ssFriends', function() {
-		return {
-			restrict: 'E',
-			templateUrl: 'templates/friends.html'
-		};
-	});
-
-	app.directive('ssChat', function() {
-		return {
-			restrict: 'E',
-			templateUrl: 'templates/chat.html'
-		};
-	});
-
-	app.directive('ssBrowse', function() {
-		return {
-			restrict: 'E',
-			templateUrl: 'templates/browse.html'
-		};
-	});
-
-	app.controller('EpisodeController', function($scope, $ionicPopup, $ionicGesture, 
-			$ionicModal, $http, $timeout, $ionicScrollDelegate) {
-			
 		//----------------------------
 		//           Data
 		//----------------------------
 
-		// Eventually, this stuff needs to be retrieved dynamically, as needed
-		$scope.questions = [];
-		$scope.bot = [];
-		$scope.users = [];
+		// Eventually, this stuff needs to be retrieved directly from the server, as needed
 
 		$http.get('data/questions.json').success(function(data){
 			$scope.questions = data;
@@ -96,7 +61,7 @@
 				if ($scope.users[i].uid === uid) {
 					return $scope.users[i];
 				}
-			};
+			}
 			return null;
 		};
 
@@ -117,32 +82,28 @@
 				if ($scope.users[i].email === email) {
 					return $scope.users[i];
 				}
-			};
+			}
 			return null;
 		};
 
-		//----------------------------
-		//         Variables
-		//----------------------------
-
-		$scope.chat = {
-			send: function() {
-				if (this.buffer) {
-					this.history.push({
-						isYou: true,
-						text: this.buffer
-					});	
-					this.buffer = '';			
-					$ionicScrollDelegate.scrollBottom(true);
+		var getUsersByLocation = function(location) {
+			var output = [];
+			for (var i=0; i<$scope.users.length; i++) {
+				if ($scope.users[i].location === location) {
+					output.push($scope.users[i]);
 				}
-			},
-			reset: function(username) {
-				this.recipient = username;
-				this.history = [];
-				this.buffer = '';			
+			}
+			return output;
+		};
+
+		var updateUser = function(user) {
+			for (var i=0; i<$scope.users.length; i++) {
+				if ($scope.users[i].uid === user.uid) {
+					$scope.users[i] = user;
+				}
 			}
 		};
-		
+
 		//----------------------------
 		//    Modals and Functions
 		//----------------------------
@@ -219,7 +180,13 @@
 		};
 		
 		$scope.createAccount = function() {
-			$scope.loginData = {};
+			$scope.loginData = {
+				email: '',
+				password: '',
+				confirmPassword: '',
+				location: '',
+				alias: ''
+			};
 			$scope.errorMessage = function() {
 				if (!$scope.loginData.email) {
 					return "Invalid email!";
@@ -232,7 +199,7 @@
 				} else {
 					return "";
 				}
-			}
+			};
 			$ionicPopup.show({
 				scope: $scope,
 				title: 'Create Account',
@@ -241,7 +208,7 @@
 					{
 						text: 'Cancel',
 						type: 'button-stable',
-						onTap: function(e) { return null; }
+						onTap: function () { return null; }
 					}, {
 						text: 'Okay',
 						type: 'button-royal',
@@ -256,6 +223,7 @@
 				]			
 			}).then(function(data) {
 				if (data) {
+					// eventually, this needs to all be server-side
 					var alias = data.alias;
 					if (!alias) {
 						var index = data.email.indexOf('@');
@@ -307,12 +275,14 @@
 		$scope.go = function(state) {
 			if (status.s != state) {
 				interruptAll();
+				$scope.search = [''];
 			}
 			if (state === 'menu') {
 				this.show('menu');
 			} else {
 				status.s = state;
 				this.close('menu');
+				$ionicScrollDelegate.scrollTop();
 			}
 		};
 		
@@ -357,15 +327,14 @@
 			}, 2000);
 		};
 		
-		$scope.play = function(connection) {
-			this.episode = connection;
-			this.go(connection.status);
+		$scope.play = function(episode) {
+			this.episode = episode;
+			this.go(episode.status);
 		};
 		
 		$scope.initEpisode = function(uid) {
-			$scope.episode.stage = 0;
 			var count = 5; // eventually increase to 10
-			var max = this.questions.length
+			var max = this.questions.length;
 			var a = [];
 			for (var i=0; i<max; ++i) {
 				a.push(i);
@@ -378,11 +347,14 @@
 				a[top] = tmp;
 				top++;
 			}
-			$scope.episode.qids = a.slice(0, count);
-			$scope.episode.partnerId = uid;
+			$scope.episode = {
+				stage: 0,
+				partnerId: uid,
+				qids: a.slice(0, count)
+			};
 		};
 	
-		$scope.match = function() {
+		$scope.matchText = function() {
 			if (this.is('matching')) {
 				return "Matching...";
 			} else {
@@ -390,7 +362,7 @@
 			}
 		};
 
-		$scope.question = function() {
+		$scope.getQuestion = function() {
 			return this.questions[index(this.episode)];
 		};
 
@@ -404,12 +376,15 @@
 		};
 	
 		$scope.retrieve = function() {
-			// retrieve their answer from server, or wait
-			var temp = this.bot[index(this.episode)];
-			if (temp != null) {
-				this.episode.theirAnswer = temp;
-				this.go("continue");			
-			}
+			interval(function() {
+				// eventually ping server for their answer
+				var temp = $scope.bot[index($scope.episode)];
+				if (temp != null) {
+					$scope.episode.theirAnswer = temp;
+					$scope.go("continue");
+					// call to go interrupts interval command
+				}
+			}, 1000);
 		};
 
 		$scope.next = function() {
@@ -421,7 +396,44 @@
 				this.go("entry");			
 			}
 		};
-	
+
+		//----------------------------
+		//     Message Functions
+		//----------------------------
+
+		$scope.message = function(user) {
+			this.resetChat(this.displayName(user));
+			this.go('chat');
+			this.close('profile');
+			var n = 0;
+			interval(function() {
+				$scope.chat.history.push({
+					isYou: false,
+					text: n.toString()
+				});
+				n++;
+			}, 2000);
+		};
+
+		$scope.resetChat = function(username) {
+			$scope.chat = {
+				recipient: username,
+				history: [],
+				buffer: ''
+			};
+		};
+
+		$scope.sendChat = function() {
+			if (this.chat.buffer) {
+				this.chat.history.push({
+					isYou: true,
+					text: this.chat.buffer
+				});
+				this.chat.buffer = '';
+				$ionicScrollDelegate.scrollBottom(true);
+			}
+		};
+
 		//----------------------------
 		//      Editor Functions
 		//----------------------------
@@ -440,7 +452,7 @@
 					{
 						text: 'Cancel',
 						type: 'button-stable',
-						onTap: function(e) { return $scope.user[field]; }
+						onTap: function() { return $scope.user[field]; }
 					}, {
 						text: 'Okay',
 						type: 'button-royal',
@@ -456,11 +468,16 @@
 			}).then(function(update) {
 				$scope.user[field] = update;
 				$scope.data = null;
+				//$scope.saveProfile();
 			});
 		};
 		
 		$scope.editPassword = function() {
-			$scope.data = {};
+			$scope.data = {
+				oldPassword: '',
+				newPassword: '',
+				confirmPassword: ''
+			};
 			$scope.errorMessage = function() {
 				if ($scope.data.oldPassword != $scope.user.password) {
 					return "Invalid password!";
@@ -480,7 +497,7 @@
 					{
 						text: 'Cancel',
 						type: 'button-stable',
-						onTap: function(e) { return $scope.user.password; }
+						onTap: function() { return $scope.user.password; }
 					}, {
 						text: 'Okay',
 						type: 'button-royal',
@@ -513,11 +530,11 @@
 					{
 						text: 'Cancel',
 						type: 'button-stable',
-						onTap: function(e) { return $scope.user.questions[num]; }
+						onTap: function() { return $scope.user.questions[num]; }
 					}, {
 						text: 'Okay',
 						type: 'button-royal',
-						onTap: function(e) { return $scope.data.value; }
+						onTap: function() { return $scope.data.value; }
 					}
 				]			
 			}).then(function(update) {
@@ -525,22 +542,20 @@
 				$scope.data = null;
 			});
 		};
+
+		$scope.saveProfile = function() {
+			updateUser(this.user);
+		};
 		
 		//----------------------------
 		//       User Functions
 		//----------------------------
 
-		$scope.message = function(user) {
-			this.chat.reset(this.displayName(user));
-			this.go('chat');
-			this.close('profile');
-		};
-	
 		$scope.preview = function(user) {
 			$scope.tempUser = user;
 			this.show('profile');
 		};
-		
+
 		$scope.displayName = function(user) {
 			if (user.name) {
 				return user.name;
@@ -548,16 +563,15 @@
 				return user.alias;
 			}
 		};
-		
-		$scope.hasQuestions = function(user) {
-			for (var i=0; i<user.questions.length; i++) {
-				if (user.questions[i]) {
-					return true;
-				}
+
+		$scope.displayName = function(user) {
+			if (user.name) {
+				return user.name;
+			} else {
+				return user.alias;
 			}
-			return false;
 		};
-		
+
 		$scope.getFriends = function(user) {
 			return getUsersById(user.friends);
 		};
@@ -567,20 +581,54 @@
 			this.initEpisode(user.uid);
 			this.next();
 		};
-		
+
+		//----------------------------
+		//    Connection Functions
+		//----------------------------
+
+		$scope.goConnections = function() {
+			if (this.user.connections.length > 0) {
+				this.go('connections');
+			} else {
+				$ionicPopup.alert({
+					title: 'No Connections',
+					template: 'You have no pending connections.',
+					okText: 'Okay',
+					okType: 'button-royal'
+				});
+			}
+		};
+
+		$scope.getNearby = function() {
+			// eventually, this should get this from the server
+			return getUsersByLocation(this.user.location);
+		};
+
 		//----------------------------
 		//      Utility Functions
 		//----------------------------
-		
-		var promises = [];
-		
+
+		var promises1 = [];
+		var promises2 = [];
+
 		var timeout = function(fn, delay) {
-			promises.push($timeout(fn, delay));
+			var temp = $timeout(fn, delay);
+			promises1.push(temp);
+			return temp;
 		};
-		
+
+		var interval = function(fn, delay) {
+			var temp = $interval(fn, delay);
+			promises2.push(temp);
+			return temp;
+		};
+
 		var interruptAll = function() {
-			while (promises.length > 0) {
-				$timeout.cancel(promises.pop());
+			while (promises1.length > 0) {
+				$timeout.cancel(promises1.pop());
+			}
+			while (promises2.length > 0) {
+				$interval.cancel(promises2.pop());
 			}
 		};
 		
@@ -593,14 +641,15 @@
 				hash |= 0; // Convert to 32bit integer
 			}
 			return hash;
-		};	
-		
-		// Debug
-		
+		};
+
+		//----------------------------
+		//           Debug
+		//----------------------------
+
 		$scope.getStatus = function() {
 			return status;
 		};
-		
 	});
 
 })();

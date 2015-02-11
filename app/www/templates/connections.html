@@ -1,0 +1,14 @@
+<div ng-show="is('friends')">
+	<label class="item item-divider item-input">
+		<i class="icon ion-search placeholder-icon"></i>
+		<input type="text" placeholder="Search">
+	</label>
+	<ion-content>
+		<div class="item item-avatar" ng-repeat="cxn in user.connections" ng-click="">
+			{{cxn}}
+			<!--<img src="img/lone_icon.png">-->
+			<!--{{displayName(users[friend])}}-->
+			<!--<p ng-show="users[friend].name">{{users[friend].alias}}</p>-->
+		</div>
+	</ion-content>
+</div>
