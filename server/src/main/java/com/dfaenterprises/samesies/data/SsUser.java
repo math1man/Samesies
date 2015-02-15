@@ -2,22 +2,25 @@ package com.dfaenterprises.samesies.data;
 
 import com.google.appengine.api.datastore.EmbeddedEntity;
 import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.users.User;
+import com.google.gson.Gson;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Ari Weiland
  */
 public class SsUser {
 
-    public static Entity makeUser(Key key, String email, String password, String location, String alias,
+    public static Entity makeUser(String email, String password, String location, String alias,
                                   String name, Integer age, String gender, String aboutMe, String[] questions) {
-        Entity entity = makeUser(key, email, password, location, alias, name, age, gender, aboutMe);
+        Entity entity = makeUser(email, password, location, alias, name, age, gender, aboutMe);
         if (questions != null && questions.length > 0) {
             if (questions.length != 5) {
                 throw new IllegalArgumentException("Exactly 0 or 5 questions must be specified!");
             }
             EmbeddedEntity questionsEntity = new EmbeddedEntity();
+            questionsEntity.setProperty("length", 5);
             for (int i=0; i<5; i++) {
                 questionsEntity.setProperty("" + i, questions[i]);
             }
@@ -26,30 +29,31 @@ public class SsUser {
         return entity;
     }
 
-    public static Entity makeUser(Key key, String email, String password, String location, String alias,
+    public static Entity makeUser(String email, String password, String location, String alias,
                                   String name, Integer age, String gender, String aboutMe) {
-        Entity entity = makeUser(key, email, password, location, alias, name, age, gender);
+        Entity entity = makeUser(email, password, location, alias, name, age, gender);
         entity.setUnindexedProperty("aboutMe", aboutMe);
         return entity;
     }
 
-    public static Entity makeUser(Key key, String email, String password, String location, String alias,
+    public static Entity makeUser(String email, String password, String location, String alias,
                                   String name, Integer age, String gender) {
-        Entity entity = makeUser(key, email, password, location, alias);
+        Entity entity = makeUser(email, password, location, alias);
         entity.setProperty("name", name);
         entity.setProperty("age", age);
         entity.setProperty("gender", gender);
         return entity;
     }
 
-    public static Entity makeUser(Key key, String email, String password, String location, String alias) {
-        Entity entity = makeUser(key, email, password, location);
-        entity.setProperty("alias", alias);
+    public static Entity makeUser(String email, String password, String location, String alias) {
+        Entity entity = makeUser(email, password, location);
+        if (alias != null && !alias.isEmpty()) {
+            entity.setProperty("alias", alias);
+        }
         return entity;
     }
 
-    public static Entity makeUser(Key key, String email, String password, String location) {
-        Entity entity = new Entity(key);
+    public static Entity makeUser(String email, String password, String location) {
         if (email == null || email.isEmpty()) {
             throw new NullPointerException("Must specify an email!");
         }
@@ -59,12 +63,13 @@ public class SsUser {
         if (location == null || location.isEmpty()) {
             throw new NullPointerException("Must specify a location!");
         }
-        User user = makeUserField(email);
-        entity.setProperty("user", user);
+        Entity entity = new Entity("User");
+        entity.setProperty("email", email);
         entity.setUnindexedProperty("password", password);
         entity.setProperty("location", location);
-        entity.setProperty("alias", user.getNickname());
+        entity.setProperty("alias", getAlias(email));
         EmbeddedEntity questionsEntity = new EmbeddedEntity();
+        questionsEntity.setProperty("length", 5);
         for (int i=0; i<5; i++) {
             questionsEntity.setProperty("" + i, "");
         }
@@ -72,7 +77,27 @@ public class SsUser {
         return entity;
     }
 
-    public static User makeUserField(String email) {
-        return new User(email, "samesies.org");
+    public static String getAlias(String email) {
+        return email.substring(0, email.indexOf('@'));
+    }
+
+    public static String toJson(Entity user, Gson gson, boolean stripSensitiveData) {
+        if (user == null) {
+            return gson.toJson(null);
+        } else {
+            if (stripSensitiveData) {
+                user.removeProperty("password");
+                // TODO: maybe remove other properties?
+            }
+            return gson.toJson(user.getProperties());
+        }
+    }
+
+    public static String toJson(Iterable<Entity> users, Gson gson, boolean stripSensitiveData) {
+        List<String> data = new ArrayList<String>();
+        for (Entity e : users) {
+            data.add(toJson(e, gson, stripSensitiveData));
+        }
+        return gson.toJson(data);
     }
 }

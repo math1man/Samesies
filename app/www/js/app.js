@@ -42,16 +42,14 @@
 
 		// Eventually, this stuff needs to be retrieved directly from the server, as needed
 
-		$http.get('data/questions.json').success(function(data){
-			$scope.questions = data;
-		});
+		$scope.questions = [];
 
-		$http.get('data/bots.json').success(function(data){
-			var total = data.length;
-			var index = parseInt(Math.random() * total);
-			$scope.bot = data[index];
-		});
-		
+		$scope.getAllQuestions = function(category) {
+			$http.get('http://localhost:8080/questions', {params: {query: "all", category: category}}).success(function(data){
+				$scope.questions = data;
+			});
+		};
+
 		$http.get('data/users.json').success(function(data){
 			$scope.users = data;
 		});
@@ -63,6 +61,14 @@
 				}
 			}
 			return null;
+		};
+
+		var getUserById2 = function(uid) {
+			var temp;
+			$http.get('http://localhost:8080/users', {params: {query: "id", id: uid}}).success(function(data){
+				temp = data;
+			});
+			return temp;
 		};
 
 		var getUsersById = function(uids) {
@@ -84,6 +90,10 @@
 				}
 			}
 			return null;
+		};
+
+		$scope.getUserByEmail2 = function(email) {
+			return $http.get('http://localhost:8080/users', {params: {query: "email", email: email}});
 		};
 
 		var getUsersByLocation = function(location) {
@@ -161,22 +171,32 @@
 		//      Login Functions
 		//----------------------------
 
+		$scope.loginData = {
+			error: false
+		};
+
 		$scope.doLogin = function() {
-			var temp = getUserByEmail(this.loginData.email);
-			if (temp && this.loginData.password === temp.password) {
-				$scope.user = temp;
-				this.close('login');
-				this.loginData = null;
-				this.go('menu');
-				return true;					
-			}
-			return false;
+			$scope.user = null;
+			$http.get('http://localhost:8080/users', {params: {query: "login", email: $scope.loginData.email,
+					password: $scope.loginData.password}}).success(function(data){
+				$scope.user = data;
+				$scope.user.questions = Array.prototype.slice.call($scope.user.questions.propertyMap);
+				$scope.close('login');
+				$scope.loginData = null;
+				$scope.go('menu');
+			}).error(function () {
+				$scope.loginData.error = true;
+			});
 		};
 		
 		$scope.logOut = function() {
 			this.close('menu');
 			this.show('login');
 			$scope.user = null;
+			$scope.loginData = {
+				error: false
+			};
+
 		};
 		
 		$scope.createAccount = function() {
@@ -185,21 +205,29 @@
 				password: '',
 				confirmPassword: '',
 				location: '',
-				alias: ''
-			};
-			$scope.errorMessage = function() {
-				if (!$scope.loginData.email) {
-					return "Invalid email!";
-				} else if ($scope.loginData.password.length <= 5) {
-					return "Password too short!";
-				} else if ($scope.loginData.password != $scope.loginData.confirmPassword) {
-					return "Passwords don't match!";
-				} else if (!$scope.loginData.location) {
-					return "Invalid location!";
-				} else {
-					return "";
+				alias: '',
+				error: function() {
+					if (!this.email) {
+						return "Invalid email!";
+					} else if (this.password.length <= 5) {
+						return "Password too short!";
+					} else if (this.password != $scope.loginData.confirmPassword) {
+						return "Passwords don't match!";
+					} else if (!this.location) {
+						return "Invalid location!";
+					} else {
+						return "";
+					}
 				}
 			};
+			var transform = function(data){
+				data = JSON.stringify(data);		// to json
+				data = data.replace(/":"/g, "=");	// add in '='
+				data = data.replace(/","/g, "&");	// add in '&'
+				data = data.replace(/\{"|"}/g, "");	// remove ends
+				return data;
+			};
+
 			$ionicPopup.show({
 				scope: $scope,
 				title: 'Create Account',
@@ -213,7 +241,7 @@
 						text: 'Okay',
 						type: 'button-royal',
 						onTap: function(e) {
-							if (!$scope.errorMessage()) {
+							if (!$scope.loginData.error()) {
 								return $scope.loginData;
 							} else {
 								e.preventDefault();
@@ -223,24 +251,19 @@
 				]			
 			}).then(function(data) {
 				if (data) {
-					// eventually, this needs to all be server-side
-					var alias = data.alias;
-					if (!alias) {
-						var index = data.email.indexOf('@');
-						alias = data.email.substr(0, index);
-					}
-					var user = {
-						uid: data.email.hashCode(),
-						email: data.email,
-						password: data.password,
-						alias: alias,
-						location: data.location,
-						questions: ["", "", "", "", ""],
-						friends: [],
-						connections: []
-					};
-					// eventually publish user to server
-					$scope.users.push(user);
+					$http.post('http://localhost:8080/users', data, {
+						headers: { 'Content-Type': 'application/x-www-form-urlencoded'},
+						transformRequest: transform
+					}).success(function(data){
+						$scope.user = data;
+						$scope.user.questions = Array.prototype.slice.call($scope.user.questions.propertyMap);
+						$scope.close('login');
+						$scope.loginData = null;
+						$scope.go('menu');
+					}).error(function(data, status){
+						$scope.loginData.data = data;
+						$scope.loginData.status = status;
+					});
 				}
 			});
 		};
@@ -258,9 +281,12 @@
 		};
 		
 		$scope.quickLogin = function() {
-			$scope.user = getUserByEmail("ari@samesies.com");
-			this.close('login');
-			this.go('menu');
+			$scope.loginData = {
+				error: false,
+				email: "ari@samesies.com",
+				password: "samesies123"
+			};
+			this.doLogin();
 		};
 		
 		//----------------------------
@@ -312,10 +338,6 @@
 		//      Episode Control
 		//----------------------------
 
-		var index = function(episode) {
-			return episode.qids[episode.stage-1];
-		};
-
 		$scope.find = function() {
 			$scope.episode = {};
 			$scope.episode.stage = 0;
@@ -323,7 +345,6 @@
 			// add searching code here
 			timeout(function() {
 				$scope.initEpisode(1);
-				$scope.next();
 			}, 2000);
 		};
 		
@@ -333,25 +354,17 @@
 		};
 		
 		$scope.initEpisode = function(uid) {
-			var count = 5; // eventually increase to 10
-			var max = this.questions.length;
-			var a = [];
-			for (var i=0; i<max; ++i) {
-				a.push(i);
-			}
-			var top = 0;
-			while (top < count) {
-				var swap = parseInt(Math.random() * (max - top)) + top;
-				var tmp = a[swap];
-				a[swap] = a[top];
-				a[top] = tmp;
-				top++;
-			}
 			$scope.episode = {
 				stage: 0,
 				partnerId: uid,
-				qids: a.slice(0, count)
+				questions: [],
+				bot: []
 			};
+			$http.get('http://localhost:8080/questions', {params: {query: "episode", count: 5}}).success(function (data) {
+				$scope.episode.questions = data.questions;
+				$scope.episode.bot = data.bot;
+				$scope.next();
+			});
 		};
 	
 		$scope.matchText = function() {
@@ -363,7 +376,7 @@
 		};
 
 		$scope.getQuestion = function() {
-			return this.questions[index(this.episode)];
+			return this.episode.questions[this.episode.stage - 1];
 		};
 
 		$scope.answer = function() {
@@ -378,7 +391,7 @@
 		$scope.retrieve = function() {
 			interval(function() {
 				// eventually ping server for their answer
-				var temp = $scope.bot[index($scope.episode)];
+				var temp = $scope.episode.bot[$scope.episode.stage - 1];
 				if (temp != null) {
 					$scope.episode.theirAnswer = temp;
 					$scope.go("continue");
@@ -476,17 +489,17 @@
 			$scope.data = {
 				oldPassword: '',
 				newPassword: '',
-				confirmPassword: ''
-			};
-			$scope.errorMessage = function() {
-				if ($scope.data.oldPassword != $scope.user.password) {
-					return "Invalid password!";
-				} else if ($scope.data.newPassword.length <= 5) {
-					return "New password too short!";
-				} else if ($scope.data.newPassword != $scope.data.confirmPassword) {
-					return "Passwords don't match!";
-				} else {
-					return "";
+				confirmPassword: '',
+				error: function() {
+					if ($scope.data.oldPassword != $scope.user.password) {
+						return "Invalid password!";
+					} else if ($scope.data.newPassword.length <= 5) {
+						return "New password too short!";
+					} else if ($scope.data.newPassword != $scope.data.confirmPassword) {
+						return "Passwords don't match!";
+					} else {
+						return "";
+					}
 				}
 			};
 			$ionicPopup.show({
@@ -502,7 +515,7 @@
 						text: 'Okay',
 						type: 'button-royal',
 						onTap: function(e) {
-							if (!$scope.errorMessage()) {
+							if (!$scope.data.error()) {
 								return $scope.data.newPassword;
 							} else {
 								e.preventDefault();
@@ -564,12 +577,13 @@
 			}
 		};
 
-		$scope.displayName = function(user) {
-			if (user.name) {
-				return user.name;
-			} else {
-				return user.alias;
+		$scope.hasQuestions = function(user) {
+			for (var i=0; i<5; i++) {
+				if (user.questions[i]) {
+					return true;
+				}
 			}
+			return false;
 		};
 
 		$scope.getFriends = function(user) {
@@ -579,7 +593,6 @@
 		$scope.challenge = function(user) {
 			this.close('profile');
 			this.initEpisode(user.uid);
-			this.next();
 		};
 
 		//----------------------------
@@ -602,6 +615,13 @@
 		$scope.getNearby = function() {
 			// eventually, this should get this from the server
 			return getUsersByLocation(this.user.location);
+		};
+
+		$scope.goBrowse = function() {
+			if (this.questions.length === 0) {
+				this.getAllQuestions("all");
+			}
+			this.go("browse");
 		};
 
 		//----------------------------

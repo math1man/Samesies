@@ -25,8 +25,19 @@
 			<div class="item" ng-click="go('edit')">
 				Edit Profile
 			</div>
-			<div class="item" ng-click="go('browse')">
+			<div class="item" ng-click="goBrowse()">
 				Browse Questions
+			</div>
+		</div>
+
+		<!-- debug info -->
+		<div class="card" ng-hide="true">
+			<div class="item item-divider">
+				Debug:
+			</div>
+			<div class="item item-text-wrap">
+				<p>{{getStatus()}}</p>
+				<p>{{user}}</p>
 			</div>
 		</div>
 	</ion-content>

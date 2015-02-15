@@ -13,6 +13,9 @@
           <span class="input-label">Password</span>
           <input type="password" ng-model="loginData.password" placeholder="••••••••" required>
         </label>
+        <div class="item error" ng-show="loginData.error === true">
+          Invalid email or password!
+        </div>
         <label class="item">
           <button class="button button-block button-royal" type="submit">Log in</button>
         </label>
@@ -33,7 +36,6 @@
 			<div class="item item-text-wrap">
 				<p>{{loginData}}</p>
 				<p>{{user}}</p>
-				<p>{{users}}</p>
 			</div>
 		</div>
 

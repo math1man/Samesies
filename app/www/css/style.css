@@ -1,23 +1,26 @@
-/* Empty. Add your own CSS if you like */
 .align-right {
-	text-align: right;
+  text-align: right;
 }
 
 .float-left {
-	float: left;
+  float: left;
 }
 
 .float-right {
-	float: right;
+  float: right;
 }
 
 .popup-title {
-	font-size: 18px;
+  font-size: 18px;
 }
 
 .spinner {
-	-webkit-animation:spin 2s linear infinite;
-	animation:spin 2s linear infinite;
+  -webkit-animation:spin 2s linear infinite;
+  animation:spin 2s linear infinite;
+}
+
+.error {
+  color: red;
 }
 
 .chat.ng-enter {
