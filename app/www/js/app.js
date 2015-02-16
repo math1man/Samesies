@@ -171,8 +171,12 @@
 
 		$scope.doLogin = function() {
 			$scope.user = null;
-			$http.get(url + '/users', {params: {query: "login", email: $scope.loginData.email,
-					password: $scope.loginData.password}}).success(function(data){
+			$scope.loginData.error = false;
+			$http.get(url + '/users', {params: {
+				query: "login",
+				email: $scope.loginData.email,
+				password: $scope.loginData.password
+			}}).success(function(data){
 				$scope.user = data;
 				$scope.user.questions = Array.prototype.slice.call($scope.user.questions.propertyMap);
 				$scope.close('login');
