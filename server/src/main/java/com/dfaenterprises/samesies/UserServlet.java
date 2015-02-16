@@ -61,6 +61,36 @@ public class UserServlet extends HttpServlet {
     }
 
     @Override
+    public void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        resp.setContentType("application/json");
+        resp.addHeader("Access-Control-Allow-Origin", "*");
+
+        long id = Long.parseLong(req.getParameter("id"));
+        String property = req.getParameter("property");
+        String value = req.getParameter("value");
+        log("ID: " + id + ", property: " + property + ", value: " + value);
+
+        try {
+            Entity user = datastore.get(KeyFactory.createKey("User", id));
+            if (property.equals("questions")) {
+                String[] questions = gson.fromJson(value, String[].class);
+                user.setUnindexedProperty(property, SsUser.makeQuestions(questions));
+            } else if (property.equals("age")) {
+                user.setProperty(property, Integer.parseInt(value));
+            } else {
+                user.setProperty(property, value);
+            }
+            datastore.put(user);
+            resp.getWriter().println(")]}',");
+            resp.getWriter().println(SsUser.toJson(user, gson, false));
+        } catch (EntityNotFoundException e) {
+            log("Retrieval error", e);
+            resp.sendError(404);
+        }
+    }
+
+    @Override
     public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         resp.setContentType("application/json");
@@ -104,6 +134,7 @@ public class UserServlet extends HttpServlet {
                 resp.getWriter().println(json);
             } catch (EntityNotFoundException e) {
                 log("Retrieval error", e);
+                resp.sendError(404);
             }
         } else if (queryType.equals("location")) {
             // TODO: eventually need to be more clever about location stuff

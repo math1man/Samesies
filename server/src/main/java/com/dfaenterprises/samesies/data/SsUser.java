@@ -15,17 +15,7 @@ public class SsUser {
     public static Entity makeUser(String email, String password, String location, String alias,
                                   String name, Integer age, String gender, String aboutMe, String[] questions) {
         Entity entity = makeUser(email, password, location, alias, name, age, gender, aboutMe);
-        if (questions != null && questions.length > 0) {
-            if (questions.length != 5) {
-                throw new IllegalArgumentException("Exactly 0 or 5 questions must be specified!");
-            }
-            EmbeddedEntity questionsEntity = new EmbeddedEntity();
-            questionsEntity.setProperty("length", 5);
-            for (int i=0; i<5; i++) {
-                questionsEntity.setProperty("" + i, questions[i]);
-            }
-            entity.setUnindexedProperty("questions", questionsEntity);
-        }
+        entity.setUnindexedProperty("questions", makeQuestions(questions));
         return entity;
     }
 
@@ -68,12 +58,7 @@ public class SsUser {
         entity.setUnindexedProperty("password", password);
         entity.setProperty("location", location);
         entity.setProperty("alias", getAlias(email));
-        EmbeddedEntity questionsEntity = new EmbeddedEntity();
-        questionsEntity.setProperty("length", 5);
-        for (int i=0; i<5; i++) {
-            questionsEntity.setProperty("" + i, "");
-        }
-        entity.setUnindexedProperty("questions", questionsEntity);
+        entity.setUnindexedProperty("questions", makeQuestions(null));
         return entity;
     }
 
@@ -81,10 +66,32 @@ public class SsUser {
         return email.substring(0, email.indexOf('@'));
     }
 
+    /**
+     * Creates an EmbeddedEntity representing the questions.
+     * If null is specified, or if less than 5 questions are
+     * given, the questions will all be set to the empty string.
+     * If more than 5 questions are given, only the first 5
+     * questions will be used.
+     * @param questions
+     * @return
+     */
+    public static EmbeddedEntity makeQuestions(String[] questions) {
+        if (questions == null || questions.length < 5) {
+            questions = new String[]{"", "", "", "", ""};
+        }
+        EmbeddedEntity questionsEntity = new EmbeddedEntity();
+        questionsEntity.setProperty("length", 5);
+        for (int i=0; i<5; i++) {
+            questionsEntity.setProperty("" + i, questions[i]);
+        }
+        return questionsEntity;
+    }
+
     public static String toJson(Entity user, Gson gson, boolean stripSensitiveData) {
         if (user == null) {
             return gson.toJson(null);
         } else {
+            user.setProperty("id", user.getKey().getId());
             if (stripSensitiveData) {
                 user.removeProperty("password");
                 // TODO: maybe remove other properties?

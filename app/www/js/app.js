@@ -4,6 +4,8 @@
 // angular.module is a global place for creating, registering and retrieving Angular modules
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
+	var url = 'http://localhost:8080';
+
 	var app = angular.module('samesies', ['ionic', 'directives']);
 	
 	app.run(function($ionicPlatform) {
@@ -45,7 +47,7 @@
 		$scope.questions = [];
 
 		$scope.getAllQuestions = function(category) {
-			$http.get('http://localhost:8080/questions', {params: {query: "all", category: category}}).success(function(data){
+			$http.get(url + '/questions', {params: {query: "all", category: category}}).success(function(data){
 				$scope.questions = data;
 			});
 		};
@@ -65,7 +67,7 @@
 
 		var getUserById2 = function(uid) {
 			var temp;
-			$http.get('http://localhost:8080/users', {params: {query: "id", id: uid}}).success(function(data){
+			$http.get(url + '/users', {params: {query: "id", id: uid}}).success(function(data){
 				temp = data;
 			});
 			return temp;
@@ -93,7 +95,7 @@
 		};
 
 		$scope.getUserByEmail2 = function(email) {
-			return $http.get('http://localhost:8080/users', {params: {query: "email", email: email}});
+			return $http.get(url + '/users', {params: {query: "email", email: email}});
 		};
 
 		var getUsersByLocation = function(location) {
@@ -104,14 +106,6 @@
 				}
 			}
 			return output;
-		};
-
-		var updateUser = function(user) {
-			for (var i=0; i<$scope.users.length; i++) {
-				if ($scope.users[i].uid === user.uid) {
-					$scope.users[i] = user;
-				}
-			}
 		};
 
 		//----------------------------
@@ -177,7 +171,7 @@
 
 		$scope.doLogin = function() {
 			$scope.user = null;
-			$http.get('http://localhost:8080/users', {params: {query: "login", email: $scope.loginData.email,
+			$http.get(url + '/users', {params: {query: "login", email: $scope.loginData.email,
 					password: $scope.loginData.password}}).success(function(data){
 				$scope.user = data;
 				$scope.user.questions = Array.prototype.slice.call($scope.user.questions.propertyMap);
@@ -193,6 +187,7 @@
 			this.close('menu');
 			this.show('login');
 			$scope.user = null;
+			$scope.error = null;
 			$scope.loginData = {
 				error: false
 			};
@@ -220,14 +215,6 @@
 					}
 				}
 			};
-			var transform = function(data){
-				data = JSON.stringify(data);		// to json
-				data = data.replace(/":"/g, "=");	// add in '='
-				data = data.replace(/","/g, "&");	// add in '&'
-				data = data.replace(/\{"|"}/g, "");	// remove ends
-				return data;
-			};
-
 			$ionicPopup.show({
 				scope: $scope,
 				title: 'Create Account',
@@ -251,7 +238,7 @@
 				]			
 			}).then(function(data) {
 				if (data) {
-					$http.post('http://localhost:8080/users', data, {
+					$http.post(url + '/users', data, {
 						headers: { 'Content-Type': 'application/x-www-form-urlencoded'},
 						transformRequest: transform
 					}).success(function(data){
@@ -360,7 +347,7 @@
 				questions: [],
 				bot: []
 			};
-			$http.get('http://localhost:8080/questions', {params: {query: "episode", count: 5}}).success(function (data) {
+			$http.get(url + '/questions', {params: {query: "episode", count: 5}}).success(function (data) {
 				$scope.episode.questions = data.questions;
 				$scope.episode.bot = data.bot;
 				$scope.next();
@@ -451,6 +438,27 @@
 		//      Editor Functions
 		//----------------------------
 
+		$scope.save = function(field) {
+			var data = {
+				id: $scope.user.id,
+				property: field,
+				value: $scope.user[field]
+			};
+			$http.put(url + '/users', data, {
+				headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+				transformRequest: transform
+			}).success(function(data){
+
+			}).error(function(data, status, headers, config){
+				$scope.error = {
+					//data: data,
+					status: status,
+					//headers: headers,
+					config: config
+				}
+			});
+		};
+
 		$scope.edit = function(property, field, type, required) {
 			$scope.data = {
 				value: $scope.user[field],
@@ -459,7 +467,7 @@
 			};
 			$ionicPopup.show({
 				scope: $scope,
-				title: 'Edit '.concat(property),
+				title: 'Edit ' + property,
 				templateUrl: 'templates/edit.html',
 				buttons: [
 					{
@@ -481,7 +489,7 @@
 			}).then(function(update) {
 				$scope.user[field] = update;
 				$scope.data = null;
-				//$scope.saveProfile();
+				$scope.save(field);
 			});
 		};
 		
@@ -526,6 +534,7 @@
 			}).then(function(newPassword) {
 				$scope.user.password = newPassword;
 				$scope.data = null;
+				$scope.save("password");
 			});
 		};
 		
@@ -553,11 +562,24 @@
 			}).then(function(update) {
 				$scope.user.questions[num] = update;
 				$scope.data = null;
+				$scope.save("questions");
 			});
 		};
 
 		$scope.saveProfile = function() {
-			updateUser(this.user);
+			$http.post(url + '/users', $scope.user, {
+				headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+				transformRequest: transform
+			}).success(function(data){
+
+			}).error(function(data, status, headers, config){
+				$scope.error = {
+					//data: data,
+					status: status,
+					//headers: headers,
+					config: config
+				}
+			});
 		};
 		
 		//----------------------------
@@ -651,7 +673,15 @@
 				$interval.cancel(promises2.pop());
 			}
 		};
-		
+
+		var transform = function(data){
+			data = JSON.stringify(data);		// to json
+			data = data.replace(/:/g, "=");	// add in '='
+			data = data.replace(/,/g, "&");	// add in '&'
+			data = data.replace(/[{}"]/g, "");	// remove ends
+			return data;
+		};
+
 		String.prototype.hashCode = function() {
 			var hash = 0, i, chr, len;
 			if (this.length == 0) return hash;
