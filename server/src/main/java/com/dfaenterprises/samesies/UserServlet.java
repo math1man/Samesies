@@ -44,19 +44,29 @@ public class UserServlet extends HttpServlet {
         resp.setContentType("application/json");
         resp.addHeader("Access-Control-Allow-Origin", "*");
 
-        String email = req.getParameter("email");
-        String password = req.getParameter("password");
-        String location = req.getParameter("location");
-        String alias = req.getParameter("alias");
+        String type = req.getParameter("type");
+        if (type.equals("create")) {
+            String email = req.getParameter("email");
+            String password = req.getParameter("password");
+            String location = req.getParameter("location");
+            String alias = req.getParameter("alias");
 
-        Entity e = getUserByEmail(datastore, email);
-        if (e == null) {
-            Entity newUser = SsUser.makeUser(email, password, location, alias);
-            datastore.put(newUser);
-            resp.getWriter().println(")]}',");
-            resp.getWriter().println(SsUser.toJson(newUser, gson, false));
-        } else { // that email is already in the system
-            resp.sendError(403, "Forbidden: Email already in use");
+            Entity e = getUserByEmail(datastore, email);
+            if (e == null) {
+                Entity newUser = SsUser.makeUser(email, password, location, alias);
+                datastore.put(newUser);
+                resp.getWriter().println(")]}',");
+                resp.getWriter().println(SsUser.toJson(newUser, gson, false));
+            } else { // that email is already in the system
+                resp.sendError(403, "Forbidden: Email already in use");
+            }
+        } else { // update
+            String id = req.getParameter("id");
+            String password = req.getParameter("password");
+            String location = req.getParameter("location");
+            String alias = req.getParameter("alias");
+            String name = req.getParameter("name");
+//            Integer
         }
     }
 
