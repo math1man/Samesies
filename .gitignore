@@ -2,6 +2,7 @@
 server/target
 app/platforms/
 .idea/
+helloworld
 
 *.ai
 *.iml

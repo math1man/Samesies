@@ -58,6 +58,10 @@ public class SsUser {
         entity.setUnindexedProperty("password", password);
         entity.setProperty("location", location);
         entity.setProperty("alias", getAlias(email));
+        entity.setProperty("name", "");
+        entity.setProperty("age", null);
+        entity.setProperty("gender", "");
+        entity.setUnindexedProperty("aboutMe", "");
         entity.setUnindexedProperty("questions", makeQuestions(null));
         return entity;
     }

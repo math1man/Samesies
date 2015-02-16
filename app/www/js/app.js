@@ -243,6 +243,7 @@
 			}).then(function(data) {
 				if (data) {
 					$http.post(url + '/users', data, {
+						params: {type: "create"},
 						headers: { 'Content-Type': 'application/x-www-form-urlencoded'},
 						transformRequest: transform
 					}).success(function(data){
@@ -251,9 +252,8 @@
 						$scope.close('login');
 						$scope.loginData = null;
 						$scope.go('menu');
-					}).error(function(data, status){
-						$scope.loginData.data = data;
-						$scope.loginData.status = status;
+					//}).error(function(data, status){
+					//	$scope.loginData.status = status;
 					});
 				}
 			});
@@ -442,27 +442,6 @@
 		//      Editor Functions
 		//----------------------------
 
-		$scope.save = function(field) {
-			var data = {
-				id: $scope.user.id,
-				property: field,
-				value: $scope.user[field]
-			};
-			$http.put(url + '/users', data, {
-				headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-				transformRequest: transform
-			}).success(function(data){
-
-			}).error(function(data, status, headers, config){
-				$scope.error = {
-					//data: data,
-					status: status,
-					//headers: headers,
-					config: config
-				}
-			});
-		};
-
 		$scope.edit = function(property, field, type, required) {
 			$scope.data = {
 				value: $scope.user[field],
@@ -493,7 +472,7 @@
 			}).then(function(update) {
 				$scope.user[field] = update;
 				$scope.data = null;
-				$scope.save(field);
+				$scope.user.isChanged = true;
 			});
 		};
 		
@@ -538,7 +517,7 @@
 			}).then(function(newPassword) {
 				$scope.user.password = newPassword;
 				$scope.data = null;
-				$scope.save("password");
+				$scope.user.isChanged = true;
 			});
 		};
 		
@@ -566,26 +545,24 @@
 			}).then(function(update) {
 				$scope.user.questions[num] = update;
 				$scope.data = null;
-				$scope.save("questions");
+				$scope.user.isChanged = true;
 			});
 		};
 
 		$scope.saveProfile = function() {
-			$http.post(url + '/users', $scope.user, {
-				headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-				transformRequest: transform
-			}).success(function(data){
+			if ($scope.user.isChanged) {
+				$http.post(url + '/users', $scope.user, {
+					params: {type: 'update'},
+					headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+					transformRequest: transform
+				}).success(function (data) {
 
-			}).error(function(data, status, headers, config){
-				$scope.error = {
-					//data: data,
-					status: status,
-					//headers: headers,
-					config: config
-				}
-			});
+				}).error(function (data, status, headers, config) {
+
+				});
+			}
 		};
-		
+
 		//----------------------------
 		//       User Functions
 		//----------------------------
