@@ -40,9 +40,7 @@
 		//           Data
 		//----------------------------
 
-		// Eventually, this stuff needs to be retrieved directly from the server, as needed
-
-		$scope.loadQuestions = function() {
+		var loadQuestions = function() {
 			gapi.client.samesies.samesiesApi.questions().then(function(resp){
 				$scope.questions = resp.result.items;
 			});
@@ -54,13 +52,15 @@
 			};
 		};
 
-		$http.get('data/users.json').success(function(data){
-			$scope.users = data;
-		});
-
 		var getUserById = function(uid) {
 			return gapi.client.samesies.samesiesApi.user({id: uid});
 		};
+
+		// Eventually, this stuff needs to be retrieved directly from the server, as needed
+
+		$http.get('data/users.json').success(function(data){
+			$scope.users = data;
+		});
 
 		var getUsersById = function(uids) {
 			var output = [];
@@ -94,7 +94,7 @@
 			backdropClickToClose: false,
 			hardwareBackButtonClose: false
 		}).then(function(modal) {
-			$scope.login = modal;
+			$scope.loginPopup = modal;
 			$scope.show('login'); // open the login on app-start
 		});
 		
@@ -104,44 +104,44 @@
 			backdropClickToClose: false,
 			hardwareBackButtonClose: false
 		}).then(function(modal) {
-			$scope.menu = modal;
+			$scope.menuPopup = modal;
 		});
 		
 		$ionicModal.fromTemplateUrl('templates/help.html', {
 			scope: $scope,
 			animation: 'slide-in-up'
 		}).then(function(modal) {
-			$scope.help = modal;
+			$scope.helpPopup = modal;
 		});
 		
 		$ionicModal.fromTemplateUrl('templates/profile.html', {
 			scope: $scope,
 			animation: 'slide-in-left'
 		}).then(function(modal) {
-			$scope.profile = modal;
+			$scope.profilePopup = modal;
 		});
 
 		$ionicPopover.fromTemplateUrl('templates/select-category.html', {
 			scope: $scope
 		}).then(function(popover) {
-			$scope.category = popover;
+			$scope.categoryPopup = popover;
 		});
 
 		$scope.show = function(item, $event) {
 			this.resetToggle();
-			this[item].show($event);
+			this[item + "Popup"].show($event);
 		};
 		
 		$scope.close = function(item) {
-			this[item].hide();
+			this[item + "Popup"].hide();
 		};
 
 		$scope.$on('$destroy', function() {
 			// Cleanup the modals when we're done with them!
-			$scope.menu.remove();
-			$scope.help.remove();
-			$scope.profile.remove();
-			$scope.category.remove();
+			$scope.menuPopup.remove();
+			$scope.helpPopup.remove();
+			$scope.profilePopup.remove();
+			$scope.categoryPopup.remove();
 		});
 
 		//----------------------------
@@ -158,8 +158,8 @@
 		};
 
 		$scope.login = function(user) {
+			loadQuestions();
 			$scope.user = user;
-			$scope.loadQuestions();
 			$scope.close('login');
 			$scope.loginData = null;
 			$scope.go('menu');
@@ -273,7 +273,7 @@
 		};
 		
 		$scope.is = function(state) {
-			if (this.menu.isShown()) {
+			if (this.menuPopup.isShown()) {
 				return state === "menu";
 			} else if (state === "episode") {
 				return this.is("matching") || this.is("entry") || this.is("waiting") || this.is("continue");
@@ -563,7 +563,8 @@
 		//----------------------------
 
 		$scope.goConnections = function() {
-			if (this.user.connections.length > 0) {
+			// TODO: these need to be retrieved from server
+			if (this.user.connections && this.user.connections.length > 0) {
 				this.go('connections');
 			} else {
 				$ionicPopup.alert({
@@ -614,17 +615,6 @@
 			data = data.replace(/,/g, "&");	// add in '&'
 			data = data.replace(/[{}"]/g, "");	// remove ends
 			return data;
-		};
-
-		String.prototype.hashCode = function() {
-			var hash = 0, i, chr, len;
-			if (this.length == 0) return hash;
-			for (i = 0, len = this.length; i < len; i++) {
-				chr   = this.charCodeAt(i);
-				hash  = ((hash << 5) - hash) + chr;
-				hash |= 0; // Convert to 32bit integer
-			}
-			return hash;
 		};
 
 		//----------------------------
