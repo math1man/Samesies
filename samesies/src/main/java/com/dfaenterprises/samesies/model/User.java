@@ -53,14 +53,18 @@ public class User {
     }
 
     public User(String email, String password, String location) {
-        this(email, password, location, getAlias(email));
+        this(email, password, location, null);
     }
 
     public User(String email, String password, String location, String alias) {
         this.email = email;
         this.password = password;
         this.location = location;
-        this.alias = alias;
+        if (alias == null) {
+            this.alias = getAlias(email);
+        } else {
+            this.alias = alias;
+        }
         this.questions = emptyQuestions();
     }
 

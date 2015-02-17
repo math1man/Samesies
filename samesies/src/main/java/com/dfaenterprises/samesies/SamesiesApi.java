@@ -8,6 +8,7 @@ import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
 import com.google.api.server.spi.config.Nullable;
 import com.google.api.server.spi.response.BadRequestException;
+import com.google.api.server.spi.response.ForbiddenException;
 import com.google.api.server.spi.response.NotFoundException;
 import com.google.appengine.api.datastore.*;
 
@@ -144,11 +145,25 @@ public class SamesiesApi {
 
         Entity e = getUserByEmail(datastore, email);
         if (e == null) {
-            throw new NotFoundException("Email not found");
+            throw new NotFoundException("Invalid Email");
         } else if (password.equals(e.getProperty("password"))) {
             return new User(e);
         } else {
-            throw new BadRequestException("Invalid password");
+            throw new BadRequestException("Invalid Password");
+        }
+    }
+
+    @ApiMethod(name = "samesiesApi.create") // Defaults to POST
+    public User createAccount(@Named("email") String email, @Named("password") String password,
+                              @Named("location") String location, @Nullable @Named("alias") String alias) throws ServiceException {
+        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+
+        if (getUserByEmail(datastore, email) == null) {
+            Entity user = new User(email, password, location, alias).toEntity();
+            datastore.put(user);
+            return new User(user);
+        } else {
+            throw new ForbiddenException("Email already in use");
         }
     }
 
@@ -186,20 +201,6 @@ public class SamesiesApi {
 //        PreparedQuery pq = datastore.prepare(query);
 //        return pq.asList(FetchOptions.Builder.withDefaults());
 //    }
-//
-//    @ApiMethod(name = "samesiesApi.userEmail")
-//    public Entity createAccount(@Named("email") String email, @Named("password") String password,
-//                                @Named("location") String location, @Nullable @Named("alias") String alias) throws ServiceException {
-//        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-//
-//        Entity e = getUserByEmail(datastore, email);
-//        if (e == null) {
-//            throw new NotFoundException("Email not found");
-//        } else {
-//            return e;
-//        }
-//    }
-
 
     @ApiMethod(name = "samesiesApi.questions") // Defaults to GET
     public List<Question> getQuestions(@Nullable @Named("category") String category) throws ServiceException {

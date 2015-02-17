@@ -13,8 +13,8 @@
           <span class="input-label">Password</span>
           <input type="password" ng-model="loginData.password" placeholder="••••••••" required>
         </label>
-        <div class="item error" ng-show="loginData.error === true">
-          Invalid email or password!
+        <div class="item error" ng-show="loginData.error">
+          {{loginData.error}}
         </div>
         <label class="item">
           <button class="button button-block button-royal" type="submit">Log in</button>
@@ -28,16 +28,16 @@
         </div>
       </div>
     </form>
-    
-		<div class="card" ng-hide="true">
-			<div class="item item-divider">
-				Debug:
-			</div>
-			<div class="item item-text-wrap">
-				<p>{{loginData}}</p>
-				<p>{{user}}</p>
-			</div>
-		</div>
+
+      <div class="card" ng-hide="true">
+        <div class="item item-divider">
+          Debug:
+        </div>
+        <div class="item item-text-wrap">
+          <p>{{loginData}}</p>
+          <p>{{user}}</p>
+        </div>
+      </div>
 
   </ion-content>
 </ion-modal-view>

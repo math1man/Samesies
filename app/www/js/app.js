@@ -64,7 +64,7 @@
 			//$http.get(url + '/questions', {params: {query: "all", category: category}}).success(function(data){
 			//	$scope.questions = data;
 			//});
-			gapi.client.samesies.samesiesApi.questions({category: category}).execute(function(resp){
+			gapi.client.samesies.samesiesApi.questions({category: category}).then(function(resp){
 				$scope.questions = resp.items;
 			});
 		};
@@ -168,19 +168,32 @@
 		$scope.doLogin = function() {
 			$scope.user = null;
 			$scope.loginData.error = false;
-			$http.get(url + '/users', {params: {
-				query: "login",
-				email: $scope.loginData.email,
-				password: $scope.loginData.password
-			}}).success(function(data){
-				$scope.user = data;
-				$scope.user.questions = Array.prototype.slice.call($scope.user.questions.propertyMap);
+			gapi.client.samesies.samesiesApi.login($scope.loginData).then(function(resp){
+				$scope.user = resp;
 				$scope.close('login');
 				$scope.loginData = null;
 				$scope.go('menu');
-			}).error(function () {
-				$scope.loginData.error = true;
+			}, function(reason){ // error
+				if (reason.status === 404) {
+					$scope.loginData.error = 'Invalid Email';
+				} else {
+					$scope.loginData.error = 'Invalid Password';
+				}
+				$scope.$apply();
 			});
+			//$http.get(url + '/users', {params: {
+			//	query: "login",
+			//	email: $scope.loginData.email,
+			//	password: $scope.loginData.password
+			//}}).success(function(data){
+			//	$scope.user = data;
+			//	$scope.user.questions = Array.prototype.slice.call($scope.user.questions.propertyMap);
+			//	$scope.close('login');
+			//	$scope.loginData = null;
+			//	$scope.go('menu');
+			//}).error(function () {
+			//	$scope.loginData.error = true;
+			//});
 		};
 		
 		$scope.logOut = function() {
@@ -195,24 +208,17 @@
 		};
 		
 		$scope.createAccount = function() {
-			$scope.loginData = {
-				email: '',
-				password: '',
-				confirmPassword: '',
-				location: '',
-				alias: '',
-				error: function() {
-					if (!this.email) {
-						return "Invalid email!";
-					} else if (this.password.length <= 5) {
-						return "Password too short!";
-					} else if (this.password != $scope.loginData.confirmPassword) {
-						return "Passwords don't match!";
-					} else if (!this.location) {
-						return "Invalid location!";
-					} else {
-						return "";
-					}
+			var error = function() {
+				if (!$scope.loginData.email) {
+					return "Invalid email!";
+				} else if (!$scope.loginData.password || $scope.loginData.password.length <= 5) {
+					return "Password too short!";
+				} else if ($scope.loginData.password != $scope.loginData.confirmPassword) {
+					return "Passwords don't match!";
+				} else if (!$scope.loginData.location) {
+					return "Invalid location!";
+				} else {
+					return "";
 				}
 			};
 			$ionicPopup.show({
@@ -228,29 +234,45 @@
 						text: 'Okay',
 						type: 'button-royal',
 						onTap: function(e) {
-							if (!$scope.loginData.error()) {
+							$scope.loginData.error = error();
+							if (!$scope.loginData.error) {
 								return $scope.loginData;
 							} else {
 								e.preventDefault();
 							}
 						}
 					}
-				]			
+				]
 			}).then(function(data) {
 				if (data) {
-					$http.post(url + '/users', data, {
-						params: {type: "create"},
-						headers: { 'Content-Type': 'application/x-www-form-urlencoded'},
-						transformRequest: transform
-					}).success(function(data){
-						$scope.user = data;
-						$scope.user.questions = Array.prototype.slice.call($scope.user.questions.propertyMap);
+					gapi.client.samesies.samesiesApi.create(data).then(function(resp){
+						$scope.user = resp;
 						$scope.close('login');
 						$scope.loginData = null;
 						$scope.go('menu');
+					}, function(reason){ // error
+						$ionicPopup.alert({
+							title: 'Email already in use',
+							template: 'That email is already being used.',
+							okText: 'Okay',
+							okType: 'button-royal'
+						});
+						$scope.loginData.error = 'Email already in use'; // Email already in use
+						$scope.$apply();
+					});
+					//$http.post(url + '/users', data, {
+					//	params: {type: "create"},
+					//	headers: { 'Content-Type': 'application/x-www-form-urlencoded'},
+					//	transformRequest: transform
+					//}).success(function(data){
+					//	$scope.user = data;
+					//	$scope.user.questions = Array.prototype.slice.call($scope.user.questions.propertyMap);
+					//	$scope.close('login');
+					//	$scope.loginData = null;
+					//	$scope.go('menu');
 					//}).error(function(data, status){
 					//	$scope.loginData.status = status;
-					});
+					//});
 				}
 			});
 		};
@@ -352,7 +374,7 @@
 			//	$scope.episode.bot = data.bot;
 			//	$scope.next();
 			//});
-			gapi.client.samesies.samesiesApi.makeEpisode({'count': 5}).execute(function(resp){
+			gapi.client.samesies.samesiesApi.makeEpisode({'count': 5}).then(function(resp){
 				$scope.episode.questions = resp.questions;
 				$scope.next();
 			});
