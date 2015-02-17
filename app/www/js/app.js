@@ -49,7 +49,6 @@
 		$scope.loadLib = function() {
 			gapi.client.load('samesies', 'v1', function() {
 				$scope.isBackendReady = true;
-				gapi.client.samesies.samesiesApi.init().execute();
 			}, 'http://localhost:8080/_ah/api');
 		};
 
@@ -83,14 +82,6 @@
 			return null;
 		};
 
-		var getUserById2 = function(uid) {
-			var temp;
-			$http.get(url + '/users', {params: {query: "id", id: uid}}).success(function(data){
-				temp = data;
-			});
-			return temp;
-		};
-
 		var getUsersById = function(uids) {
 			var output = [];
 			if (uids.length > 0) {
@@ -101,19 +92,6 @@
 				}
 			}
 			return output;
-		};
-
-		var getUserByEmail = function(email) {
-			for (var i=0; i<$scope.users.length; i++) {
-				if ($scope.users[i].email === email) {
-					return $scope.users[i];
-				}
-			}
-			return null;
-		};
-
-		$scope.getUserByEmail2 = function(email) {
-			return $http.get(url + '/users', {params: {query: "email", email: email}});
 		};
 
 		var getUsersByLocation = function(location) {
