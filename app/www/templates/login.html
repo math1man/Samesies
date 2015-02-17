@@ -3,25 +3,49 @@
     <h1 class="title">Login</h1>
   </ion-header-bar>
   <ion-content>
-    <form name="loginForm" ng-submit="loginForm.$valid && doLogin()" novalidate>
+    <form novalidate>
       <div class="list">
         <label class="item item-input">
           <span class="input-label">Email</span>
-          <input type="email" ng-model="loginData.email" placeholder="johndoe@samesies.com" required>
+          <input type="email" ng-model="loginData.email" placeholder="johndoe@samesies.com">
         </label>
         <label class="item item-input">
           <span class="input-label">Password</span>
-          <input type="password" ng-model="loginData.password" placeholder="••••••••" required>
+          <input type="password" ng-model="loginData.password" placeholder="••••••••">
         </label>
+        <div ng-show="loginData.isCreate">
+          <label class="item item-input">
+            <span class="input-label">Confirm</span>
+            <input type="password" ng-model="loginData.confirmPassword" placeholder="••••••••">
+          </label>
+          <label class="item item-input">
+            <span class="input-label">Location</span>
+            <input type="text" ng-model="loginData.location" placeholder="Location">
+          </label>
+          <label class="item item-input">
+            <span class="input-label">Alias</span>
+            <input type="text" ng-model="loginData.alias" placeholder="Alias">
+          </label>
+        </div>
         <div class="item error" ng-show="loginData.error">
           {{loginData.error}}
         </div>
-        <label class="item">
-          <button class="button button-block button-royal" type="submit">Log in</button>
-        </label>
-        <div class="item">
-          <a href="" ng-click="createAccount()">Create Account</a>
-          <span class="float-right"><a href="" ng-click="recoverPassword()">Forgot your Password?</a></span>
+        <div class="row padding-horizontal" ng-show="loginData.isCreate">
+          <label class="col">
+            <button class="button button-block button-stable" ng-click="loginData.toggle()">Cancel</button>
+          </label>
+          <label class="col">
+            <button class="button button-block button-royal" ng-click="createAccount()">Create!</button>
+          </label>
+        </div>
+        <div ng-show="!loginData.isCreate">
+          <label class="item">
+            <button class="button button-block button-royal" ng-click="doLogin()">Log in</button>
+          </label>
+          <div class="item">
+            <a href="" ng-click="loginData.toggle()">Create Account</a>
+            <span class="float-right"><a href="" ng-click="recoverPassword()">Forgot your Password?</a></span>
+          </div>
         </div>
         <div class="item">
           <a href="" ng-click="quickLogin()">Debug Quick Login</a>
@@ -29,15 +53,15 @@
       </div>
     </form>
 
-      <div class="card" ng-hide="true">
-        <div class="item item-divider">
-          Debug:
-        </div>
-        <div class="item item-text-wrap">
-          <p>{{loginData}}</p>
-          <p>{{user}}</p>
-        </div>
+    <div class="card" ng-hide="true">
+      <div class="item item-divider">
+        Debug:
       </div>
+      <div class="item item-text-wrap">
+        <p>{{loginData}}</p>
+        <p>{{user}}</p>
+      </div>
+    </div>
 
   </ion-content>
 </ion-modal-view>
