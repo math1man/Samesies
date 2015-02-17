@@ -126,16 +126,21 @@ public class SamesiesApi {
                 e.setProperty("question", q.getQ());
                 e.setUnindexedProperty("answer", q.getA());
                 // TODO: categories?
-                e.setProperty("category", "random");
+                e.setProperty("category", "Random");
                 datastore.put(e);
             }
             for (Question q : questionsBad) {
                 Entity e = new Entity("Question");
                 e.setProperty("question", q.getQ());
                 // TODO: categories?
-                e.setProperty("category", "bad");
+                e.setProperty("category", "Bad");
                 datastore.put(e);
             }
+
+            // initialize question categories
+            datastore.put(new Entity("Category", "All"));
+            datastore.put(new Entity("Category", "Random"));
+            datastore.put(new Entity("Category", "Bad"));
         }
     }
 
@@ -191,26 +196,38 @@ public class SamesiesApi {
 //    }
 
     @ApiMethod(name = "samesiesApi.questions") // Defaults to GET
-    public List<Question> getQuestions(@Nullable @Named("category") String category) throws ServiceException {
+    public List<Question> getQuestions() throws ServiceException {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
-        Query query = new Query("Question").addProjection(new PropertyProjection("question", String.class));
-        if (category != null && !category.equals("all")) {
-            query.setFilter(new Query.FilterPredicate("category", Query.FilterOperator.EQUAL, category));
-        }
+        Query query = new Query("Question")
+                .addProjection(new PropertyProjection("question", String.class))
+                .addProjection(new PropertyProjection("category", String.class));
         PreparedQuery pq = datastore.prepare(query);
         List<Question> questions = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
-            questions.add(new Question((String) e.getProperty("question")));
+            questions.add(new Question((String) e.getProperty("question"), null, (String) e.getProperty("category")));
         }
         return questions;
+    }
+
+    @ApiMethod(name = "samesiesApi.categories")
+    public List<String> getCategories() throws ServiceException {
+        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+
+        Query query = new Query("Category").setKeysOnly();
+        PreparedQuery pq = datastore.prepare(query);
+        List<String> categories = new ArrayList<>();
+        for (Entity e : pq.asIterable()) {
+            categories.add(e.getKey().getName());
+        }
+        return categories;
     }
 
     @ApiMethod(name = "samesiesApi.makeEpisode") // Defaults to POST
     public Episode makeEpisode(@Named("count") int count) throws ServiceException {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
-        Query query = new Query("Question").setFilter(new Query.FilterPredicate("category", Query.FilterOperator.EQUAL, "random")).setKeysOnly();
+        Query query = new Query("Question").setFilter(new Query.FilterPredicate("category", Query.FilterOperator.EQUAL, "Random")).setKeysOnly();
         PreparedQuery pq = datastore.prepare(query);
 
         int max = pq.countEntities(FetchOptions.Builder.withDefaults());

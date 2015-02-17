@@ -4,7 +4,7 @@
 	// angular.module is a global place for creating, registering and retrieving Angular modules
 	// 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 	// the 2nd parameter is an array of 'requires'
-	var app = angular.module('samesies', ['ionic', 'directives']);
+	var app = angular.module('samesies', ['ionic', 'directives', 'filters']);
 	
 	app.run(function($ionicPlatform) {
 		$ionicPlatform.ready(function() {
@@ -19,22 +19,8 @@
 		});
 	});
 
-	app.filter('checkName', function () {
-		return function (items, string) {
-			var filtered = [];
-			for (var i = 0; i < items.length; i++) {
-				var item = items[i];
-				var regex = new RegExp(".*" + string + ".*", 'i');
-				if (regex.test(item.name) || regex.test(item.alias)) {
-					filtered.push(item);
-				}
-			}
-			return filtered;
-		};
-	});
-
-	app.controller('MainController', function($scope, $window, $ionicPopup, $ionicGesture,
-			$ionicModal, $http, $timeout, $interval, $ionicScrollDelegate) {
+	app.controller('MainController', function($scope, $window, $ionicPopup, $ionicPopover,
+			$ionicModal, $ionicGesture, $http, $timeout, $interval, $ionicScrollDelegate) {
 
 		//----------------------------
 		//       Cloud Endpoint
@@ -56,12 +42,16 @@
 
 		// Eventually, this stuff needs to be retrieved directly from the server, as needed
 
-		$scope.questions = [];
-
-		$scope.getAllQuestions = function(category) {
-			gapi.client.samesies.samesiesApi.questions({category: category}).then(function(resp){
+		$scope.loadQuestions = function() {
+			gapi.client.samesies.samesiesApi.questions().then(function(resp){
 				$scope.questions = resp.result.items;
 			});
+			gapi.client.samesies.samesiesApi.categories().then(function(resp){
+				$scope.categories = resp.result.items;
+			});
+			$scope.selected = {
+				cat: "All"
+			};
 		};
 
 		$http.get('data/users.json').success(function(data){
@@ -95,7 +85,7 @@
 		};
 
 		//----------------------------
-		//    Modals and Functions
+		//    Modals and Popovers
 		//----------------------------
 
 		$ionicModal.fromTemplateUrl('templates/login.html', {
@@ -130,21 +120,28 @@
 		}).then(function(modal) {
 			$scope.profile = modal;
 		});
-		
-		$scope.show = function(modal) {
+
+		$ionicPopover.fromTemplateUrl('templates/select-category.html', {
+			scope: $scope
+		}).then(function(popover) {
+			$scope.category = popover;
+		});
+
+		$scope.show = function(item, $event) {
 			this.resetToggle();
-			this[modal].show();
+			this[item].show($event);
 		};
 		
-		$scope.close = function(modal) {
-			this[modal].hide();
+		$scope.close = function(item) {
+			this[item].hide();
 		};
-		
+
 		$scope.$on('$destroy', function() {
 			// Cleanup the modals when we're done with them!
 			$scope.menu.remove();
 			$scope.help.remove();
 			$scope.profile.remove();
+			$scope.category.remove();
 		});
 
 		//----------------------------
@@ -160,6 +157,14 @@
 			}
 		};
 
+		$scope.login = function(user) {
+			$scope.user = user;
+			$scope.loadQuestions();
+			$scope.close('login');
+			$scope.loginData = null;
+			$scope.go('menu');
+		};
+
 		$scope.doLogin = function() {
 			if (!$scope.loginData.email) {
 				$scope.loginData.error = "Invalid email";
@@ -170,10 +175,7 @@
 			}
 			if (!$scope.loginData.error) {
 				gapi.client.samesies.samesiesApi.login($scope.loginData).then(function (resp) {
-					$scope.user = resp.result;
-					$scope.close('login');
-					$scope.loginData = null;
-					$scope.go('menu');
+					$scope.login(resp.result);
 				}, function (reason) { // error
 					if (reason.status === 404) {
 						$scope.loginData.error = 'Invalid email';
@@ -201,10 +203,7 @@
 			}
 			if (!this.loginData.error) {
 				gapi.client.samesies.samesiesApi.create($scope.loginData).then(function(resp){
-					$scope.user = resp.result;
-					$scope.close('login');
-					$scope.loginData = null;
-					$scope.go('menu');
+					$scope.login(resp.result);
 				}, function () { // error
 					$ionicPopup.alert({
 						title: 'Invalid Email',
@@ -579,13 +578,6 @@
 		$scope.getNearby = function() {
 			// eventually, this should get this from the server
 			return getUsersByLocation(this.user.location);
-		};
-
-		$scope.goBrowse = function() {
-			if (this.questions.length === 0) {
-				this.getAllQuestions("random");
-			}
-			this.go("browse");
 		};
 
 		//----------------------------

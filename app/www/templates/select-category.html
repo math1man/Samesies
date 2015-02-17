@@ -1,0 +1,12 @@
+<ion-popover-view>
+    <ion-header-bar class="bar-stable">
+        <h1 class="title">Select a Category</h1>
+    </ion-header-bar>
+    <ion-content>
+        <div class="list">
+            <ion-radio ng-model="selected.cat" ng-value="category" ng-repeat="category in categories" ng-click="close('category')">
+                {{category}}
+            </ion-radio>
+        </div>
+    </ion-content>
+</ion-popover-view>

@@ -1,11 +1,11 @@
 <div ng-show="is('browse')">
-	<div class="item item-divider item-input">
+	<div class="item item-divider item-input item-button-right">
 		<i class="icon ion-search placeholder-icon"></i>
 		<input type="text" ng-model="search[0]" placeholder="Search">
-		<!--<i class="icon ion-arrow-down-b"></i>-->
+		<button class="button button-small button-clear icon ion-arrow-down-b" ng-click="show('category', $event)"></button>
 	</div>
 	<ion-content class="has-header">
-		<div class="item item-text-wrap" ng-repeat="question in questions | filter:search[0]">
+		<div class="item item-text-wrap" ng-repeat="question in questions | questionFilter:search[0]:selected.cat">
 			{{question.q}}
 		</div>
 	</ion-content>
