@@ -167,18 +167,6 @@ public class SamesiesApi {
         }
     }
 
-//    @ApiMethod(name = "samesiesApi.userEmail")
-//    public Entity getUserByEmail(@Named("email") String email) throws ServiceException {
-//        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-//
-//        Entity e = getUserByEmail(datastore, email);
-//        if (e == null) {
-//            throw new NotFoundException("Email not found");
-//        } else {
-//            return e;
-//        }
-//    }
-
     @ApiMethod(name = "samesiesApi.user") // Defaults to GET
     public User getUserById(@Named("id") long id) throws ServiceException {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();

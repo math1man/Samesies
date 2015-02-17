@@ -69,12 +69,7 @@
 		});
 
 		var getUserById = function(uid) {
-			for (var i=0; i<$scope.users.length; i++) {
-				if ($scope.users[i].uid === uid) {
-					return $scope.users[i];
-				}
-			}
-			return null;
+			return gapi.client.samesies.samesiesApi.user({id: uid});
 		};
 
 		var getUsersById = function(uids) {
@@ -309,7 +304,7 @@
 			$scope.go('matching');
 			// add searching code here
 			timeout(function() {
-				$scope.initEpisode(1);
+				$scope.initEpisode("5066549580791808");
 			}, 2000);
 		};
 		
@@ -346,27 +341,26 @@
 			// send myAnswer to server
 			this.go("waiting");			
 			this.episode.theirAnswer = "Waiting for your partner to answer...";
-			timeout(function() {
+			interval(function() {
 				$scope.retrieve();
-			}, 1000);
+			}, 100);
 		};
 	
 		$scope.retrieve = function() {
-			interval(function() {
-				// eventually ping server for their answer
-				var temp = $scope.episode.questions[$scope.episode.stage - 1].a;
-				if (temp != null) {
-					$scope.episode.theirAnswer = temp;
-					$scope.go("continue");
-					// call to go interrupts interval command
-				}
-			}, 1000);
+			// eventually ping server for their answer
+			var temp = $scope.episode.questions[$scope.episode.stage - 1].a;
+			if (temp != null) {
+				$scope.episode.theirAnswer = temp;
+				$scope.go("continue");
+			}
 		};
 
 		$scope.next = function() {
 			this.episode.myAnswer = '';
 			if (this.episode.stage == 5) {
-				this.message(getUserById(this.episode.partnerId));
+				getUserById(this.episode.partnerId).then(function(resp){
+					$scope.message(resp.result);
+				});
 			} else {
 				this.episode.stage++;
 				this.go("entry");			
@@ -378,6 +372,7 @@
 		//----------------------------
 
 		$scope.message = function(user) {
+			// TODO: this should only use displayName if they are a friend...
 			this.resetChat(this.displayName(user));
 			this.go('chat');
 			this.close('profile');
