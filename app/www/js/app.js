@@ -1,10 +1,10 @@
 (function() {
-// Ionic Starter App
+	// Ionic Starter App
 
-// angular.module is a global place for creating, registering and retrieving Angular modules
-// 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
-// the 2nd parameter is an array of 'requires'
-	var url = 'http://localhost:8080';
+	// angular.module is a global place for creating, registering and retrieving Angular modules
+	// 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
+	// the 2nd parameter is an array of 'requires'
+	var url = 'http://localhost:8888';
 
 	var app = angular.module('samesies', ['ionic', 'directives']);
 	
@@ -35,8 +35,23 @@
 		};
 	});
 
-	app.controller('MainController', function($scope, $ionicPopup, $ionicGesture,
+	app.controller('MainController', function($scope, $window, $ionicPopup, $ionicGesture,
 			$ionicModal, $http, $timeout, $interval, $ionicScrollDelegate) {
+
+		//----------------------------
+		//       Cloud Endpoint
+		//----------------------------
+
+		$window.init= function() {
+			$scope.$apply($scope.loadLib);
+		};
+
+		$scope.loadLib = function() {
+			gapi.client.load('samesies', 'v1', function() {
+				$scope.isBackendReady = true;
+				gapi.client.samesies.samesiesApi.init().execute();
+			}, 'http://localhost:8080/_ah/api');
+		};
 
 		//----------------------------
 		//           Data
@@ -47,8 +62,11 @@
 		$scope.questions = [];
 
 		$scope.getAllQuestions = function(category) {
-			$http.get(url + '/questions', {params: {query: "all", category: category}}).success(function(data){
-				$scope.questions = data;
+			//$http.get(url + '/questions', {params: {query: "all", category: category}}).success(function(data){
+			//	$scope.questions = data;
+			//});
+			gapi.client.samesies.samesiesApi.questions({category: category}).execute(function(resp){
+				$scope.questions = resp.items;
 			});
 		};
 
@@ -330,8 +348,9 @@
 		//----------------------------
 
 		$scope.find = function() {
-			$scope.episode = {};
-			$scope.episode.stage = 0;
+			$scope.episode = {
+				stage: 0
+			};
 			$scope.go('matching');
 			// add searching code here
 			timeout(function() {
@@ -348,12 +367,15 @@
 			$scope.episode = {
 				stage: 0,
 				partnerId: uid,
-				questions: [],
-				bot: []
+				questions: []
 			};
-			$http.get(url + '/questions', {params: {query: "episode", count: 5}}).success(function (data) {
-				$scope.episode.questions = data.questions;
-				$scope.episode.bot = data.bot;
+			//$http.get(url + '/questions', {params: {query: "episode", count: 5}}).success(function (data) {
+			//	$scope.episode.questions = data.questions;
+			//	$scope.episode.bot = data.bot;
+			//	$scope.next();
+			//});
+			gapi.client.samesies.samesiesApi.makeEpisode({'count': 5}).execute(function(resp){
+				$scope.episode.questions = resp.questions;
 				$scope.next();
 			});
 		};
@@ -367,7 +389,7 @@
 		};
 
 		$scope.getQuestion = function() {
-			return this.episode.questions[this.episode.stage - 1];
+			return this.episode.questions[this.episode.stage - 1].q;
 		};
 
 		$scope.answer = function() {
@@ -382,7 +404,7 @@
 		$scope.retrieve = function() {
 			interval(function() {
 				// eventually ping server for their answer
-				var temp = $scope.episode.bot[$scope.episode.stage - 1];
+				var temp = $scope.episode.questions[$scope.episode.stage - 1].a;
 				if (temp != null) {
 					$scope.episode.theirAnswer = temp;
 					$scope.go("continue");
