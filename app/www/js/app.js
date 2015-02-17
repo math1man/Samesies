@@ -320,7 +320,7 @@
 				partnerId: uid,
 				questions: []
 			};
-			gapi.client.samesies.samesiesApi.makeEpisode({'count': 5}).then(function(resp){
+			gapi.client.samesies.samesiesApi.makeEpisode({'count': 10}).then(function(resp){
 				$scope.episode.questions = resp.result.questions;
 				$scope.next();
 			});
@@ -358,7 +358,7 @@
 
 		$scope.next = function() {
 			this.episode.myAnswer = '';
-			if (this.episode.stage == 5) {
+			if (this.episode.stage == 10) {
 				getUserById(this.episode.partnerId).then(function(resp){
 					$scope.message(resp.result);
 				});
