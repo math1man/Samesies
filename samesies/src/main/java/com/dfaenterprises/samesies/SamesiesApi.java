@@ -24,9 +24,9 @@ import java.util.List;
         clientIds = {Constants.WEB_CLIENT_ID, Constants.ANDROID_CLIENT_ID, Constants.IOS_CLIENT_ID},
         audiences = {Constants.ANDROID_AUDIENCE}
 )
-public class SamesiesApi2 {
+public class SamesiesApi {
 
-    public SamesiesApi2() {
+    public SamesiesApi() {
 
     }
 
