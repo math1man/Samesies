@@ -519,7 +519,22 @@
 
 		$scope.saveProfile = function() {
 			if ($scope.user.isChanged) {
-
+				gapi.client.samesies.samesiesApi.update($scope.user).then(function (resp) {
+					$ionicPopup.alert({
+						title: "Saved",
+						template: "Your profile has been saved!",
+						okText: "Okay",
+						okType: "button-royal"
+					});
+					$scope.user.isChanged = false;
+				});
+			} else {
+				$ionicPopup.alert({
+					title: "No Change",
+					template: "Your profile has not been changed!",
+					okText: "Okay",
+					okType: "button-royal"
+				})
 			}
 		};
 

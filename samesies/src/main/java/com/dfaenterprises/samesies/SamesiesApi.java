@@ -159,6 +159,22 @@ public class SamesiesApi {
         }
     }
 
+    @ApiMethod(name = "samesiesApi.update")
+    public void updateUser(User user) throws ServiceException {
+        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        Entity entity = user.toEntity();
+        if (!entity.getKey().isComplete()) {
+            throw new BadRequestException("User ID not specified");
+        }
+        try {
+            datastore.get(entity.getKey());
+        } catch (EntityNotFoundException e) {
+            throw new NotFoundException("User not found", e);
+        }
+        // the try-catch guarantees the entity is in the datastore
+        datastore.put(entity);
+    }
+
     @ApiMethod(name = "samesiesApi.create") // Defaults to POST
     public User createAccount(@Named("email") String email, @Named("password") String password,
                               @Named("location") String location, @Nullable @Named("alias") String alias) throws ServiceException {
