@@ -28,6 +28,7 @@ import java.util.List;
 )
 public class SamesiesApi {
 
+    // defaults to POST (not relevant though)
     public void init() {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         // if this entity is in the datastore, it has already been initialized, so don't init
@@ -210,7 +211,7 @@ public class SamesiesApi {
         return questions;
     }
 
-    @ApiMethod(name = "samesiesApi.categories")
+    @ApiMethod(name = "samesiesApi.categories") // Defaults to GET
     public List<String> getCategories() throws ServiceException {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
@@ -223,6 +224,7 @@ public class SamesiesApi {
         return categories;
     }
 
+    // TODO: this is temporary, needs to eventually be more complex (matching and all)
     @ApiMethod(name = "samesiesApi.makeEpisode") // Defaults to POST
     public Episode makeEpisode(@Named("count") int count) throws ServiceException {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
