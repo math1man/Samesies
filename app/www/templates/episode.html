@@ -1,58 +1,60 @@
-<!-- matching info -->
-<div class="item item-divider" ng-show="is('episode')">
-	{{matchText()}} <span class="item-note">{{episode.stage}}/5</span>
-</div>
-
-<!-- question -->
-<div class="card" ng-show="is('episode') && !is('matching')">
-	<div class="item item-text-wrap">
-		{{getQuestion()}}
+<ion-content ng-show="is('episode')">
+	<!-- matching info -->
+	<div class="item item-divider padding-vertical" ng-show="is('episode')">
+		{{matchText()}} <span class="item-note">{{episode.stage}}/5</span>
 	</div>
-</div>
 
-<!-- temporary way to initiate the episode with the bot -->
-<div class="item" ng-show="is('matching')">
-	<img class="full-image spinner" src="img/icon.png">
-</div>
+	<!-- temporary way to initiate the episode with the bot -->
+	<div class="item" ng-show="is('matching')">
+		<img class="full-image spinner" src="img/icon.png">
+	</div>
 
-<!-- text area for the user to enter an answer -->
-<div class="card" ng-show="is('entry')">
-	<form name="answerForm" ng-submit="answerForm.$valid && answer()" novalidate>
-		<div class="item item-input-inset">
-			<label class="item-input-wrapper">
-				<input type="text" maxlength="140" placeholder="Your Answer" ng-model="episode.myAnswer" required/>
-			</label>
-			<button class="button button-small button-royal" type="submit">
-				Send
-			</button>
+	<!-- question -->
+	<div class="card" ng-show="!is('matching')">
+		<div class="item item-text-wrap">
+			{{getQuestion()}}
 		</div>
-	</form>
-</div>
+	</div>
 
-<!-- user's answer -->
-<div class="card" ng-show="is('waiting') || is('continue')">
-	<div class="item item-divider">
-		You
+	<!-- text area for the user to enter an answer -->
+	<div class="card" ng-show="is('entry')">
+		<form name="answerForm" ng-submit="answerForm.$valid && answer()" novalidate>
+			<div class="item item-input-inset">
+				<label class="item-input-wrapper">
+					<input type="text" maxlength="140" placeholder="Your Answer" ng-model="episode.myAnswer" required/>
+				</label>
+				<button class="button button-small button-royal" type="submit">
+					Send
+				</button>
+			</div>
+		</form>
 	</div>
-	<div class="item item-text-wrap">
-		{{episode.myAnswer}}
-	</div>
-</div>
 
-<!-- other user's answer -->
-<div class="card" ng-show="is('waiting') || is('continue')">
-	<div class="item item-divider item-icon-left align-right">
-		<i class="icon ion-loading-c" ng-show="is('waiting')"></i>
-		Them
+	<!-- user's answer -->
+	<div class="card" ng-show="is('waiting') || is('continue')">
+		<div class="item item-divider">
+			You
+		</div>
+		<div class="item item-text-wrap">
+			{{episode.myAnswer}}
+		</div>
 	</div>
-	<div class="item item-text-wrap">
-		{{episode.theirAnswer}}
-	</div>
-</div>
 
-<!-- continue button -->
-<div class="item" ng-show="is('continue')">
-	<button class="button button-block button-large button-royal" ng-click="next()">
-		Continue
-	</button>
-</div>
+	<!-- other user's answer -->
+	<div class="card" ng-show="is('waiting') || is('continue')">
+		<div class="item item-divider item-icon-left align-right">
+			<i class="icon ion-loading-c" ng-show="is('waiting')"></i>
+			Them
+		</div>
+		<div class="item item-text-wrap">
+			{{episode.theirAnswer}}
+		</div>
+	</div>
+
+	<!-- continue button -->
+	<div class="item" ng-show="is('continue')">
+		<button class="button button-block button-large button-royal" ng-click="next()">
+			Continue
+		</button>
+	</div>
+</ion-content>
