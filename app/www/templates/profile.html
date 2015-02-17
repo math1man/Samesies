@@ -24,11 +24,13 @@
 				Personal Questions:
 				<p ng-repeat="question in tempUser.questions track by $index" ng-show="question">{{question}}</p>
 			</div>
-		</div>
-		<div class="item" ng-show="is('friends')">
-			<div class="button-bar bar-royal">
-				<a class="button" ng-click="challenge(tempUser)">Connect!</a>
-				<a class="button" ng-click="message(tempUser)">Message</a>
+			<div class="row padding-horizontal" ng-show="is('friends')">
+				<div class="col">
+					<button class="button button-block button-stable" ng-click="message(tempUser)">Message</button>
+				</div>
+				<div class="col">
+					<button class="button button-block button-royal" ng-click="challenge(tempUser)">Connect!</button>
+				</div>
 			</div>
 		</div>
 	</ion-content>

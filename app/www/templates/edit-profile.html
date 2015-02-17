@@ -50,13 +50,12 @@
 		<span class="item-note float-left" ng-hide="user.questions[$index]">Question {{$index+1}}</span>
 		{{user.questions[$index]}}
 	</div>
-	<div class="item">
-		<!--<button class="button button-block button-royal" ng-click="preview(user)">-->
-			<!--Preview-->
-		<!--</button>-->
-		<div class="button-bar bar-royal">
-			<a class="button" ng-click="preview(user)">Preview</a>
-			<a class="button" ng-click="saveProfile()">Save</a>
+	<div class="row padding-horizontal">
+		<div class="col">
+			<button class="button button-block button-stable" ng-click="preview(user)">Preview</button>
+		</div>
+		<div class="col">
+			<button class="button button-block button-royal" ng-click="saveProfile()">Save</button>
 		</div>
 	</div>
 </ion-content>

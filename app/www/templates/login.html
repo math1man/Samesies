@@ -31,12 +31,12 @@
           {{loginData.error}}
         </div>
         <div class="row padding-horizontal" ng-show="loginData.isCreate">
-          <label class="col">
+          <div class="col">
             <button class="button button-block button-stable" ng-click="loginData.toggle()">Cancel</button>
-          </label>
-          <label class="col">
+          </div>
+          <div class="col">
             <button class="button button-block button-royal" ng-click="createAccount()">Create!</button>
-          </label>
+          </div>
         </div>
         <div ng-show="!loginData.isCreate">
           <label class="item">

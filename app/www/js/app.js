@@ -177,8 +177,10 @@
 				}, function (reason) { // error
 					if (reason.status === 404) {
 						$scope.loginData.error = 'Invalid email';
-					} else {
+					} else if (reason.status === 400) {
 						$scope.loginData.error = 'Invalid password';
+					} else {
+						$scope.loginData.error = 'Server is down'
 					}
 					$scope.$apply();
 				});
