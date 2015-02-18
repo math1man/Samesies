@@ -1,0 +1,12 @@
+<div ng-show="is('communities')">
+    <!--Eventually allow community selection via this header-->
+    <div class="bar bar-header" ng-click="go('menu')">
+        <div class="title">{{community.location}}</div>
+    </div>
+    <ion-content class="has-header">
+        <div class="item" ng-repeat="user in community.users | filterSelf:user" ng-click="challenge(user)">
+            <img class="full-image" src="img/lone_icon.png">
+            <h2>{{user.alias}}</h2>
+        </div>
+    </ion-content>
+</div>

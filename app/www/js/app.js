@@ -20,7 +20,7 @@
 	});
 
 	app.controller('MainController', function($scope, $window, $ionicPopup, $ionicPopover,
-			$ionicModal, $ionicGesture, $http, $timeout, $interval, $ionicScrollDelegate) {
+			$ionicModal, $ionicGesture, $timeout, $interval, $ionicScrollDelegate) {
 
 		//----------------------------
 		//       Cloud Endpoint
@@ -45,43 +45,24 @@
 				$scope.questions = resp.result.items;
 			});
 			gapi.client.samesies.samesiesApi.categories().then(function(resp){
-				$scope.categories = resp.result.items;
+				$scope.categories = resp.result.categories;
 			});
 			$scope.selected = {
 				cat: "All"
 			};
 		};
 
+		var loadUserData = function(user) {
+			gapi.client.samesies.samesiesApi.friends({id: user.id}).then(function(resp){
+				$scope.friends = resp.result.friends;
+			});
+			// TODO: load connections here
+			// TODO: load user's communities
+			$scope.connections = [];
+		};
+
 		var getUserById = function(uid) {
 			return gapi.client.samesies.samesiesApi.user({id: uid});
-		};
-
-		// Eventually, this stuff needs to be retrieved directly from the server, as needed
-
-		$http.get('data/users.json').success(function(data){
-			$scope.users = data;
-		});
-
-		var getUsersById = function(uids) {
-			var output = [];
-			if (uids.length > 0) {
-				for (var i=0; i<$scope.users.length; i++) {
-					if (uids.indexOf($scope.users[i].uid) > -1) {
-						output.push($scope.users[i]);
-					}
-				}
-			}
-			return output;
-		};
-
-		var getUsersByLocation = function(location) {
-			var output = [];
-			for (var i=0; i<$scope.users.length; i++) {
-				if ($scope.users[i].location === location) {
-					output.push($scope.users[i]);
-				}
-			}
-			return output;
 		};
 
 		//----------------------------
@@ -95,7 +76,6 @@
 			hardwareBackButtonClose: false
 		}).then(function(modal) {
 			$scope.loginPopup = modal;
-			$scope.show('login'); // open the login on app-start
 		});
 		
 		$ionicModal.fromTemplateUrl('templates/menu.html', {
@@ -105,6 +85,7 @@
 			hardwareBackButtonClose: false
 		}).then(function(modal) {
 			$scope.menuPopup = modal;
+			$scope.logOut(); // open the login on app-start
 		});
 		
 		$ionicModal.fromTemplateUrl('templates/help.html', {
@@ -148,20 +129,13 @@
 		//      Login Functions
 		//----------------------------
 
-		$scope.loginData = {
-			isCreate: false,
-			error: false,
-			toggle: function() {
-				this.isCreate = !this.isCreate;
-				this.error = false;
-			}
-		};
-
 		$scope.login = function(user) {
 			loadQuestions();
-			$scope.user = user;
-			$scope.close('login');
+			loadUserData(user);
 			$scope.loginData = null;
+			$scope.user = user;
+			$scope.loadCommunity(user.location);
+			$scope.close('login');
 			$scope.go('menu');
 		};
 
@@ -221,11 +195,15 @@
 			this.close('menu');
 			this.show('login');
 			$scope.user = null;
-			$scope.error = null;
+			$scope.friends = null;
 			$scope.loginData = {
-				error: false
+				isCreate: false,
+				error: false,
+				toggle: function() {
+					this.isCreate = !this.isCreate;
+					this.error = false;
+				}
 			};
-
 		};
 
 		$scope.recoverPassword = function() {
@@ -564,10 +542,6 @@
 			return false;
 		};
 
-		$scope.getFriends = function(user) {
-			return getUsersById(user.friends);
-		};
-		
 		$scope.challenge = function(user) {
 			this.close('profile');
 			this.initEpisode(user.uid);
@@ -577,9 +551,15 @@
 		//    Connection Functions
 		//----------------------------
 
+		$scope.loadCommunity = function(location) {
+			gapi.client.samesies.samesiesApi.community({location: location}).then(function(resp){
+				$scope.community = resp.result;
+			});
+		};
+
 		$scope.goConnections = function() {
 			// TODO: these need to be retrieved from server
-			if (this.user.connections && this.user.connections.length > 0) {
+			if (this.connections && this.connections.length > 0) {
 				this.go('connections');
 			} else {
 				$ionicPopup.alert({
@@ -589,11 +569,6 @@
 					okType: 'button-royal'
 				});
 			}
-		};
-
-		$scope.getNearby = function() {
-			// eventually, this should get this from the server
-			return getUsersByLocation(this.user.location);
 		};
 
 		//----------------------------

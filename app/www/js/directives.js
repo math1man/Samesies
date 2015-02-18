@@ -23,10 +23,10 @@
         };
     });
 
-    app.directive('ssNearby', function() {
+    app.directive('ssCommunities', function() {
         return {
             restrict: 'E',
-            templateUrl: 'templates/nearby.html'
+            templateUrl: 'templates/communities.html'
         };
     });
 

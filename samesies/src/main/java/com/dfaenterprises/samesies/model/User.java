@@ -8,11 +8,17 @@ import com.google.appengine.api.datastore.Entity;
  */
 public class User {
 
+    public static final int ADMIN = 100;
+    public static final int SELF = 32;
+    public static final int FRIEND = 16;
+    public static final int STRANGER = 0;
+
     private Long id;
     private String email;
     private String password;
     private String location;
     private String alias;
+    // TODO: profile picture
     private String name;
     private Integer age;
     private String gender;
@@ -24,31 +30,42 @@ public class User {
     }
 
     public User(Entity entity) {
+        this(entity, ADMIN);
+    }
+
+    public User(Entity entity, int type) {
+        // public
         this.id = entity.getKey().getId();
-        this.email = (String) entity.getProperty("email");
-        this.password = (String) entity.getProperty("password");
         this.location = (String) entity.getProperty("location");
         this.alias = (String) entity.getProperty("alias");
-        if (entity.hasProperty("name")) {
-            this.name = (String) entity.getProperty("name");
+        // private
+        if (type >= SELF) {
+            this.email = (String) entity.getProperty("email");
+            this.password = (String) entity.getProperty("password");
         }
-        if (entity.hasProperty("age")) {
-            this.age = ((Long) entity.getProperty("age")).intValue();
-        }
-        if (entity.hasProperty("gender")) {
-            this.gender = (String) entity.getProperty("gender");
-        }
-        if (entity.hasProperty("aboutMe")) {
-            this.aboutMe = (String) entity.getProperty("aboutMe");
-        }
-        if (entity.hasProperty("questions")) {
-            EmbeddedEntity qs = (EmbeddedEntity) entity.getProperty("questions");
-            this.questions = new String[5];
-            for (int i=0; i<5; i++) {
-                this.questions[i] = (String) qs.getProperty("" + i);
+        // protected
+        if (type >= FRIEND) {
+            if (entity.hasProperty("name")) {
+                this.name = (String) entity.getProperty("name");
             }
-        } else {
-            this.questions = emptyQuestions();
+            if (entity.hasProperty("age")) {
+                this.age = ((Long) entity.getProperty("age")).intValue();
+            }
+            if (entity.hasProperty("gender")) {
+                this.gender = (String) entity.getProperty("gender");
+            }
+            if (entity.hasProperty("aboutMe")) {
+                this.aboutMe = (String) entity.getProperty("aboutMe");
+            }
+            if (entity.hasProperty("questions")) {
+                EmbeddedEntity qs = (EmbeddedEntity) entity.getProperty("questions");
+                this.questions = new String[5];
+                for (int i=0; i<5; i++) {
+                    this.questions[i] = (String) qs.getProperty("" + i);
+                }
+            } else {
+                this.questions = emptyQuestions();
+            }
         }
     }
 

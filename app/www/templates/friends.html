@@ -5,7 +5,7 @@
 	</label>
 	<ion-content class="has-header">
 		<!-- currently, this search will go through every data field.  it ideally should only go into name/alias -->
-		<div class="item item-avatar" ng-repeat="friend in getFriends(user) | checkName:search[0]" ng-click="preview(friend)">
+		<div class="item item-avatar" ng-repeat="friend in friends | checkName:search[0]" ng-click="preview(friend)">
 			<img src="img/lone_icon.png">
 			{{displayName(friend)}}
 			<p ng-show="friend.name">{{friend.alias}}</p>

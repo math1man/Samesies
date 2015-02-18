@@ -30,4 +30,17 @@
         };
     });
 
+    app.filter('filterSelf', function () {
+        return function (items, user) {
+            var filtered = [];
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                if (item.id != user.id) {
+                    filtered.push(item);
+                }
+            }
+            return filtered;
+        };
+    });
+
 })();
