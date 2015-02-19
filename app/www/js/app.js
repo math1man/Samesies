@@ -1,10 +1,10 @@
 (function() {
 
-	MATCHING = 0;
-	UNMATCHED = 2;
-	IN_PROGRESS = 4;
-	ABANDONED = 6;
-	COMPLETE = 8;
+	MATCHING = "0";
+	UNMATCHED = "2";
+	IN_PROGRESS = "4";
+	ABANDONED = "6";
+	COMPLETE = "8";
 
 	PING_INTERVAL = 500; // ms
 
@@ -37,7 +37,7 @@
 		$scope.loadLib = function() {
 			gapi.client.load('samesies', 'v1', function() {
 				$scope.isBackendReady = true;
-			}, 'http://localhost:8080/_ah/api');
+			}, 'https://samesies-app.appspot.com/_ah/api');
 			// http://localhost:8080/_ah/api
 			// https://samesies-app.appspot.com/_ah/api
 		};
@@ -241,12 +241,12 @@
 		//      Status Functions
 		//----------------------------
 
-		var status = { 
+		var state = {
 			s: "", 
 			t: false
 		};
 
-		$scope.go = function(state) {
+		$scope.go = function(newState) {
 			// kill everything that may have been going
 			interruptAll();
 			if ($scope.episode && $scope.episode.id) {
@@ -256,33 +256,33 @@
 			}
 			$scope.search = [''];
 			// go wherever
-			if (state === 'menu') {
+			if (newState === 'menu') {
 				this.show('menu');
 			} else {
-				status.s = state;
+				state.s = newState;
 				this.close('menu');
 				$ionicScrollDelegate.scrollTop();
 			}
 		};
 		
-		$scope.is = function(state) {
-			if (this.menuPopup.isShown()) {
-				return state === "menu";
+		$scope.is = function(checkState) {
+			if ($scope.menuPopup.isShown()) {
+				return checkState === "menu";
 			} else {
-				return status.s === state;
+				return state.s === checkState;
 			}
 		};
 
 		$scope.toggle = function() {
-			status.t = !status.t;
+			state.t = !state.t;
 		};
 		
 		$scope.isToggled = function() {
-			return status.t;
+			return state.t;
 		};
 		
 		$scope.resetToggle = function() {
-			status.t = false;
+			state.t = false;
 		};		
 		
 		//----------------------------
@@ -377,15 +377,25 @@
 				answer: $scope.episodeData.myAnswer
 			}).then(function(resp) {
 				$scope.error = resp.result;
-				getResponse(resp.result);
-				if ($scope.epIs('waiting')) {
-					interval(function () {
-						getEpisode($scope.episode.id).then(function (resp) {
-							if ($scope.epIs('waiting')) {
-								getResponse(resp.result);
-							}
-						});
-					}, PING_INTERVAL);
+				if (resp.result.status === ABANDONED) {
+					abandonMessage();
+				} else {
+					getResponse(resp.result);
+					if ($scope.epIs('waiting')) {
+						interval(function () {
+							getEpisode($scope.episode.id).then(function (resp) {
+								if ($scope.epIs('waiting')) {
+									$scope.error = resp.result;
+									if (resp.result.status === ABANDONED) {
+										interruptAll();
+										abandonMessage();
+									} else {
+										getResponse(resp.result);
+									}
+								}
+							});
+						}, PING_INTERVAL);
+					}
 				}
 			}, function(reason) {
 				$scope.error = reason;
@@ -409,6 +419,23 @@
 			}
 		};
 
+		var abandonMessage = function() {
+			$ionicPopup.confirm({
+				title: 'Partner Left',
+				template: 'Your partner has left the episode.',
+				okText: 'Play Again!',
+				okType: 'button-royal',
+				cancelText: 'Main Menu',
+				cancelType: 'button-stable'
+			}).then(function(resp) {
+				if (resp) {
+					$scope.find();
+				} else {
+					$scope.go('menu');
+				}
+			})
+		};
+
 		var getPartnerId = function(episode) {
 			if (episode.uid1 === $scope.user.id) {
 				return episode.uid2;
@@ -426,14 +453,7 @@
 			this.resetChat(this.displayName(user));
 			this.go('chat');
 			this.close('profile');
-			var n = 0;
-			interval(function() {
-				$scope.chat.history.push({
-					isYou: false,
-					text: n.toString()
-				});
-				n++;
-			}, 2000);
+			// TODO: make chat work
 		};
 
 		$scope.resetChat = function(username) {
@@ -674,8 +694,8 @@
 		//           Debug
 		//----------------------------
 
-		$scope.getStatus = function() {
-			return status;
+		$scope.getState = function() {
+			return state;
 		};
 	});
 
