@@ -1,12 +1,12 @@
 (function() {
 
-	MATCHING = "0";
-	UNMATCHED = "2";
-	IN_PROGRESS = "4";
-	ABANDONED = "6";
-	COMPLETE = "8";
+	var MATCHING = "MATCHING";
+	var UNMATCHED = "UNMATCHED";
+	var IN_PROGRESS = "IN_PROGRESS";
+	var ABANDONED = "ABANDONED";
+	var COMPLETE = "COMPLETE";
 
-	PING_INTERVAL = 500; // ms
+	var PING_INTERVAL = 500; // ms
 
 	var app = angular.module('samesies', ['ionic', 'directives', 'filters']);
 	
@@ -312,13 +312,13 @@
 			gapi.client.samesies.samesiesApi.findEpisode({myId: $scope.user.id}).then(function(resp){
 				// if it returns matching, I am the first user
 				// if it returns otherwise, I am the second user
-				$scope.episodeData.is1 = (resp.result.status <= MATCHING);
+				$scope.episodeData.is1 = (resp.result.status === MATCHING);
 				if ($scope.episodeData.is1) {
 					$scope.episode = resp.result;
 					interval(function() {
 						getEpisode($scope.episode.id).then(function(resp) {
 							// second condition prevents multiple calls
-							if (resp.result.status >= IN_PROGRESS && $scope.epIs('matching')) {
+							if (resp.result.status === IN_PROGRESS && $scope.epIs('matching')) {
 								loadEpisode(resp.result);
 							}
 						});

@@ -325,7 +325,7 @@ public class SamesiesApi {
 
         Query query = new Query("Episode").setFilter(new Query.CompositeFilter(
                 Query.CompositeFilterOperator.AND, Arrays.asList(
-                (Query.Filter) new Query.FilterPredicate("status", Query.FilterOperator.EQUAL, Episode.MATCHING),
+                (Query.Filter) new Query.FilterPredicate("status", Query.FilterOperator.EQUAL, Episode.Status.MATCHING.name()),
                 new Query.FilterPredicate("isPersistent", Query.FilterOperator.EQUAL, false)
         ))).addSort("startDate", Query.SortDirection.ASCENDING);
         PreparedQuery pq = ds.prepare(query);
@@ -342,7 +342,7 @@ public class SamesiesApi {
         if (episode == null) {
             episode = new Episode(myUid);
         } else {
-            episode.setStatus(Episode.IN_PROGRESS);
+            episode.setStatus(Episode.Status.IN_PROGRESS);
             episode.setUid2(myUid);
             episode.setQids(getEpisodeQs(ds, "Random"));
         }
@@ -383,12 +383,12 @@ public class SamesiesApi {
     public void endEpisode(@Named("id") long eid) throws ServiceException {
         DatastoreService ds = getDS();
         Episode episode = getEpisode(ds, eid);
-        if (episode.getStatus() == Episode.MATCHING) {
-            episode.setStatus(Episode.UNMATCHED);
+        if (episode.getStatus() == Episode.Status.MATCHING) {
+            episode.setStatus(Episode.Status.UNMATCHED);
         } else if (episode.getAnswers1().size() == 10 && episode.getAnswers2().size() == 10) {
-            episode.setStatus(Episode.COMPLETE);
+            episode.setStatus(Episode.Status.COMPLETE);
         } else {
-            episode.setStatus(Episode.ABANDONED);
+            episode.setStatus(Episode.Status.ABANDONED);
         }
         ds.put(episode.toEntity());
     }

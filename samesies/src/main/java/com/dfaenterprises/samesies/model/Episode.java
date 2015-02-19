@@ -10,16 +10,14 @@ import java.util.List;
  */
 public class Episode {
 
-    public static final long MATCHING = 0;    // searching for a match
-    public static final long UNMATCHED = 2;   // abandoned before a match found
-    public static final long IN_PROGRESS = 4; // in progress
-    public static final long ABANDONED = 6;   // abandoned after a match found
-    public static final long COMPLETE = 8;    // all 10 questions answered
+    public static enum Status {
+        MATCHING, UNMATCHED, IN_PROGRESS, ABANDONED, COMPLETE
+    }
 
     private Long id;
     private Date startDate;
     private Boolean isPersistent;
-    private Long status;
+    private Status status;
     private Long uid1;
     private Long uid2;
     private List<Long> qids;
@@ -33,12 +31,12 @@ public class Episode {
         this.id = e.getKey().getId();
         this.startDate = (Date) e.getProperty("startDate");
         this.isPersistent = (Boolean) e.getProperty("isPersistent");
-        this.status = (Long) e.getProperty("status");
+        this.status = Status.valueOf((String) e.getProperty("status"));
         this.uid1 = (Long) e.getProperty("uid1");
-        if (isPersistent || status >= IN_PROGRESS) {
+        if (isPersistent || status.ordinal() >= Status.IN_PROGRESS.ordinal()) {
             this.uid2 = (Long) e.getProperty("uid2");
         }
-        if (status >= IN_PROGRESS) {
+        if (status.ordinal() >= Status.IN_PROGRESS.ordinal()) {
             this.qids = EntityUtils.entityToList(e.getProperty("qids"), 10, Long.class);
             this.answers1 = EntityUtils.entityToList(e.getProperty("answers1"), 10, String.class);
             this.answers2 = EntityUtils.entityToList(e.getProperty("answers2"), 10, String.class);
@@ -53,7 +51,7 @@ public class Episode {
     public Episode(Long uid1) {
         this.startDate = new Date();
         this.isPersistent = false;
-        this.status = MATCHING;
+        this.status = Status.MATCHING;
         this.uid1 = uid1;
     }
 
@@ -66,7 +64,7 @@ public class Episode {
     public Episode(Long uid1, Long uid2) {
         this.startDate = new Date();
         this.isPersistent = true;
-        this.status = MATCHING;
+        this.status = Status.MATCHING;
         this.uid1 = uid1;
         this.uid2 = uid2;
     }
@@ -84,7 +82,7 @@ public class Episode {
         this.id = id;
         this.startDate = startDate;
         this.isPersistent = isPersistent;
-        this.status = IN_PROGRESS;
+        this.status = Status.IN_PROGRESS;
         this.uid1 = uid1;
         this.uid2 = uid2;
         this.qids = qids;
@@ -106,7 +104,7 @@ public class Episode {
         this.id = id;
         this.startDate = startDate;
         this.isPersistent = isPersistent;
-        this.status = IN_PROGRESS;
+        this.status = Status.IN_PROGRESS;
         this.uid1 = uid1;
         this.uid2 = uid2;
         this.qids = qids;
@@ -126,7 +124,7 @@ public class Episode {
      * @param answers1
      * @param answers2
      */
-    public Episode(Long id, Date startDate, Boolean isPersistent, Long status, Long uid1, Long uid2,
+    public Episode(Long id, Date startDate, Boolean isPersistent, Status status, Long uid1, Long uid2,
                    List<Long> qids, List<String> answers1, List<String> answers2) {
         this.id = id;
         this.startDate = startDate;
@@ -163,11 +161,11 @@ public class Episode {
         this.isPersistent = isPersistent;
     }
 
-    public Long getStatus() {
+    public Status getStatus() {
         return status;
     }
 
-    public void setStatus(Long status) {
+    public void setStatus(Status status) {
         this.status = status;
     }
 
@@ -236,7 +234,7 @@ public class Episode {
         }
         e.setProperty("startDate", startDate);
         e.setProperty("isPersistent", isPersistent);
-        e.setProperty("status", status);
+        e.setProperty("status", status.name());
         e.setProperty("uid1", uid1);
         e.setProperty("uid2", uid2);
         e.setProperty("qids", EntityUtils.listToEntity(qids));
