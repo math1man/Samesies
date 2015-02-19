@@ -1,16 +1,12 @@
 (function() {
-	// Ionic Starter App
 
-	// angular.module is a global place for creating, registering and retrieving Angular modules
-	// 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
-	// the 2nd parameter is an array of 'requires'
 	MATCHING = 0;
 	UNMATCHED = 2;
 	IN_PROGRESS = 4;
 	ABANDONED = 6;
 	COMPLETE = 8;
 
-	PING_INT = 500; // ms
+	PING_INTERVAL = 500; // ms
 
 	var app = angular.module('samesies', ['ionic', 'directives', 'filters']);
 	
@@ -254,7 +250,7 @@
 			// kill everything that may have been going
 			interruptAll();
 			if ($scope.episode && $scope.episode.id) {
-				gapi.client.samesies.samesiesApi.abandonEpisode({id: $scope.episode.id}).then();
+				gapi.client.samesies.samesiesApi.endEpisode({id: $scope.episode.id}).then();
 				$scope.episode = null;
 				$scope.episodeData = null;
 			}
@@ -326,7 +322,7 @@
 								loadEpisode(resp.result);
 							}
 						});
-					}, PING_INT);
+					}, PING_INTERVAL);
 				} else {
 					loadEpisode(resp.result);
 				}
@@ -389,7 +385,7 @@
 								getResponse(resp.result);
 							}
 						});
-					}, PING_INT);
+					}, PING_INTERVAL);
 				}
 			}, function(reason) {
 				$scope.error = reason;

@@ -377,14 +377,16 @@ public class SamesiesApi {
         return episode;
     }
 
-    @ApiMethod(name = "samesiesApi.abandonEpisode",
-            path = "episode/abandon/{id}",
+    @ApiMethod(name = "samesiesApi.endEpisode",
+            path = "episode/end/{id}",
             httpMethod = ApiMethod.HttpMethod.PUT)
-    public void abandonEpisode(@Named("id") long eid) throws ServiceException {
+    public void endEpisode(@Named("id") long eid) throws ServiceException {
         DatastoreService ds = getDS();
         Episode episode = getEpisode(ds, eid);
         if (episode.getStatus() == Episode.MATCHING) {
             episode.setStatus(Episode.UNMATCHED);
+        } else if (episode.getAnswers1().size() == 10 && episode.getAnswers2().size() == 10) {
+            episode.setStatus(Episode.COMPLETE);
         } else {
             episode.setStatus(Episode.ABANDONED);
         }
