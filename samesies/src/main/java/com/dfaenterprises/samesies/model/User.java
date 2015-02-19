@@ -67,22 +67,6 @@ public class User {
         }
     }
 
-    public User(String email, String password, String location) {
-        this(email, password, location, null);
-    }
-
-    public User(String email, String password, String location, String alias) {
-        this.email = email;
-        this.password = password;
-        this.location = location;
-        if (alias == null) {
-            this.alias = getAlias(email);
-        } else {
-            this.alias = alias;
-        }
-        this.questions = blankQuestions();
-    }
-
     public User(String email, String password, String location, String alias,
                 String name, Integer age, String gender, String aboutMe) {
         this.email = email;
@@ -94,19 +78,6 @@ public class User {
         this.gender = gender;
         this.aboutMe = aboutMe;
         this.questions = blankQuestions();
-    }
-
-    public User(String email, String password, String location, String alias,
-                String name, Integer age, String gender, String aboutMe, List<String> questions) {
-        this.email = email;
-        this.password = password;
-        this.location = location;
-        this.alias = alias;
-        this.name = name;
-        this.age = age;
-        this.gender = gender;
-        this.aboutMe = aboutMe;
-        this.questions = questions;
     }
 
     public Long getId() {
