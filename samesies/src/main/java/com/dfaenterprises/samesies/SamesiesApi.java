@@ -182,8 +182,9 @@ public class SamesiesApi {
         }
         if (getUserByEmail(ds, email) == null) {
             if (alias == null) {
-                newUser.setAlias(User.getAlias(email));
+                newUser.setDefaultAlias();
             }
+            newUser.setBlankQuestions();
             Entity e = newUser.toEntity();
             ds.put(e);
             newUser.setId(e.getKey().getId());

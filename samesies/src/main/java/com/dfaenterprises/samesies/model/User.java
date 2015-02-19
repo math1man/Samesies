@@ -62,7 +62,7 @@ public class User {
             if (entity.hasProperty("questions")) {
                 this.questions = EntityUtils.entityToList(entity.getProperty("questions"), 5, String.class);
             } else {
-                this.questions = emptyQuestions();
+                this.questions = blankQuestions();
             }
         }
     }
@@ -80,7 +80,7 @@ public class User {
         } else {
             this.alias = alias;
         }
-        this.questions = emptyQuestions();
+        this.questions = blankQuestions();
     }
 
     public User(String email, String password, String location, String alias,
@@ -93,7 +93,7 @@ public class User {
         this.age = age;
         this.gender = gender;
         this.aboutMe = aboutMe;
-        this.questions = emptyQuestions();
+        this.questions = blankQuestions();
     }
 
     public User(String email, String password, String location, String alias,
@@ -212,11 +212,21 @@ public class User {
         return new User(entity);
     }
 
+    public void setDefaultAlias() {
+        if (email != null) {
+            setAlias(getAlias(email));
+        }
+    }
+
+    public void setBlankQuestions() {
+        questions = blankQuestions();
+    }
+
     public static String getAlias(String email) {
         return email.substring(0, email.indexOf('@'));
     }
 
-    private static List<String> emptyQuestions() {
+    private static List<String> blankQuestions() {
         return Arrays.asList("", "", "", "", "");
     }
 }
