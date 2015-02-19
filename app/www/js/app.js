@@ -42,6 +42,8 @@
 			gapi.client.load('samesies', 'v1', function() {
 				$scope.isBackendReady = true;
 			}, 'http://localhost:8080/_ah/api');
+			// http://localhost:8080/_ah/api
+			// https://samesies-app.appspot.com/_ah/api
 		};
 
 		//----------------------------
@@ -345,7 +347,7 @@
 		};
 
 		$scope.matchText = function() {
-			if (this.is('matching')) {
+			if (this.epIs('matching')) {
 				return "Matching...";
 			} else {
 				return "Matched!";
