@@ -251,15 +251,15 @@
 		};
 
 		$scope.go = function(state) {
-			if (status.s != state) {
-				interruptAll();
-				if ($scope.episode && $scope.episode.id) {
-					gapi.client.samesies.samesiesApi.abandonEpisode({id: $scope.episode.id}).then();
-					$scope.episode = null;
-					$scope.episodeData = null;
-				}
-				$scope.search = [''];
+			// kill everything that may have been going
+			interruptAll();
+			if ($scope.episode && $scope.episode.id) {
+				gapi.client.samesies.samesiesApi.abandonEpisode({id: $scope.episode.id}).then();
+				$scope.episode = null;
+				$scope.episodeData = null;
 			}
+			$scope.search = [''];
+			// go wherever
 			if (state === 'menu') {
 				this.show('menu');
 			} else {
@@ -300,11 +300,12 @@
 		};
 
 		$scope.epIs = function(state) {
-			return this.episodeData.state === state;
+			return ($scope.episodeData.state === state);
 		};
 
 		$scope.find = function() {
 			// episodeData holds local references that do not get directly transmitted
+			$scope.go('episode');
 			$scope.episodeData = {
 				state: 'matching',
 				stage: 0,
@@ -312,7 +313,6 @@
 				myAnswer: '',
 				theirAnswer: ''
 			};
-			$scope.go('episode');
 			gapi.client.samesies.samesiesApi.findEpisode({myId: $scope.user.id}).then(function(resp){
 				// if it returns matching, I am the first user
 				// if it returns otherwise, I am the second user
@@ -321,7 +321,8 @@
 					$scope.episode = resp.result;
 					interval(function() {
 						getEpisode($scope.episode.id).then(function(resp) {
-							if (resp.result.status >= IN_PROGRESS) {
+							// second condition prevents multiple calls
+							if (resp.result.status >= IN_PROGRESS && $scope.epIs('matching')) {
 								loadEpisode(resp.result);
 							}
 						});
@@ -336,7 +337,8 @@
 			$scope.episode = data;
 			gapi.client.samesies.samesiesApi.getQuestions({ids: data.qids}).then(function(resp){
 				$scope.episodeData.questions = resp.result.items;
-				$scope.next();
+				$scope.episodeData.stage = 1;
+				epGo('entry');
 			});
 		};
 
@@ -355,38 +357,42 @@
 		};
 
 		$scope.next = function() {
-			this.episodeData.myAnswer = '';
-			if (this.episodeData.stage == 10) {
+			$scope.episodeData.myAnswer = '';
+			if ($scope.episodeData.stage == 10) {
 				getUser(getPartnerId(this.episode)).then(function(resp) {
 					$scope.message(resp.result);
 				});
 			} else {
-				this.episodeData.stage++;
+				$scope.episodeData.stage++;
 				epGo('entry');
 			}
 		};
 
 		$scope.getQuestion = function() {
-			return this.episodeData.questions[this.episodeData.stage - 1].q;
+			return $scope.episodeData.questions[$scope.episodeData.stage - 1].q;
 		};
 
 		$scope.answer = function() {
-			this.episodeData.theirAnswer = "Waiting for your partner to answer...";
+			$scope.episodeData.theirAnswer = "Waiting for your partner to answer...";
 			epGo('waiting');
-
 			gapi.client.samesies.samesiesApi.answerEpisode({
 				id: $scope.episode.id,
 				myId: $scope.user.id,
 				answer: $scope.episodeData.myAnswer
 			}).then(function(resp) {
+				$scope.error = resp.result;
 				getResponse(resp.result);
 				if ($scope.epIs('waiting')) {
 					interval(function () {
 						getEpisode($scope.episode.id).then(function (resp) {
-							getResponse(resp.result);
+							if ($scope.epIs('waiting')) {
+								getResponse(resp.result);
+							}
 						});
 					}, PING_INT);
 				}
+			}, function(reason) {
+				$scope.error = reason;
 			});
 		};
 
@@ -394,11 +400,14 @@
 			var index = $scope.episodeData.stage - 1;
 			var answer;
 			if ($scope.episodeData.is1) {
-				answer = data.answers2[index];
-			} else {
+				// make sure it has the list and that the list is long enough
+				if (data.answers2 && data.answers2.length > index) {
+					answer = data.answers2[index];
+				}
+			} else if (data.answers1 && data.answers1.length > index) {
 				answer = data.answers1[index];
 			}
-			if (angular.isDefined(answer)) { // they also answered
+			if (answer != null) { // they also answered
 				$scope.episodeData.theirAnswer = answer;
 				epGo('continue');
 			}
