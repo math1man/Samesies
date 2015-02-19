@@ -4,6 +4,14 @@
 	// angular.module is a global place for creating, registering and retrieving Angular modules
 	// 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 	// the 2nd parameter is an array of 'requires'
+	MATCHING = 0;
+	UNMATCHED = 2;
+	IN_PROGRESS = 4;
+	ABANDONED = 6;
+	COMPLETE = 8;
+
+	PING_INT = 500; // ms
+
 	var app = angular.module('samesies', ['ionic', 'directives', 'filters']);
 	
 	app.run(function($ionicPlatform) {
@@ -41,11 +49,11 @@
 		//----------------------------
 
 		var loadQuestions = function() {
-			gapi.client.samesies.samesiesApi.questions().then(function(resp){
+			gapi.client.samesies.samesiesApi.getAllQuestions().then(function(resp){
 				$scope.questions = resp.result.items;
 			});
-			gapi.client.samesies.samesiesApi.categories().then(function(resp){
-				$scope.categories = resp.result.categories;
+			gapi.client.samesies.samesiesApi.getCategories().then(function(resp){
+				$scope.categories = resp.result.items;
 			});
 			$scope.selected = {
 				cat: "All"
@@ -53,16 +61,20 @@
 		};
 
 		var loadUserData = function(user) {
-			gapi.client.samesies.samesiesApi.friends({id: user.id}).then(function(resp){
-				$scope.friends = resp.result.friends;
+			gapi.client.samesies.samesiesApi.getFriends({id: user.id}).then(function(resp){
+				$scope.friends = resp.result.items;
 			});
 			// TODO: load connections here
-			// TODO: load user's communities
+			// TODO: load communities here
 			$scope.connections = [];
 		};
 
-		var getUserById = function(uid) {
-			return gapi.client.samesies.samesiesApi.user({id: uid});
+		var getUser = function(uid) {
+			return gapi.client.samesies.samesiesApi.getUser({id: uid});
+		};
+
+		var getEpisode = function(eid) {
+			return gapi.client.samesies.samesiesApi.getEpisode({id: eid});
 		};
 
 		//----------------------------
@@ -176,7 +188,7 @@
 				$scope.loginData.error = "";
 			}
 			if (!this.loginData.error) {
-				gapi.client.samesies.samesiesApi.create($scope.loginData).then(function(resp){
+				gapi.client.samesies.samesiesApi.createUser($scope.loginData).then(function(resp){
 					$scope.login(resp.result);
 				}, function () { // error
 					$ionicPopup.alert({
@@ -239,6 +251,11 @@
 		$scope.go = function(state) {
 			if (status.s != state) {
 				interruptAll();
+				if ($scope.episode && $scope.episode.id) {
+					gapi.client.samesies.samesiesApi.abandonEpisode({id: $scope.episode.id}).then();
+					$scope.episode = null;
+					$scope.episodeData = null;
+				}
 				$scope.search = [''];
 			}
 			if (state === 'menu') {
@@ -253,13 +270,11 @@
 		$scope.is = function(state) {
 			if (this.menuPopup.isShown()) {
 				return state === "menu";
-			} else if (state === "episode") {
-				return this.is("matching") || this.is("entry") || this.is("waiting") || this.is("continue");
 			} else {
 				return status.s === state;
 			}
 		};
-		
+
 		$scope.toggle = function() {
 			status.t = !status.t;
 		};
@@ -276,34 +291,59 @@
 		//      Episode Control
 		//----------------------------
 
-		$scope.find = function() {
-			$scope.episode = {
-				stage: 0
-			};
-			$scope.go('matching');
-			// add searching code here
-			timeout(function() {
-				$scope.initEpisode("5066549580791808");
-			}, 2000);
+		var epGo = function(state) {
+			interruptAll();
+			$scope.episodeData.state = state;
+			$scope.$apply();
 		};
-		
+
+		$scope.epIs = function(state) {
+			return this.episodeData.state === state;
+		};
+
+		$scope.find = function() {
+			// episodeData holds local references that do not get directly transmitted
+			$scope.episodeData = {
+				state: 'matching',
+				stage: 0,
+				questions: [],
+				myAnswer: '',
+				theirAnswer: ''
+			};
+			$scope.go('episode');
+			gapi.client.samesies.samesiesApi.findEpisode({myId: $scope.user.id}).then(function(resp){
+				// if it returns matching, I am the first user
+				// if it returns otherwise, I am the second user
+				$scope.episodeData.is1 = (resp.result.status <= MATCHING);
+				if ($scope.episodeData.is1) {
+					$scope.episode = resp.result;
+					interval(function() {
+						getEpisode($scope.episode.id).then(function(resp) {
+							if (resp.result.status >= IN_PROGRESS) {
+								loadEpisode(resp.result);
+							}
+						});
+					}, PING_INT);
+				} else {
+					loadEpisode(resp.result);
+				}
+			});
+		};
+
+		var loadEpisode = function(data) {
+			$scope.episode = data;
+			gapi.client.samesies.samesiesApi.getQuestions({ids: data.qids}).then(function(resp){
+				$scope.episodeData.questions = resp.result.items;
+				$scope.next();
+			});
+		};
+
+		// TODO: make this work right
 		$scope.play = function(episode) {
 			this.episode = episode;
 			this.go(episode.status);
 		};
-		
-		$scope.initEpisode = function(uid) {
-			$scope.episode = {
-				stage: 0,
-				partnerId: uid,
-				questions: []
-			};
-			gapi.client.samesies.samesiesApi.makeEpisode({'count': 10}).then(function(resp){
-				$scope.episode.questions = resp.result.questions;
-				$scope.next();
-			});
-		};
-	
+
 		$scope.matchText = function() {
 			if (this.is('matching')) {
 				return "Matching...";
@@ -312,37 +352,61 @@
 			}
 		};
 
-		$scope.getQuestion = function() {
-			return this.episode.questions[this.episode.stage - 1].q;
-		};
-
-		$scope.answer = function() {
-			// send myAnswer to server
-			this.go("waiting");			
-			this.episode.theirAnswer = "Waiting for your partner to answer...";
-			interval(function() {
-				$scope.retrieve();
-			}, 100);
-		};
-	
-		$scope.retrieve = function() {
-			// eventually ping server for their answer
-			var temp = $scope.episode.questions[$scope.episode.stage - 1].a;
-			if (temp != null) {
-				$scope.episode.theirAnswer = temp;
-				$scope.go("continue");
-			}
-		};
-
 		$scope.next = function() {
-			this.episode.myAnswer = '';
-			if (this.episode.stage == 10) {
-				getUserById(this.episode.partnerId).then(function(resp){
+			this.episodeData.myAnswer = '';
+			if (this.episodeData.stage == 10) {
+				getUser(getPartnerId(this.episode)).then(function(resp) {
 					$scope.message(resp.result);
 				});
 			} else {
-				this.episode.stage++;
-				this.go("entry");			
+				this.episodeData.stage++;
+				epGo('entry');
+			}
+		};
+
+		$scope.getQuestion = function() {
+			return this.episodeData.questions[this.episodeData.stage - 1].q;
+		};
+
+		$scope.answer = function() {
+			this.episodeData.theirAnswer = "Waiting for your partner to answer...";
+			epGo('waiting');
+
+			gapi.client.samesies.samesiesApi.answerEpisode({
+				id: $scope.episode.id,
+				myId: $scope.user.id,
+				answer: $scope.episodeData.myAnswer
+			}).then(function(resp) {
+				getResponse(resp.result);
+				if ($scope.epIs('waiting')) {
+					interval(function () {
+						getEpisode($scope.episode.id).then(function (resp) {
+							getResponse(resp.result);
+						});
+					}, PING_INT);
+				}
+			});
+		};
+
+		var getResponse = function(data) {
+			var index = $scope.episodeData.stage - 1;
+			var answer;
+			if ($scope.episodeData.is1) {
+				answer = data.answers2[index];
+			} else {
+				answer = data.answers1[index];
+			}
+			if (angular.isDefined(answer)) { // they also answered
+				$scope.episodeData.theirAnswer = answer;
+				epGo('continue');
+			}
+		};
+
+		var getPartnerId = function(episode) {
+			if (episode.uid1 === $scope.user.id) {
+				return episode.uid2;
+			} else {
+				return episode.uid1;
 			}
 		};
 
@@ -497,7 +561,7 @@
 
 		$scope.saveProfile = function() {
 			if ($scope.user.isChanged) {
-				gapi.client.samesies.samesiesApi.update($scope.user).then(function (resp) {
+				gapi.client.samesies.samesiesApi.updateUser($scope.user).then(function (resp) {
 					$ionicPopup.alert({
 						title: "Saved",
 						template: "Your profile has been saved!",
@@ -544,7 +608,7 @@
 
 		$scope.challenge = function(user) {
 			this.close('profile');
-			this.initEpisode(user.uid);
+			// TODO: finish this method
 		};
 
 		//----------------------------
@@ -552,7 +616,7 @@
 		//----------------------------
 
 		$scope.loadCommunity = function(location) {
-			gapi.client.samesies.samesiesApi.community({location: location}).then(function(resp){
+			gapi.client.samesies.samesiesApi.getCommunity({location: location}).then(function(resp){
 				$scope.community = resp.result;
 			});
 		};
@@ -597,14 +661,6 @@
 			while (promises2.length > 0) {
 				$interval.cancel(promises2.pop());
 			}
-		};
-
-		var transform = function(data){
-			data = JSON.stringify(data);		// to json
-			data = data.replace(/:/g, "=");	// add in '='
-			data = data.replace(/,/g, "&");	// add in '&'
-			data = data.replace(/[{}"]/g, "");	// remove ends
-			return data;
 		};
 
 		//----------------------------

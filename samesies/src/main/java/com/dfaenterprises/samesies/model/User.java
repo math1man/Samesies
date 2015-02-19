@@ -1,7 +1,9 @@
 package com.dfaenterprises.samesies.model;
 
-import com.google.appengine.api.datastore.EmbeddedEntity;
 import com.google.appengine.api.datastore.Entity;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Ari Weiland
@@ -23,7 +25,7 @@ public class User {
     private Integer age;
     private String gender;
     private String aboutMe;
-    private String[] questions;
+    private List<String> questions;
 
     public User() {
 
@@ -58,11 +60,7 @@ public class User {
                 this.aboutMe = (String) entity.getProperty("aboutMe");
             }
             if (entity.hasProperty("questions")) {
-                EmbeddedEntity qs = (EmbeddedEntity) entity.getProperty("questions");
-                this.questions = new String[5];
-                for (int i=0; i<5; i++) {
-                    this.questions[i] = (String) qs.getProperty("" + i);
-                }
+                this.questions = EntityUtils.entityToList(entity.getProperty("questions"), 5, String.class);
             } else {
                 this.questions = emptyQuestions();
             }
@@ -86,18 +84,6 @@ public class User {
     }
 
     public User(String email, String password, String location, String alias,
-                String name, Integer age, String gender) {
-        this.email = email;
-        this.password = password;
-        this.location = location;
-        this.alias = alias;
-        this.name = name;
-        this.age = age;
-        this.gender = gender;
-        this.questions = emptyQuestions();
-    }
-
-    public User(String email, String password, String location, String alias,
                 String name, Integer age, String gender, String aboutMe) {
         this.email = email;
         this.password = password;
@@ -111,21 +97,7 @@ public class User {
     }
 
     public User(String email, String password, String location, String alias,
-                String name, Integer age, String gender, String aboutMe, String[] questions) {
-        this.email = email;
-        this.password = password;
-        this.location = location;
-        this.alias = alias;
-        this.name = name;
-        this.age = age;
-        this.gender = gender;
-        this.aboutMe = aboutMe;
-        this.questions = questions;
-    }
-
-    public User(Long id, String email, String password, String location, String alias,
-                String name, Integer age, String gender, String aboutMe, String[] questions) {
-        this.id = id;
+                String name, Integer age, String gender, String aboutMe, List<String> questions) {
         this.email = email;
         this.password = password;
         this.location = location;
@@ -209,11 +181,11 @@ public class User {
         this.aboutMe = aboutMe;
     }
 
-    public String[] getQuestions() {
+    public List<String> getQuestions() {
         return questions;
     }
 
-    public void setQuestions(String[] questions) {
+    public void setQuestions(List<String> questions) {
         this.questions = questions;
     }
 
@@ -228,25 +200,12 @@ public class User {
         entity.setUnindexedProperty("password", password);
         entity.setProperty("location", location);
         entity.setProperty("alias", alias);
-        if (name != null) {
-            entity.setProperty("name", name);
-        }
-        if (age != null) {
-            entity.setProperty("age", age);
-        }
-        if (gender != null) {
-            entity.setProperty("gender", gender);
-        }
-        if (aboutMe != null) {
-            entity.setUnindexedProperty("aboutMe", aboutMe);
-        }
-        entity.setUnindexedProperty("questions", makeQuestions(questions));
+        entity.setProperty("name", name);
+        entity.setProperty("age", age);
+        entity.setProperty("gender", gender);
+        entity.setUnindexedProperty("aboutMe", aboutMe);
+        entity.setUnindexedProperty("questions", EntityUtils.listToEntity(questions));
         return entity;
-    }
-
-    public void removeSensitiveData() {
-        this.password = null;
-        // TODO: remove other stuff?
     }
 
     public User fromEntity(Entity entity) {
@@ -257,28 +216,7 @@ public class User {
         return email.substring(0, email.indexOf('@'));
     }
 
-    /**
-     * Creates an EmbeddedEntity representing the questions.
-     * If null is specified, or if less than 5 questions are
-     * given, the questions will all be set to the empty string.
-     * If more than 5 questions are given, only the first 5
-     * questions will be used.
-     * @param questions
-     * @return
-     */
-    public static EmbeddedEntity makeQuestions(String[] questions) {
-        if (questions == null || questions.length < 5) {
-            questions = new String[]{"", "", "", "", ""};
-        }
-        EmbeddedEntity questionsEntity = new EmbeddedEntity();
-        questionsEntity.setProperty("length", 5);
-        for (int i=0; i<5; i++) {
-            questionsEntity.setProperty("" + i, questions[i]);
-        }
-        return questionsEntity;
-    }
-
-    private static String[] emptyQuestions() {
-        return new String[]{"", "", "", "", ""};
+    private static List<String> emptyQuestions() {
+        return Arrays.asList("", "", "", "", "");
     }
 }

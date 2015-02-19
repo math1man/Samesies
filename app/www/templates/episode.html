@@ -1,27 +1,27 @@
 <ion-content ng-show="is('episode')">
 	<!-- matching info -->
-	<div class="item item-divider padding-vertical" ng-show="is('episode')">
-		{{matchText()}} <span class="item-note">{{episode.stage}}/10</span>
+	<div class="item item-divider">
+		{{matchText()}} <span class="item-note">{{episodeData.stage}}/10</span>
 	</div>
 
 	<!-- temporary way to initiate the episode with the bot -->
-	<div class="item" ng-show="is('matching')">
+	<div class="item" ng-show="epIs('matching')">
 		<img class="full-image spinner" src="img/icon.png">
 	</div>
 
 	<!-- question -->
-	<div class="card" ng-show="!is('matching')">
+	<div class="card" ng-show="!epIs('matching')">
 		<div class="item item-text-wrap">
 			{{getQuestion()}}
 		</div>
 	</div>
 
 	<!-- text area for the user to enter an answer -->
-	<div class="card" ng-show="is('entry')">
+	<div class="card" ng-show="epIs('entry')">
 		<form name="answerForm" ng-submit="answerForm.$valid && answer()" novalidate>
 			<div class="item item-input-inset">
 				<label class="item-input-wrapper">
-					<input type="text" maxlength="140" placeholder="Your Answer" ng-model="episode.myAnswer" required/>
+					<input type="text" maxlength="140" placeholder="Your Answer" ng-model="episodeData.myAnswer" required/>
 				</label>
 				<button class="button button-small button-royal" type="submit">
 					Send
@@ -31,28 +31,28 @@
 	</div>
 
 	<!-- user's answer -->
-	<div class="card" ng-show="is('waiting') || is('continue')">
+	<div class="card" ng-show="epIs('waiting') || epIs('continue')">
 		<div class="item item-divider">
 			You
 		</div>
 		<div class="item item-text-wrap">
-			{{episode.myAnswer}}
+			{{episodeData.myAnswer}}
 		</div>
 	</div>
 
 	<!-- other user's answer -->
-	<div class="card" ng-show="is('waiting') || is('continue')">
+	<div class="card" ng-show="epIs('waiting') || epIs('continue')">
 		<div class="item item-divider item-icon-left align-right">
-			<i class="icon ion-loading-c" ng-show="is('waiting')"></i>
+			<i class="icon ion-loading-c" ng-show="epIs('waiting')"></i>
 			Them
 		</div>
 		<div class="item item-text-wrap">
-			{{episode.theirAnswer}}
+			{{episodeData.theirAnswer}}
 		</div>
 	</div>
 
 	<!-- continue button -->
-	<div class="item" ng-show="is('continue')">
+	<div class="item" ng-show="epIs('continue')">
 		<button class="button button-block button-large button-royal" ng-click="next()">
 			Continue
 		</button>
