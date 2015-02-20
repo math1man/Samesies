@@ -5,7 +5,7 @@ import com.google.appengine.api.datastore.Entity;
 /**
  * @author Ari Weiland
  */
-public class Question {
+public class Question implements Storable {
 
     private Long id;
     private String q;

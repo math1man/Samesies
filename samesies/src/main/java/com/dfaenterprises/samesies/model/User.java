@@ -1,5 +1,6 @@
 package com.dfaenterprises.samesies.model;
 
+import com.dfaenterprises.samesies.Utils;
 import com.google.appengine.api.datastore.Entity;
 
 import java.util.Arrays;
@@ -8,7 +9,7 @@ import java.util.List;
 /**
  * @author Ari Weiland
  */
-public class User {
+public class User implements Storable {
 
     public static final int ADMIN = 100;
     public static final int SELF = 32;
@@ -47,23 +48,17 @@ public class User {
         }
         // protected
         if (type >= FRIEND) {
-            if (entity.hasProperty("name")) {
-                this.name = (String) entity.getProperty("name");
-            }
-            if (entity.hasProperty("age")) {
-                this.age = ((Long) entity.getProperty("age")).intValue();
-            }
-            if (entity.hasProperty("gender")) {
-                this.gender = (String) entity.getProperty("gender");
-            }
-            if (entity.hasProperty("aboutMe")) {
-                this.aboutMe = (String) entity.getProperty("aboutMe");
-            }
-            if (entity.hasProperty("questions")) {
-                this.questions = EntityUtils.entityToList(entity.getProperty("questions"), 5, String.class);
+            this.name = (String) entity.getProperty("name");
+            // THIS FUCKING CODE SUCKS
+            Object o = entity.getProperty("age");
+            if (o == null) {
+                this.age = null;
             } else {
-                this.questions = blankQuestions();
+                this.age = ((Long) o).intValue();
             }
+            this.gender = (String) entity.getProperty("gender");
+            this.aboutMe = (String) entity.getProperty("aboutMe");
+            this.questions = Utils.entityToList(entity.getProperty("questions"), 5, String.class);
         }
     }
 
@@ -175,7 +170,7 @@ public class User {
         entity.setProperty("age", age);
         entity.setProperty("gender", gender);
         entity.setUnindexedProperty("aboutMe", aboutMe);
-        entity.setUnindexedProperty("questions", EntityUtils.listToEntity(questions));
+        entity.setUnindexedProperty("questions", Utils.listToEntity(questions));
         return entity;
     }
 

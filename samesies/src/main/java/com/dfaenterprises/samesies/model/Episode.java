@@ -1,5 +1,6 @@
 package com.dfaenterprises.samesies.model;
 
+import com.dfaenterprises.samesies.Utils;
 import com.google.appengine.api.datastore.Entity;
 
 import java.util.Date;
@@ -8,7 +9,7 @@ import java.util.List;
 /**
  * @author Ari Weiland
  */
-public class Episode {
+public class Episode implements Storable {
 
     public static enum Status {
         MATCHING, UNMATCHED, IN_PROGRESS, ABANDONED, COMPLETE
@@ -37,9 +38,9 @@ public class Episode {
             this.uid2 = (Long) e.getProperty("uid2");
         }
         if (status.ordinal() >= Status.IN_PROGRESS.ordinal()) {
-            this.qids = EntityUtils.entityToList(e.getProperty("qids"), 10, Long.class);
-            this.answers1 = EntityUtils.entityToList(e.getProperty("answers1"), 10, String.class);
-            this.answers2 = EntityUtils.entityToList(e.getProperty("answers2"), 10, String.class);
+            this.qids = Utils.entityToList(e.getProperty("qids"), 10, Long.class);
+            this.answers1 = Utils.entityToList(e.getProperty("answers1"), 10, String.class);
+            this.answers2 = Utils.entityToList(e.getProperty("answers2"), 10, String.class);
         }
     }
 
@@ -169,9 +170,9 @@ public class Episode {
         e.setProperty("status", status.name());
         e.setProperty("uid1", uid1);
         e.setProperty("uid2", uid2);
-        e.setProperty("qids", EntityUtils.listToEntity(qids));
-        e.setProperty("answers1", EntityUtils.listToEntity(answers1));
-        e.setProperty("answers2", EntityUtils.listToEntity(answers2));
+        e.setProperty("qids", Utils.listToEntity(qids));
+        e.setProperty("answers1", Utils.listToEntity(answers1));
+        e.setProperty("answers2", Utils.listToEntity(answers2));
         return e;
     }
 }

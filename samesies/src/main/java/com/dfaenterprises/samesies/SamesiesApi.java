@@ -11,7 +11,6 @@ import com.google.appengine.api.datastore.*;
 
 import javax.inject.Named;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -27,7 +26,7 @@ import java.util.List;
 )
 public class SamesiesApi {
 
-    public void init() {
+    public void init() throws ServiceException {
         DatastoreService ds = getDS();
         // if this entity is in the ds, it has already been initialized, so don't init
         Entity initTest = new Entity("INIT", "INIT_TEST");
@@ -35,19 +34,17 @@ public class SamesiesApi {
             ds.put(initTest);
 
             // initialize users
-            Entity user1 = new User("ari@samesies.com", "samesies123", "Saint Paul, MN", "Ajawa",
-                    "Ari Weiland", 20, "Male", "I am a junior Physics and Computer Science major at Macalester College."
-            ).toEntity();
-            ds.put(user1);
-            Entity user2 = new User("luke@samesies.com", "samesies456", "Saint Paul, MN", "KoboldForeman",
-                    "Luke Gehman", 21, "Male", "I am a junior Biology major at Macalester College. I play a lot of Dota 2."
-            ).toEntity();
-            ds.put(user2);
+            User user1 = new User("ari@samesies.com", "samesies123", "Saint Paul, MN", "Ajawa",
+                    "Ari Weiland", 20, "Male", "I am a junior Physics and Computer Science major at Macalester College.");
+            Utils.put(ds, user1);
+            User user2 = new User("luke@samesies.com", "samesies456", "Saint Paul, MN", "KoboldForeman",
+                    "Luke Gehman", 21, "Male", "I am a junior Biology major at Macalester College. I play a lot of Dota 2.");
+            Utils.put(ds, user2);
 
             // initialize friends
             Entity friendship = new Entity("Friend");
-            friendship.setProperty("uid1", user1.getKey().getId());
-            friendship.setProperty("uid2", user2.getKey().getId());
+            friendship.setProperty("uid1", user1.getId());
+            friendship.setProperty("uid2", user2.getId());
             ds.put(friendship);
 
             // initialize questions
@@ -126,11 +123,11 @@ public class SamesiesApi {
             };
             for (Question q : questions) {
                 q.setCategory("Random");
-                ds.put(q.toEntity());
+                Utils.put(ds, q);
             }
             for (Question q : questionsBad) {
                 q.setCategory("Bad");
-                ds.put(q.toEntity());
+                Utils.put(ds, q);
             }
 
             // initialize question categories
@@ -151,11 +148,11 @@ public class SamesiesApi {
         if (email == null) {
             throw new BadRequestException("Invalid Email");
         }
-        Entity e = getUserByEmail(ds, email);
-        if (e == null) {
+        User dsUser = getUserByEmail(ds, email);
+        if (dsUser == null) {
             throw new NotFoundException("Invalid Email");
-        } else if (password != null && password.equals(e.getProperty("password"))) {
-            return new User(e, User.SELF);
+        } else if (password != null && password.equals(dsUser.getPassword())) {
+            return dsUser;
         } else {
             throw new BadRequestException("Invalid Password");
         }
@@ -185,9 +182,7 @@ public class SamesiesApi {
                 newUser.setDefaultAlias();
             }
             newUser.setBlankQuestions();
-            Entity e = newUser.toEntity();
-            ds.put(e);
-            newUser.setId(e.getKey().getId());
+            Utils.put(ds, newUser);
             return newUser;
         } else {
             throw new ForbiddenException("Email already in use");
@@ -206,12 +201,11 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void updateUser(User user) throws ServiceException {
         DatastoreService ds = getDS();
-        Entity entity = user.toEntity();
-        if (!entity.getKey().isComplete()) {
+        if (user.getId() == null) {
             throw new BadRequestException("User ID not specified");
         }
-        if (contains(ds, entity)) {
-            ds.put(entity);
+        if (contains(ds, user)) {
+            Utils.put(ds, user);
         } else {
             throw new NotFoundException("User not found");
         }
@@ -223,11 +217,8 @@ public class SamesiesApi {
     public List<User> getFriends(@Named("id") long uid) throws ServiceException {
         DatastoreService ds = getDS();
 
-        Query.Filter filter = new Query.CompositeFilter(Query.CompositeFilterOperator.OR, Arrays.asList(
-                (Query.Filter) new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, uid),
-                new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, uid)
-        ));
-        Query query = new Query("Friend").setFilter(filter);
+        Query query = new Query("Friend").setFilter(Utils.makeDoubleFilter(Query.CompositeFilterOperator.OR,
+                "uid1", Query.FilterOperator.EQUAL, uid, "uid2", Query.FilterOperator.EQUAL, uid));
         PreparedQuery pq = ds.prepare(query);
         List<User> users = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
@@ -323,11 +314,10 @@ public class SamesiesApi {
     public Episode findEpisode(@Named("myId") long myUid) throws ServiceException {
         DatastoreService ds = getDS();
 
-        Query query = new Query("Episode").setFilter(new Query.CompositeFilter(
-                Query.CompositeFilterOperator.AND, Arrays.asList(
-                (Query.Filter) new Query.FilterPredicate("status", Query.FilterOperator.EQUAL, Episode.Status.MATCHING.name()),
-                new Query.FilterPredicate("isPersistent", Query.FilterOperator.EQUAL, false)
-        ))).addSort("startDate", Query.SortDirection.ASCENDING);
+        Query query = new Query("Episode").setFilter(Utils.makeDoubleFilter(Query.CompositeFilterOperator.AND,
+                        "status", Query.FilterOperator.EQUAL, Episode.Status.MATCHING.name(),
+                        "isPersistent", Query.FilterOperator.EQUAL, false)
+                ).addSort("startDate", Query.SortDirection.ASCENDING);
         PreparedQuery pq = ds.prepare(query);
 
         Iterator<Entity> iter = pq.asIterator();
@@ -340,15 +330,37 @@ public class SamesiesApi {
         }
         // TODO: handle categories
         if (episode == null) {
+            // rather than order episode uids, makes more sense to have uid1 be
+            // the initiator and uid2 be the responder, for record-keeping's sake
             episode = new Episode(myUid);
         } else {
             episode.setStatus(Episode.Status.IN_PROGRESS);
             episode.setUid2(myUid);
-            episode.setQids(getEpisodeQs(ds, "Random"));
+            // get set of questions
+            Query qQuery = new Query("Question").setFilter(new Query.FilterPredicate(
+                    "category", Query.FilterOperator.EQUAL, "Random")).setKeysOnly();
+            PreparedQuery qpq = ds.prepare(qQuery);
+            int max = qpq.countEntities(FetchOptions.Builder.withDefaults());
+            int[] a = new int[max];
+            for (int i=0; i<max; ++i) {
+                a[i] = i;
+            }
+            int top = 0;
+            while (top < 10) {
+                int swap = (int) (Math.random() * (max - top) + top);
+                int tmp = a[swap];
+                a[swap] = a[top];
+                a[top] = tmp;
+                top++;
+            }
+            List<Entity> keys = qpq.asList(FetchOptions.Builder.withDefaults());
+            List<Long> questions = new ArrayList<>();
+            for (int i=0; i<10; i++) {
+                questions.add(keys.get(a[i]).getKey().getId());
+            }
+            episode.setQids(questions);
         }
-        Entity e = episode.toEntity();
-        ds.put(e);
-        episode.setId(e.getKey().getId());
+        Utils.put(ds, episode);
         return episode;
     }
 
@@ -373,7 +385,7 @@ public class SamesiesApi {
         }
         answers.add(answer);
         episode.setAnswers(is1, answers);
-        ds.put(episode.toEntity());
+        Utils.put(ds, episode);
         return episode;
     }
 
@@ -390,11 +402,31 @@ public class SamesiesApi {
         } else {
             episode.setStatus(Episode.Status.ABANDONED);
         }
-        ds.put(episode.toEntity());
+        Utils.put(ds, episode);
+    }
+
+    @ApiMethod(name = "samesiesApi.startChat",
+            path = "chat/{myId}/{theirId}",
+            httpMethod = ApiMethod.HttpMethod.POST)
+    public Chat startChat(@Named("myId") long myUid, @Named("theirId") long theirUid) throws ServiceException {
+        DatastoreService ds = getDS();
+        long[] uids = orderIds(myUid, theirUid); // avoid parity issues to simplify search
+        Chat chat = getChat(ds, uids); // make sure a chat between these users doesn't already exist
+        if (chat == null) {
+            chat = new Chat(uids[0], uids[1]);
+            Utils.put(ds, chat);
+            return chat;
+        } else {
+            return chat;
+        }
     }
 
     private static DatastoreService getDS() {
         return DatastoreServiceFactory.getDatastoreService();
+    }
+
+    private static boolean contains(DatastoreService ds, Storable s) {
+        return contains(ds, s.toEntity());
     }
 
     private static boolean contains(DatastoreService ds, Entity entity) {
@@ -425,45 +457,17 @@ public class SamesiesApi {
         }
     }
 
-    private static Entity getUserByEmail(DatastoreService ds, String email) {
+    private static User getUserByEmail(DatastoreService ds, String email) {
         Query query = new Query("User").setFilter(new Query.FilterPredicate(
                 "email", Query.FilterOperator.EQUAL, email));
         PreparedQuery pq = ds.prepare(query);
 
-        return pq.asSingleEntity();
-    }
-
-    private static List<Long> getEpisodeQs(DatastoreService ds, String category) {
-        Query query = new Query("Question").setFilter(new Query.FilterPredicate("category", Query.FilterOperator.EQUAL, category)).setKeysOnly();
-        PreparedQuery pq = ds.prepare(query);
-
-        int max = pq.countEntities(FetchOptions.Builder.withDefaults());
-        int[] a = new int[max];
-        for (int i=0; i<max; ++i) {
-            a[i] = i;
+        Entity e = pq.asSingleEntity();
+        if (e == null) {
+            return null;
+        } else {
+            return new User(e, User.SELF);
         }
-        int top = 0;
-        while (top < 10) {
-            int swap = (int) (Math.random() * (max - top) + top);
-            int tmp = a[swap];
-            a[swap] = a[top];
-            a[top] = tmp;
-            top++;
-        }
-        List<Entity> keys = pq.asList(FetchOptions.Builder.withDefaults());
-        List<Long> questions = new ArrayList<>();
-        for (int i=0; i<10; i++) {
-            questions.add(keys.get(a[i]).getKey().getId());
-        }
-        return questions;
-    }
-
-    private static List<Long> getQids(List<Question> questions) {
-        List<Long> qids = new ArrayList<>();
-        for (Question q : questions) {
-            qids.add(q.getId());
-        }
-        return qids;
     }
 
     private static Question getQuestion(DatastoreService ds, long qid) throws NotFoundException {
@@ -479,6 +483,28 @@ public class SamesiesApi {
             return new Episode(ds.get(KeyFactory.createKey("Episode", id)));
         } catch (EntityNotFoundException e) {
             throw new NotFoundException("Episode not found", e);
+        }
+    }
+
+    private Chat getChat(DatastoreService ds, long[] uids) {
+        Query query = new Query("Chat").setFilter(Utils.makeDoubleFilter(Query.CompositeFilterOperator.AND,
+                "uid1", Query.FilterOperator.EQUAL, uids[0], "uid2", Query.FilterOperator.EQUAL, uids[2]));
+        PreparedQuery pq = ds.prepare(query);
+        Entity e = pq.asSingleEntity();
+        if (e == null) {
+            return null;
+        } else {
+            return new Chat(e);
+        }
+    }
+
+    private static long[] orderIds(long id1, long id2) throws BadRequestException {
+        if (id1 == id2) {
+            throw new BadRequestException("IDs must be different");
+        } else if (id1 < id2) {
+            return new long[]{id1, id2};
+        } else {
+            return new long[]{id2, id1};
         }
     }
 }
