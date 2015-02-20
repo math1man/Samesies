@@ -2,53 +2,51 @@
   <ion-header-bar class="bar-royal">
     <h1 class="title">Login</h1>
   </ion-header-bar>
-  <ion-content>
-    <div class="list">
+  <ion-content ng-keypress="$event.keyCode === 13 && loginShortcut()">
+    <label class="item item-input">
+      <span class="input-label">Email</span>
+      <input type="email" ng-model="loginData.email" placeholder="johndoe@samesies.com">
+    </label>
+    <label class="item item-input">
+      <span class="input-label">Password</span>
+      <input type="password" ng-model="loginData.password" placeholder="••••••••">
+    </label>
+    <div ng-show="isToggled()">
       <label class="item item-input">
-        <span class="input-label">Email</span>
-        <input type="email" ng-model="loginData.email" placeholder="johndoe@samesies.com">
+        <span class="input-label">Confirm</span>
+        <input type="password" ng-model="loginData.confirmPassword" placeholder="••••••••">
       </label>
       <label class="item item-input">
-        <span class="input-label">Password</span>
-        <input type="password" ng-model="loginData.password" placeholder="••••••••">
+        <span class="input-label">Location</span>
+        <input type="text" ng-model="loginData.location" placeholder="Location">
       </label>
-      <div ng-show="loginData.isCreate">
-        <label class="item item-input">
-          <span class="input-label">Confirm</span>
-          <input type="password" ng-model="loginData.confirmPassword" placeholder="••••••••">
-        </label>
-        <label class="item item-input">
-          <span class="input-label">Location</span>
-          <input type="text" ng-model="loginData.location" placeholder="Location">
-        </label>
-        <label class="item item-input">
-          <span class="input-label">Alias</span>
-          <input type="text" ng-model="loginData.alias" placeholder="Alias">
-        </label>
+      <label class="item item-input">
+        <span class="input-label">Alias</span>
+        <input type="text" ng-model="loginData.alias" placeholder="Alias">
+      </label>
+    </div>
+    <div class="item assertive" ng-show="loginData.error">
+      {{loginData.error}}
+    </div>
+    <div class="row padding-horizontal" ng-show="isToggled()">
+      <div class="col">
+        <button class="button button-block button-stable" ng-click="toggle()">Cancel</button>
       </div>
-      <div class="item assertive" ng-show="loginData.error">
-        {{loginData.error}}
+      <div class="col">
+        <button class="button button-block button-royal" ng-click="createAccount()">Create!</button>
       </div>
-      <div class="row padding-horizontal" ng-show="loginData.isCreate">
-        <div class="col">
-          <button class="button button-block button-stable" ng-click="loginData.toggle()">Cancel</button>
-        </div>
-        <div class="col">
-          <button class="button button-block button-royal" ng-click="createAccount()">Create!</button>
-        </div>
-      </div>
-      <div ng-show="!loginData.isCreate">
-        <label class="item">
-          <button class="button button-block button-royal" ng-click="doLogin()">Log in</button>
-        </label>
-        <div class="item">
-          <a href="" ng-click="loginData.toggle()">Create Account</a>
-          <span class="float-right"><a href="" ng-click="recoverPassword()">Forgot your Password?</a></span>
-        </div>
-      </div>
+    </div>
+    <div ng-show="!isToggled()">
+      <label class="item">
+        <button class="button button-block button-royal" ng-click="doLogin()">Log in</button>
+      </label>
       <div class="item">
-        <a href="" ng-click="quickLogin()">Debug Quick Login</a>
+        <a href="" ng-click="toggle()">Create Account</a>
+        <span class="float-right"><a href="" ng-click="recoverPassword()">Forgot your Password?</a></span>
       </div>
+    </div>
+    <div class="item">
+      <a href="" ng-click="quickLogin()">Debug Quick Login</a>
     </div>
 
     <div class="card" ng-hide="true">

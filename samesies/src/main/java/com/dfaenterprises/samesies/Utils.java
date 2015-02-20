@@ -40,7 +40,7 @@ public class Utils {
 
     public static void put(DatastoreService ds, Storable s) {
         Entity entity = s.toEntity();
-        ds.put(s.toEntity());
+        ds.put(entity);
         s.setId(entity.getKey().getId());
     }
 

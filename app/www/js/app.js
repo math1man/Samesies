@@ -37,7 +37,7 @@
 		$scope.loadLib = function() {
 			gapi.client.load('samesies', 'v1', function() {
 				$scope.isBackendReady = true;
-			}, 'https://samesies-app.appspot.com/_ah/api');
+			}, 'http://localhost:8080/_ah/api');
 			// http://localhost:8080/_ah/api
 			// https://samesies-app.appspot.com/_ah/api
 		};
@@ -201,18 +201,22 @@
 			}
 		};
 
+		$scope.loginShortcut = function() {
+			if ($scope.isToggled()) {
+				$scope.createAccount();
+			} else {
+				$scope.doLogin()
+			}
+		};
+
 		$scope.logOut = function() {
-			this.close('menu');
-			this.show('login');
+			$scope.close('menu');
+			$scope.show('login');
 			$scope.user = null;
 			$scope.friends = null;
+			$scope.resetToggle();
 			$scope.loginData = {
-				isCreate: false,
-				error: false,
-				toggle: function() {
-					this.isCreate = !this.isCreate;
-					this.error = false;
-				}
+				error: false
 			};
 		};
 
@@ -449,30 +453,76 @@
 		//----------------------------
 
 		$scope.message = function(user) {
-			// TODO: this should only use displayName if they are a friend...
-			this.resetChat(this.displayName(user));
-			this.go('chat');
-			this.close('profile');
-			// TODO: make chat work
-		};
-
-		$scope.resetChat = function(username) {
-			$scope.chat = {
-				recipient: username,
-				history: [],
-				buffer: ''
-			};
-		};
-
-		$scope.sendChat = function() {
-			if (this.chat.buffer) {
-				this.chat.history.push({
-					isYou: true,
-					text: this.chat.buffer
+			$scope.close('profile');
+			$scope.chat = null;
+			gapi.client.samesies.samesiesApi.startChat({
+				myId: $scope.user.id,
+				theirId: user.id
+			}).then(function(resp) {
+				$scope.chat = resp.result;
+				$scope.chat.recipient = $scope.displayName(user);
+				$scope.chat.buffer = '';
+				gapi.client.samesies.samesiesApi.getMessages({
+					chatId: $scope.chat.id,
+					after: $scope.chat.startDate
+				}).then(function (resp) {
+					$scope.chat.history = resp.result.items;
+					$ionicScrollDelegate.scrollBottom();
 				});
-				this.chat.buffer = '';
-				$ionicScrollDelegate.scrollBottom(true);
+			}, function(reason) {
+				$scope.error = reason;
+			});
+			$scope.go('chat');
+			interval(function() {
+				$scope.checkChat();
+			}, PING_INTERVAL);
+		};
+
+		// TODO: resolve weird double-message bug
+		$scope.sendChat = function() {
+			if ($scope.chat.buffer) {
+				$scope.checkChat();
+				$scope.chat.history.push({
+					message: $scope.chat.buffer,
+					senderId: $scope.user.id
+				});
+				$ionicScrollDelegate.scrollBottom();
+				gapi.client.samesies.samesiesApi.sendMessage({
+					chatId: $scope.chat.id,
+					myId: $scope.user.id,
+					message: $scope.chat.buffer
+				}).then(function (resp) {
+					$scope.chat.history.pop();
+					$scope.chat.history.push(resp.result);
+					$scope.chat.lastModified = resp.result.sentDate;
+				}, function(reason) {
+					$scope.error = reason;
+				});
+				$scope.chat.buffer = '';
 			}
+		};
+
+		$scope.checkChat = function() {
+			gapi.client.samesies.samesiesApi.getMessages({
+				chatId: $scope.chat.id,
+				after: $scope.chat.lastModified
+			}).then(function (resp) {
+				if (resp.result.items.length > 0) {
+					$scope.chat.history = $scope.chat.history.concat(resp.result.items);
+					var last = $scope.chat.history[$scope.chat.history.length - 1];
+					$scope.chat.lastModified = last.sentDate;
+					$ionicScrollDelegate.scrollBottom();
+					document.getElementById("chatInput").focus();
+				}
+			});
+		};
+
+		$scope.isYou = function(message) {
+			return (message.senderId === $scope.user.id);
+		};
+
+		$scope.dispDate = function(message) {
+			return new Date(message.sentDate).toLocaleString();
 		};
 
 		//----------------------------

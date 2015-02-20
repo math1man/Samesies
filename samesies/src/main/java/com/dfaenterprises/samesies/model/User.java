@@ -174,10 +174,6 @@ public class User implements Storable {
         return entity;
     }
 
-    public User fromEntity(Entity entity) {
-        return new User(entity);
-    }
-
     public void setDefaultAlias() {
         if (email != null) {
             setAlias(getAlias(email));

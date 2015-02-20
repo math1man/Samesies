@@ -57,15 +57,6 @@
 				</div>
 
 			</ion-content>
-			<ion-footer-bar class="bar-stable" ng-show="is('chat')">
-				<label class="item-input-wrapper">
-					<input type="text" ng-model="chat.buffer" ng-keypress="$event.keyCode === 13 && sendChat()"
-									placeholder="Send to {{chat.recipient}}"/>
-				</label>
-				<button class="button button-small button-royal" ng-click="sendChat()">
-					Send
-				</button>
-			</ion-footer-bar>
 		</ion-pane>
 	</body>
 </html>

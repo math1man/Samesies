@@ -19,6 +19,10 @@
   animation:spin 2s linear infinite;
 }
 
+h6 {
+  color: #cccccc;
+}
+
 .chat.ng-enter {
   -webkit-transition: all cubic-bezier(0.1, 0.7, 0.1, 1) 400ms;
   transition: all cubic-bezier(0.1, 0.7, 0.1, 1) 400ms;

@@ -11,6 +11,7 @@ import com.google.appengine.api.datastore.*;
 
 import javax.inject.Named;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -421,6 +422,43 @@ public class SamesiesApi {
         }
     }
 
+    @ApiMethod(name = "samesiesApi.getChat",
+            path = "chat/{id}",
+            httpMethod = ApiMethod.HttpMethod.GET)
+    public Chat getChat(@Named("id") long cid) throws ServiceException {
+        return getChat(getDS(), cid);
+    }
+
+    @ApiMethod(name = "samesiesApi.sendMessage",
+            path = "message/{chatId}/{myId}/{message}",
+            httpMethod = ApiMethod.HttpMethod.POST)
+    public Message sendMessage(@Named("chatId") long cid, @Named("myId") long myUid, @Named("message") String message) throws ServiceException {
+        DatastoreService ds = getDS();
+        Chat chat = getChat(ds, cid);
+        chat.modify();
+        Utils.put(ds, chat);
+        // TODO: maybe try to include a check to stop double-sending???
+        Message m = new Message(cid, myUid, message);
+        Utils.put(ds, m);
+        return m;
+    }
+
+    @ApiMethod(name = "samesiesApi.getMessages",
+            path = "message/{chatId}/{after}",
+            httpMethod = ApiMethod.HttpMethod.GET)
+    public List<Message> getMessages(@Named("chatId") long cid, @Named("after") Date after) throws ServiceException {
+        DatastoreService ds = getDS();
+        Query query = new Query("Message").setFilter(Utils.makeDoubleFilter(Query.CompositeFilterOperator.AND,
+                "chatId", Query.FilterOperator.EQUAL, cid, "sentDate", Query.FilterOperator.GREATER_THAN, after))
+                .addSort("sentDate", Query.SortDirection.ASCENDING);
+        PreparedQuery pq = ds.prepare(query);
+        List<Message> messages = new ArrayList<>();
+        for (Entity e : pq.asIterable()) {
+            messages.add(new Message(e));
+        }
+        return messages;
+    }
+
     private static DatastoreService getDS() {
         return DatastoreServiceFactory.getDatastoreService();
     }
@@ -478,17 +516,25 @@ public class SamesiesApi {
         }
     }
 
-    private static Episode getEpisode(DatastoreService ds, long id) throws NotFoundException {
+    private static Episode getEpisode(DatastoreService ds, long eid) throws NotFoundException {
         try {
-            return new Episode(ds.get(KeyFactory.createKey("Episode", id)));
+            return new Episode(ds.get(KeyFactory.createKey("Episode", eid)));
         } catch (EntityNotFoundException e) {
             throw new NotFoundException("Episode not found", e);
         }
     }
 
-    private Chat getChat(DatastoreService ds, long[] uids) {
+    private static Chat getChat(DatastoreService ds, long cid) throws NotFoundException {
+        try {
+            return new Chat(ds.get(KeyFactory.createKey("Chat", cid)));
+        } catch (EntityNotFoundException e) {
+            throw new NotFoundException("Chat not found", e);
+        }
+    }
+
+    private static Chat getChat(DatastoreService ds, long[] uids) {
         Query query = new Query("Chat").setFilter(Utils.makeDoubleFilter(Query.CompositeFilterOperator.AND,
-                "uid1", Query.FilterOperator.EQUAL, uids[0], "uid2", Query.FilterOperator.EQUAL, uids[2]));
+                "uid1", Query.FilterOperator.EQUAL, uids[0], "uid2", Query.FilterOperator.EQUAL, uids[1]));
         PreparedQuery pq = ds.prepare(query);
         Entity e = pq.asSingleEntity();
         if (e == null) {
