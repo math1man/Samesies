@@ -1,6 +1,6 @@
 package com.dfaenterprises.samesies.model;
 
-import com.dfaenterprises.samesies.Utils;
+import com.dfaenterprises.samesies.EntityUtils;
 import com.google.appengine.api.datastore.Entity;
 
 import java.util.Date;
@@ -34,14 +34,10 @@ public class Episode implements Storable {
         this.isPersistent = (Boolean) e.getProperty("isPersistent");
         this.status = Status.valueOf((String) e.getProperty("status"));
         this.uid1 = (Long) e.getProperty("uid1");
-        if (isPersistent || status.ordinal() >= Status.IN_PROGRESS.ordinal()) {
-            this.uid2 = (Long) e.getProperty("uid2");
-        }
-        if (status.ordinal() >= Status.IN_PROGRESS.ordinal()) {
-            this.qids = Utils.entityToList(e.getProperty("qids"), 10, Long.class);
-            this.answers1 = Utils.entityToList(e.getProperty("answers1"), 10, String.class);
-            this.answers2 = Utils.entityToList(e.getProperty("answers2"), 10, String.class);
-        }
+        this.uid2 = (Long) e.getProperty("uid2");
+        this.qids = EntityUtils.entityToList(e.getProperty("qids"), 10, Long.class);
+        this.answers1 = EntityUtils.entityToList(e.getProperty("answers1"), 10, String.class);
+        this.answers2 = EntityUtils.entityToList(e.getProperty("answers2"), 10, String.class);
     }
 
     /**
@@ -170,9 +166,9 @@ public class Episode implements Storable {
         e.setProperty("status", status.name());
         e.setProperty("uid1", uid1);
         e.setProperty("uid2", uid2);
-        e.setProperty("qids", Utils.listToEntity(qids));
-        e.setProperty("answers1", Utils.listToEntity(answers1));
-        e.setProperty("answers2", Utils.listToEntity(answers2));
+        e.setProperty("qids", EntityUtils.listToEntity(qids));
+        e.setProperty("answers1", EntityUtils.listToEntity(answers1));
+        e.setProperty("answers2", EntityUtils.listToEntity(answers2));
         return e;
     }
 }

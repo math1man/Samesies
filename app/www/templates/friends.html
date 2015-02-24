@@ -4,7 +4,7 @@
 		<input type="text" ng-model="search[0]" placeholder="Search">
 	</label>
 	<ion-content class="has-header">
-		<!-- currently, this search will go through every data field.  it ideally should only go into name/alias -->
+		<!--Eventually need to add friend requests here-->
 		<div class="item item-avatar" ng-repeat="friend in friends | checkName:search[0]" ng-click="preview(friend)">
 			<img src="img/lone_icon.png">
 			{{displayName(friend)}}

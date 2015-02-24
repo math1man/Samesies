@@ -26,14 +26,14 @@
 		<script src="https://apis.google.com/js/client.js?onload=init"></script>
 	</head>
 	<body ng-controller="MainController">
-		<ion-pane ng-show="isBackendReady">
+		<ion-pane>
 			<ion-header-bar class="bar-royal">
 				<button class="button button-icon" ng-click="go('menu')">
 					<i class="icon ion-navicon"></i>
 				</button>
 				<h1 class="title">Samesies</h1>
 				<button class="button button-icon" ng-click="show('help')">
-					<i class="icon ion-help"></i>
+					<i class="icon ion-help-circled"></i>
 				</button>
 			</ion-header-bar>
 			<ion-content scroll="false" on-swipe-left="is('episode') && find()" on-swipe-right="go('menu')">
@@ -43,18 +43,8 @@
 				<ss-communities></ss-communities>
 				<ss-friends></ss-friends>
 				<ss-chat></ss-chat>
+				<ss-connections></ss-connections>
 				<ss-profile></ss-profile>
-
-				<!-- debug info -->
-				<div class="card" ng-hide="true">
-					<div class="item item-divider">
-						Debug:
-					</div>
-					<div class="item item-text-wrap">
-						<p>{{getState()}}</p>
-						<p>{{user}}</p>
-					</div>
-				</div>
 
 			</ion-content>
 		</ion-pane>

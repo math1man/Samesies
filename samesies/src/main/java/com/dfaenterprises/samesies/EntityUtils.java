@@ -4,16 +4,14 @@ import com.dfaenterprises.samesies.model.Storable;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.EmbeddedEntity;
 import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.Query;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author Ari Weiland
  */
-public class Utils {
+public class EntityUtils {
 
     public static <T> EmbeddedEntity listToEntity(List<T> ts) {
         EmbeddedEntity e = new EmbeddedEntity();
@@ -42,13 +40,5 @@ public class Utils {
         Entity entity = s.toEntity();
         ds.put(entity);
         s.setId(entity.getKey().getId());
-    }
-
-    public static Query.Filter makeDoubleFilter(Query.CompositeFilterOperator compOp,
-                                                String prop1, Query.FilterOperator op1, Object value1,
-                                                String prop2, Query.FilterOperator op2, Object value2) {
-        return new Query.CompositeFilter(compOp, Arrays.asList(
-                (Query.Filter) new Query.FilterPredicate(prop1, op1, value1),
-                new Query.FilterPredicate(prop2, op2, value2)));
     }
 }

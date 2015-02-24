@@ -1,6 +1,6 @@
 package com.dfaenterprises.samesies.model;
 
-import com.dfaenterprises.samesies.Utils;
+import com.dfaenterprises.samesies.EntityUtils;
 import com.google.appengine.api.datastore.Entity;
 
 import java.util.Arrays;
@@ -58,7 +58,7 @@ public class User implements Storable {
             }
             this.gender = (String) entity.getProperty("gender");
             this.aboutMe = (String) entity.getProperty("aboutMe");
-            this.questions = Utils.entityToList(entity.getProperty("questions"), 5, String.class);
+            this.questions = EntityUtils.entityToList(entity.getProperty("questions"), 5, String.class);
         }
     }
 
@@ -170,7 +170,7 @@ public class User implements Storable {
         entity.setProperty("age", age);
         entity.setProperty("gender", gender);
         entity.setUnindexedProperty("aboutMe", aboutMe);
-        entity.setUnindexedProperty("questions", Utils.listToEntity(questions));
+        entity.setUnindexedProperty("questions", EntityUtils.listToEntity(questions));
         return entity;
     }
 

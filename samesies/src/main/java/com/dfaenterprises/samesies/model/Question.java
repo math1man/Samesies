@@ -18,7 +18,7 @@ public class Question implements Storable {
     public Question(Entity e) {
         this.id = e.getKey().getId();
         this.q = (String) e.getProperty("q");
-        this.a = (String) e.getProperty("a");
+//        this.a = (String) e.getProperty("a");
         this.category = (String) e.getProperty("category");
     }
 
@@ -72,7 +72,7 @@ public class Question implements Storable {
     public Entity toEntity() {
         Entity entity = new Entity("Question");
         entity.setProperty("q", q);
-        entity.setUnindexedProperty("a", a);
+//        entity.setUnindexedProperty("a", a);
         entity.setProperty("category", category);
         return entity;
     }

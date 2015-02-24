@@ -5,28 +5,37 @@
 		</button>
 		<h1 class="title">Menu</h1>
 		<button class="button button-icon" ng-click="show('help')">
-			<i class="icon ion-help"></i>
+			<i class="icon ion-help-circled"></i>
 		</button>
 	</ion-header-bar>
 	<ion-content>
 		<div class="list">
-			<div class="item" ng-click="find()">
+			<div class="item item-icon-left" ng-click="find()">
+				<i class="icon ion-play"></i>
 				Play Samesies!
 			</div>
-			<div class="item" ng-click="go('communities')">
+			<div class="item item-icon-left" ng-click="go('communities')">
+				<i class="icon ion-ios7-people"></i>
 				Browse Communities
 			</div>
-			<div class="item" ng-click="go('friends')">
+			<div class="item item-icon-left" ng-click="go('friends')">
+				<i class="icon ion-person-add"></i>
 				View Friends
+				<!--Eventually this needs to be friend REQUESTS-->
+				<span class="badge badge-royal">{{friends.length}}</span>
 			</div>
-			<div class="item" ng-click="goConnections()">
+			<div class="item item-icon-left" ng-click="goCxns()">
+				<i class="icon ion-loop"></i>
 				Play Pending Connections
+				<span class="badge badge-royal">{{connections.length}}</span>
 			</div>
-			<div class="item" ng-click="go('edit')">
-				Edit Profile
-			</div>
-			<div class="item" ng-click="go('browse')">
+			<div class="item item-icon-left" ng-click="go('browse')">
+				<i class="icon ion-help"></i>
 				Browse Questions
+			</div>
+			<div class="item item-icon-left" ng-click="go('edit')">
+				<i class="icon ion-edit"></i>
+				Edit Profile
 			</div>
 		</div>
 	</ion-content>

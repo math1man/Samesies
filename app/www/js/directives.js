@@ -9,13 +9,6 @@
         };
     });
 
-    app.directive('ssProfile', function() {
-        return {
-            restrict: 'E',
-            templateUrl: 'templates/edit-profile.html'
-        };
-    });
-
     app.directive('ssEpisode', function() {
         return {
             restrict: 'E',
@@ -41,6 +34,20 @@
         return {
             restrict: 'E',
             templateUrl: 'templates/chat.html'
+        };
+    });
+
+    app.directive('ssConnections', function() {
+        return {
+            restrict: 'E',
+            templateUrl: 'templates/connections.html'
+        };
+    });
+
+    app.directive('ssProfile', function() {
+        return {
+            restrict: 'E',
+            templateUrl: 'templates/edit-profile.html'
         };
     });
 

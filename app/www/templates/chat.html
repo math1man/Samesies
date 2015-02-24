@@ -15,7 +15,7 @@
 <ion-footer-bar class="bar-stable" ng-show="is('chat')">
 	<label class="item-input-wrapper">
 		<input id="chatInput" type="text" ng-model="chat.buffer" ng-keypress="$event.keyCode === 13 && sendChat()"
-			   placeholder="Send to {{chat.recipient}}"/>
+			   placeholder="Send to {{chat.recipient}}" autofocus/>
 	</label>
 	<button class="button button-small button-royal" ng-click="sendChat()">
 		Send

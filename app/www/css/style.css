@@ -23,6 +23,14 @@ h6 {
   color: #cccccc;
 }
 
+.button-round {
+  height: 40px;
+  width: 40px;
+  padding: 10%;
+  top: 8px;
+  border-radius: 100%;
+}
+
 .chat.ng-enter {
   -webkit-transition: all cubic-bezier(0.1, 0.7, 0.1, 1) 400ms;
   transition: all cubic-bezier(0.1, 0.7, 0.1, 1) 400ms;

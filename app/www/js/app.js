@@ -1,12 +1,13 @@
 (function() {
 
-	var MATCHING = "MATCHING";
-	var UNMATCHED = "UNMATCHED";
-	var IN_PROGRESS = "IN_PROGRESS";
-	var ABANDONED = "ABANDONED";
-	var COMPLETE = "COMPLETE";
+	const MATCHING = "MATCHING";
+	const UNMATCHED = "UNMATCHED";
+	const IN_PROGRESS = "IN_PROGRESS";
+	const ABANDONED = "ABANDONED";
+	const COMPLETE = "COMPLETE";
 
-	var PING_INTERVAL = 500; // ms
+	const WAITING = "Waiting for your partner to answer...";
+	const PING_INTERVAL = 500; // ms
 
 	var app = angular.module('samesies', ['ionic', 'directives', 'filters']);
 	
@@ -30,13 +31,22 @@
 		//       Cloud Endpoint
 		//----------------------------
 
-		$window.init= function() {
-			$scope.$apply($scope.loadLib);
-		};
+		var API;
 
-		$scope.loadLib = function() {
+		$window.init = function() {
 			gapi.client.load('samesies', 'v1', function() {
-				$scope.isBackendReady = true;
+				// initialize API variable
+				API = gapi.client.samesies.samesiesApi;
+				// initialize question DB
+				API.getAllQuestions().then(function(resp) {
+					$scope.questions = resp.result.items;
+				});
+				API.getCategories().then(function(resp) {
+					$scope.categories = resp.result.items;
+				});
+				$scope.selected = {
+					cat: "All"
+				};
 			}, 'http://localhost:8080/_ah/api');
 			// http://localhost:8080/_ah/api
 			// https://samesies-app.appspot.com/_ah/api
@@ -46,33 +56,21 @@
 		//           Data
 		//----------------------------
 
-		var loadQuestions = function() {
-			gapi.client.samesies.samesiesApi.getAllQuestions().then(function(resp){
-				$scope.questions = resp.result.items;
-			});
-			gapi.client.samesies.samesiesApi.getCategories().then(function(resp){
-				$scope.categories = resp.result.items;
-			});
-			$scope.selected = {
-				cat: "All"
-			};
-		};
-
-		var loadUserData = function(user) {
-			gapi.client.samesies.samesiesApi.getFriends({id: user.id}).then(function(resp){
-				$scope.friends = resp.result.items;
-			});
-			// TODO: load connections here
-			// TODO: load communities here
-			$scope.connections = [];
-		};
-
 		var getUser = function(uid) {
-			return gapi.client.samesies.samesiesApi.getUser({id: uid});
+			for (var i=0; i<$scope.friends; i++) {
+				if ($scope.friends[i].id === uid) {
+					return $scope.friends[i];
+				}
+			}
+			return API.getUser({id: uid});
 		};
 
 		var getEpisode = function(eid) {
-			return gapi.client.samesies.samesiesApi.getEpisode({id: eid});
+			return API.getEpisode({id: eid});
+		};
+
+		var getMessages = function (cid, after) {
+			return API.getMessages({chatId: cid, after: after});
 		};
 
 		//----------------------------
@@ -129,10 +127,12 @@
 
 		$scope.$on('$destroy', function() {
 			// Cleanup the modals when we're done with them!
+			$scope.go(); // interrupts things and abandons episode
 			$scope.menuPopup.remove();
 			$scope.helpPopup.remove();
 			$scope.profilePopup.remove();
 			$scope.categoryPopup.remove();
+
 		});
 
 		//----------------------------
@@ -140,10 +140,13 @@
 		//----------------------------
 
 		$scope.login = function(user) {
-			loadQuestions();
-			loadUserData(user);
 			$scope.loginData = null;
 			$scope.user = user;
+			$scope.friends = [];
+			$scope.getFriends();
+			$scope.connections = [];
+			$scope.getCxns();
+			// TODO: load communities here
 			$scope.loadCommunity(user.location);
 			$scope.close('login');
 			$scope.go('menu');
@@ -158,7 +161,7 @@
 				$scope.loginData.error = "";
 			}
 			if (!$scope.loginData.error) {
-				gapi.client.samesies.samesiesApi.login($scope.loginData).then(function (resp) {
+				API.login($scope.loginData).then(function (resp) {
 					$scope.login(resp.result);
 				}, function (reason) { // error
 					if (reason.status === 404) {
@@ -166,9 +169,8 @@
 					} else if (reason.status === 400) {
 						$scope.loginData.error = 'Invalid password';
 					} else {
-						$scope.loginData.error = 'Server is down'
+						$scope.loginData.error = 'Server error'
 					}
-					$scope.$apply();
 				});
 			}
 		};
@@ -185,10 +187,10 @@
 			} else {
 				$scope.loginData.error = "";
 			}
-			if (!this.loginData.error) {
-				gapi.client.samesies.samesiesApi.createUser($scope.loginData).then(function(resp){
+			if (!$scope.loginData.error) {
+				API.createUser($scope.loginData).then(function(resp){
 					$scope.login(resp.result);
-				}, function () { // error
+				}, function () {
 					$ionicPopup.alert({
 						title: 'Invalid Email',
 						template: 'That email is already being used.',
@@ -196,7 +198,6 @@
 						okType: 'button-royal'
 					});
 					$scope.loginData.error = '';
-					$scope.$apply();
 				});
 			}
 		};
@@ -235,10 +236,10 @@
 		$scope.quickLogin = function() {
 			$scope.loginData = {
 				error: false,
-				email: "ari@samesies.com",
-				password: "samesies123"
+				email: "luke@samesies.com",
+				password: "samesies456"
 			};
-			this.doLogin();
+			$scope.doLogin();
 		};
 		
 		//----------------------------
@@ -253,11 +254,18 @@
 		$scope.go = function(newState) {
 			// kill everything that may have been going
 			interruptAll();
-			if ($scope.episode && $scope.episode.id) {
-				gapi.client.samesies.samesiesApi.endEpisode({id: $scope.episode.id}).then();
+			if ($scope.episode) {
+				if ($scope.episode.isPersistent) {
+					if ($scope.episode.status === IN_PROGRESS) {
+						$scope.episode.data = $scope.episodeData;
+						$scope.connections.push($scope.episode);
+					}
+				} else {
+					$scope.endEpisode($scope.episode);
+				}
 				$scope.episode = null;
-				$scope.episodeData = null;
 			}
+			$scope.chat = null;
 			$scope.search = [''];
 			// go wherever
 			if (newState === 'menu') {
@@ -293,10 +301,22 @@
 		//      Episode Control
 		//----------------------------
 
+		const matchingData = {
+			state: 'matching',
+			stage: 0
+		};
+
+		var getPartnerId = function(episode) {
+			if (episode.uid1 === $scope.user.id) {
+				return episode.uid2;
+			} else {
+				return episode.uid1;
+			}
+		};
+
 		var epGo = function(state) {
 			interruptAll();
 			$scope.episodeData.state = state;
-			$scope.$apply();
 		};
 
 		$scope.epIs = function(state) {
@@ -305,20 +325,14 @@
 
 		$scope.find = function() {
 			// episodeData holds local references that do not get directly transmitted
+			$scope.episodeData = matchingData;
 			$scope.go('episode');
-			$scope.episodeData = {
-				state: 'matching',
-				stage: 0,
-				questions: [],
-				myAnswer: '',
-				theirAnswer: ''
-			};
-			gapi.client.samesies.samesiesApi.findEpisode({myId: $scope.user.id}).then(function(resp){
+			API.findEpisode({myId: $scope.user.id}).then(function(resp){
 				// if it returns matching, I am the first user
 				// if it returns otherwise, I am the second user
-				$scope.episodeData.is1 = (resp.result.status === MATCHING);
-				if ($scope.episodeData.is1) {
+				if (resp.result.status === MATCHING) {
 					$scope.episode = resp.result;
+					$scope.episodeData = matchingData;
 					interval(function() {
 						getEpisode($scope.episode.id).then(function(resp) {
 							// second condition prevents multiple calls
@@ -333,33 +347,87 @@
 			});
 		};
 
-		var loadEpisode = function(data) {
-			$scope.episode = data;
-			gapi.client.samesies.samesiesApi.getQuestions({ids: data.qids}).then(function(resp){
-				$scope.episodeData.questions = resp.result.items;
-				$scope.episodeData.stage = 1;
-				epGo('entry');
-			});
+		var getEpisodeData = function(episode) {
+			if (episode.data) {
+				return episode.data;
+			} else {
+				var is1 = episode.uid1 === $scope.user.id;
+				var myAnswers, theirAnswers;
+				if (is1) {
+					myAnswers = episode.answers1;
+					theirAnswers = episode.answers2;
+				} else {
+					theirAnswers = episode.answers1;
+					myAnswers = episode.answers2;
+				}
+				var state, stage, myAnswer, theirAnswer;
+				if (!myAnswers) {
+					stage = 0;
+				} else {
+					stage = myAnswers.length;
+				}
+				if (stage === 0) {
+					state = 'entry';
+					stage = 1;
+					myAnswer = '';
+				} else {
+					myAnswer = myAnswers[stage - 1];
+					if (!theirAnswers || theirAnswers.length < stage) {
+						state = 'waiting';
+						theirAnswer = WAITING;
+					} else {
+						state = 'continue';
+						theirAnswer = theirAnswers[stage - 1];
+					}
+				}
+				return {
+					state: state,
+					stage: stage,
+					is1: is1,
+					myAnswer: myAnswer,
+					theirAnswer: theirAnswer
+				}
+			}
 		};
 
-		// TODO: make this work right
-		$scope.play = function(episode) {
-			this.episode = episode;
-			this.go(episode.status);
+		var loadEpisode = function(episode) {
+			$scope.episode = episode;
+			$scope.episodeData = getEpisodeData(episode);
+			if (!$scope.episodeData.partner) {
+				getUser(getPartnerId(episode)).then(function (resp) {
+					$scope.episodeData.partner = $scope.displayName(resp.result);
+				});
+			}
+			if ($scope.episodeData.questions) {
+				epGo($scope.episodeData.state);
+				if ($scope.epIs('waiting')) {
+					retrieve();
+				}
+			} else {
+				API.getQuestions({ids: episode.qids}).then(function (resp) {
+					$scope.episodeData.questions = resp.result.items;
+					epGo($scope.episodeData.state);
+					if ($scope.epIs('waiting')) {
+						retrieve();
+					}
+				});
+			}
 		};
 
 		$scope.matchText = function() {
-			if (this.epIs('matching')) {
+			if ($scope.epIs('matching')) {
 				return "Matching...";
 			} else {
-				return "Matched!";
+				return "Matched!"
 			}
 		};
 
 		$scope.next = function() {
 			$scope.episodeData.myAnswer = '';
 			if ($scope.episodeData.stage == 10) {
-				getUser(getPartnerId(this.episode)).then(function(resp) {
+				$scope.endEpisode($scope.episode);
+				$scope.episode.status = COMPLETE;
+				getUser(getPartnerId($scope.episode)).then(function(resp) {
 					$scope.message(resp.result);
 				});
 			} else {
@@ -373,32 +441,20 @@
 		};
 
 		$scope.answer = function() {
-			$scope.episodeData.theirAnswer = "Waiting for your partner to answer...";
+			$scope.episodeData.theirAnswer = WAITING;
 			epGo('waiting');
-			gapi.client.samesies.samesiesApi.answerEpisode({
+			API.answerEpisode({
 				id: $scope.episode.id,
 				myId: $scope.user.id,
 				answer: $scope.episodeData.myAnswer
 			}).then(function(resp) {
-				$scope.error = resp.result;
-				if (resp.result.status === ABANDONED) {
+				$scope.episode = resp.result;
+				if ($scope.episode.status === ABANDONED) {
 					abandonMessage();
 				} else {
 					getResponse(resp.result);
 					if ($scope.epIs('waiting')) {
-						interval(function () {
-							getEpisode($scope.episode.id).then(function (resp) {
-								if ($scope.epIs('waiting')) {
-									$scope.error = resp.result;
-									if (resp.result.status === ABANDONED) {
-										interruptAll();
-										abandonMessage();
-									} else {
-										getResponse(resp.result);
-									}
-								}
-							});
-						}, PING_INTERVAL);
+						retrieve();
 					}
 				}
 			}, function(reason) {
@@ -406,16 +462,17 @@
 			});
 		};
 
-		var getResponse = function(data) {
+		var getResponse = function(episode) {
 			var index = $scope.episodeData.stage - 1;
-			var answer;
+			var answer, answers;
 			if ($scope.episodeData.is1) {
-				// make sure it has the list and that the list is long enough
-				if (data.answers2 && data.answers2.length > index) {
-					answer = data.answers2[index];
-				}
-			} else if (data.answers1 && data.answers1.length > index) {
-				answer = data.answers1[index];
+				answers = episode.answers2;
+			} else {
+				answers = episode.answers1;
+			}
+			// make sure it has the list and that the list is long enough
+			if (answers && answers.length > index) {
+				answer = answers[index];
 			}
 			if (answer != null) { // they also answered
 				$scope.episodeData.theirAnswer = answer;
@@ -440,12 +497,23 @@
 			})
 		};
 
-		var getPartnerId = function(episode) {
-			if (episode.uid1 === $scope.user.id) {
-				return episode.uid2;
-			} else {
-				return episode.uid1;
-			}
+		var retrieve = function() {
+			interval(function () {
+				getEpisode($scope.episode.id).then(function (resp) {
+					if ($scope.epIs('waiting')) {
+						if (resp.result.status === ABANDONED) {
+							interruptAll();
+							abandonMessage();
+						} else {
+							getResponse(resp.result);
+						}
+					}
+				});
+			}, PING_INTERVAL);
+		};
+
+		$scope.endEpisode = function(episode) {
+			API.endEpisode({id: episode.id}).then();
 		};
 
 		//----------------------------
@@ -455,17 +523,14 @@
 		$scope.message = function(user) {
 			$scope.close('profile');
 			$scope.chat = null;
-			gapi.client.samesies.samesiesApi.startChat({
+			API.startChat({
 				myId: $scope.user.id,
 				theirId: user.id
 			}).then(function(resp) {
 				$scope.chat = resp.result;
 				$scope.chat.recipient = $scope.displayName(user);
 				$scope.chat.buffer = '';
-				gapi.client.samesies.samesiesApi.getMessages({
-					chatId: $scope.chat.id,
-					after: $scope.chat.startDate
-				}).then(function (resp) {
+				getMessages($scope.chat.id, $scope.chat.startDate).then(function (resp) {
 					$scope.chat.history = resp.result.items;
 					$ionicScrollDelegate.scrollBottom();
 				});
@@ -487,7 +552,7 @@
 					senderId: $scope.user.id
 				});
 				$ionicScrollDelegate.scrollBottom();
-				gapi.client.samesies.samesiesApi.sendMessage({
+				API.sendMessage({
 					chatId: $scope.chat.id,
 					myId: $scope.user.id,
 					message: $scope.chat.buffer
@@ -503,14 +568,10 @@
 		};
 
 		$scope.checkChat = function() {
-			gapi.client.samesies.samesiesApi.getMessages({
-				chatId: $scope.chat.id,
-				after: $scope.chat.lastModified
-			}).then(function (resp) {
+			getMessages($scope.chat.id, $scope.chat.lastModified).then(function (resp) {
 				if (resp.result.items.length > 0) {
 					$scope.chat.history = $scope.chat.history.concat(resp.result.items);
-					var last = $scope.chat.history[$scope.chat.history.length - 1];
-					$scope.chat.lastModified = last.sentDate;
+					$scope.chat.lastModified = $scope.chat.history[$scope.chat.history.length - 1].sentDate;
 					$ionicScrollDelegate.scrollBottom();
 					document.getElementById("chatInput").focus();
 				}
@@ -638,7 +699,7 @@
 
 		$scope.saveProfile = function() {
 			if ($scope.user.isChanged) {
-				gapi.client.samesies.samesiesApi.updateUser($scope.user).then(function (resp) {
+				API.updateUser($scope.user).then(function (resp) {
 					$ionicPopup.alert({
 						title: "Saved",
 						template: "Your profile has been saved!",
@@ -683,33 +744,79 @@
 			return false;
 		};
 
-		$scope.challenge = function(user) {
-			this.close('profile');
-			// TODO: finish this method
+		$scope.connect = function(user) {
+			// this method sends a connection request to user
+			API.connectEpisode({
+				myId: $scope.user.id,
+				theirId: user.id
+			}).then(function(resp) {
+				$scope.connections.push(resp.result);
+			});
+			$ionicPopup.alert({
+				title: 'Connection Sent',
+				template: 'You have sent a connection to ' + $scope.displayName(user) + '.',
+				okText: 'Okay',
+				okType: 'button-royal'
+			});
+		};
+
+		$scope.getFriends = function() {
+			API.getFriends({id: $scope.user.id}).then(function (resp) {
+				$scope.friends = resp.result.items;
+				$scope.$broadcast('scroll.refreshComplete');
+			});
+		};
+
+		$scope.loadCommunity = function(location) {
+			API.getCommunity({location: location}).then(function(resp) {
+				$scope.community = resp.result;
+			});
 		};
 
 		//----------------------------
 		//    Connection Functions
 		//----------------------------
 
-		$scope.loadCommunity = function(location) {
-			gapi.client.samesies.samesiesApi.getCommunity({location: location}).then(function(resp){
-				$scope.community = resp.result;
-			});
+		$scope.goCxns = function() {
+			$scope.go('connections');
+			$scope.getCxns();
 		};
 
-		$scope.goConnections = function() {
-			// TODO: these need to be retrieved from server
-			if (this.connections && this.connections.length > 0) {
-				this.go('connections');
-			} else {
-				$ionicPopup.alert({
-					title: 'No Connections',
-					template: 'You have no pending connections.',
-					okText: 'Okay',
-					okType: 'button-royal'
-				});
-			}
+		$scope.acceptCxn = function(cxn) {
+			cxn.status = IN_PROGRESS;
+			$scope.playCxn(cxn);
+			API.acceptEpisode({id: cxn.id}).then();
+		};
+
+		$scope.playCxn = function(cxn) {
+			var index = $scope.connections.indexOf(cxn);
+			$scope.connections.splice(index, 1);
+			$scope.go('episode');
+			loadEpisode(cxn);
+		};
+
+		$scope.getCxns = function() {
+			API.getConnections({id: $scope.user.id}).then(function(resp) {
+				const cxns = resp.result.items;
+				if (cxns.length === 0) {
+					$scope.connections = [];
+				} else {
+					var uids = [];
+					for (var i = 0; i < cxns.length; i++) {
+						cxns[i].data = getEpisodeData(cxns[i]);
+						uids.push(getPartnerId(cxns[i]));
+					}
+					API.getUsers({ids: uids}).then(function (resp) {
+						for (var j = 0; j < cxns.length; j++) {
+							cxns[j].data.partner = $scope.displayName(resp.result.items[j]);
+						}
+						$scope.connections = cxns;
+						$scope.$broadcast('scroll.refreshComplete');
+					}, function(reason) {
+						$scope.error = reason;
+					});
+				}
+			});
 		};
 
 		//----------------------------

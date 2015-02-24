@@ -43,4 +43,44 @@
         };
     });
 
+    app.filter('requestConnections', function () {
+        return function (items) {
+            var filtered = [];
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                if (item.status === 'MATCHING' && !item.data.is1) {
+                    filtered.push(item);
+                }
+            }
+            return filtered;
+        };
+    });
+
+    app.filter('yourTurnConnections', function () {
+        return function (items) {
+            var filtered = [];
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                if (item.status === 'IN_PROGRESS' && item.data.state != 'waiting') {
+                    filtered.push(item);
+                }
+            }
+            return filtered;
+        };
+    });
+
+    app.filter('waitingConnections', function () {
+        return function (items) {
+            var filtered = [];
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                if (item.status === 'MATCHING' && item.data.is1
+                    || item.status === 'IN_PROGRESS' && item.data.state === 'waiting') {
+                    filtered.push(item);
+                }
+            }
+            return filtered;
+        };
+    });
+
 })();

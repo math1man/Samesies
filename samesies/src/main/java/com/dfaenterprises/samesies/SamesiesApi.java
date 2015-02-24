@@ -10,10 +10,7 @@ import com.google.api.server.spi.response.NotFoundException;
 import com.google.appengine.api.datastore.*;
 
 import javax.inject.Named;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Ari Weiland
@@ -23,8 +20,7 @@ import java.util.List;
         version = "v1",
         scopes = {Constants.EMAIL_SCOPE},
         clientIds = {Constants.WEB_CLIENT_ID, Constants.ANDROID_CLIENT_ID, Constants.IOS_CLIENT_ID},
-        audiences = {Constants.ANDROID_AUDIENCE}
-)
+        audiences = {Constants.ANDROID_AUDIENCE})
 public class SamesiesApi {
 
     public void init() throws ServiceException {
@@ -37,10 +33,10 @@ public class SamesiesApi {
             // initialize users
             User user1 = new User("ari@samesies.com", "samesies123", "Saint Paul, MN", "Ajawa",
                     "Ari Weiland", 20, "Male", "I am a junior Physics and Computer Science major at Macalester College.");
-            Utils.put(ds, user1);
+            EntityUtils.put(ds, user1);
             User user2 = new User("luke@samesies.com", "samesies456", "Saint Paul, MN", "KoboldForeman",
                     "Luke Gehman", 21, "Male", "I am a junior Biology major at Macalester College. I play a lot of Dota 2.");
-            Utils.put(ds, user2);
+            EntityUtils.put(ds, user2);
 
             // initialize friends
             Entity friendship = new Entity("Friend");
@@ -124,11 +120,11 @@ public class SamesiesApi {
             };
             for (Question q : questions) {
                 q.setCategory("Random");
-                Utils.put(ds, q);
+                EntityUtils.put(ds, q);
             }
             for (Question q : questionsBad) {
                 q.setCategory("Bad");
-                Utils.put(ds, q);
+                EntityUtils.put(ds, q);
             }
 
             // initialize question categories
@@ -138,8 +134,12 @@ public class SamesiesApi {
         }
     }
 
+    //----------------------------
+    //        User Calls
+    //----------------------------
+
     @ApiMethod(name = "samesiesApi.login",
-            path = "users/login",
+            path = "user/login",
             httpMethod = ApiMethod.HttpMethod.POST)
     public User login(User user) throws ServiceException {
         DatastoreService ds = getDS();
@@ -183,7 +183,7 @@ public class SamesiesApi {
                 newUser.setDefaultAlias();
             }
             newUser.setBlankQuestions();
-            Utils.put(ds, newUser);
+            EntityUtils.put(ds, newUser);
             return newUser;
         } else {
             throw new ForbiddenException("Email already in use");
@@ -191,14 +191,31 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.getUser",
-            path = "users/{id}",
+            path = "user/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public User getUser(@Named("id") long uid) throws ServiceException {
         return getUserById(getDS(), uid, User.STRANGER);
     }
 
-    @ApiMethod(name = "samesiesApi.updateUser",
+    @ApiMethod(name = "samesiesApi.getUsers",
             path = "users",
+            httpMethod = ApiMethod.HttpMethod.GET)
+    public List<User> getUsers(@Named("ids") long[] uids) throws ServiceException {
+        List<Key> keys = new ArrayList<>();
+        for (long uid : uids) {
+            keys.add(KeyFactory.createKey("User", uid));
+        }
+        Map<Key, Entity> map = getDS().get(keys);
+        List<User> users = new ArrayList<>();
+        for (Key key : keys) {
+            // TODO: deal with friends' connections
+            users.add(new User(map.get(key), User.STRANGER));
+        }
+        return users;
+    }
+
+    @ApiMethod(name = "samesiesApi.updateUser",
+            path = "user",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void updateUser(User user) throws ServiceException {
         DatastoreService ds = getDS();
@@ -206,20 +223,21 @@ public class SamesiesApi {
             throw new BadRequestException("User ID not specified");
         }
         if (contains(ds, user)) {
-            Utils.put(ds, user);
+            EntityUtils.put(ds, user);
         } else {
             throw new NotFoundException("User not found");
         }
     }
 
     @ApiMethod(name = "samesiesApi.getFriends",
-            path = "users/friends/{id}",
+            path = "user/friends/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<User> getFriends(@Named("id") long uid) throws ServiceException {
         DatastoreService ds = getDS();
 
-        Query query = new Query("Friend").setFilter(Utils.makeDoubleFilter(Query.CompositeFilterOperator.OR,
-                "uid1", Query.FilterOperator.EQUAL, uid, "uid2", Query.FilterOperator.EQUAL, uid));
+        Query query = new Query("Friend").setFilter(Query.CompositeFilterOperator.or(
+                new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, uid),
+                new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, uid)));
         PreparedQuery pq = ds.prepare(query);
         List<User> users = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
@@ -233,6 +251,10 @@ public class SamesiesApi {
         }
         return users;
     }
+
+    //----------------------------
+    //      Community Calls
+    //----------------------------
 
     @ApiMethod(name = "samesiesApi.getCommunity",
             path = "communities/{location}",
@@ -266,6 +288,10 @@ public class SamesiesApi {
         }
         return questions;
     }
+
+    //----------------------------
+    //       Question Calls
+    //----------------------------
 
     @ApiMethod(name = "samesiesApi.getQuestion",
             path = "questions/{id}",
@@ -301,6 +327,10 @@ public class SamesiesApi {
         return categories;
     }
 
+    //----------------------------
+    //       Episode Calls
+    //----------------------------
+
     /**
      * Finds a new random episode.
      * If a currently matching episode matches with the user, matches the episode and returns it.
@@ -315,10 +345,10 @@ public class SamesiesApi {
     public Episode findEpisode(@Named("myId") long myUid) throws ServiceException {
         DatastoreService ds = getDS();
 
-        Query query = new Query("Episode").setFilter(Utils.makeDoubleFilter(Query.CompositeFilterOperator.AND,
-                        "status", Query.FilterOperator.EQUAL, Episode.Status.MATCHING.name(),
-                        "isPersistent", Query.FilterOperator.EQUAL, false)
-                ).addSort("startDate", Query.SortDirection.ASCENDING);
+        Query query = new Query("Episode").setFilter(Query.CompositeFilterOperator.and(
+                        new Query.FilterPredicate("status", Query.FilterOperator.EQUAL, Episode.Status.MATCHING.name()),
+                        new Query.FilterPredicate("isPersistent", Query.FilterOperator.EQUAL, false)))
+                .addSort("startDate", Query.SortDirection.ASCENDING);
         PreparedQuery pq = ds.prepare(query);
 
         Iterator<Entity> iter = pq.asIterator();
@@ -337,40 +367,39 @@ public class SamesiesApi {
         } else {
             episode.setStatus(Episode.Status.IN_PROGRESS);
             episode.setUid2(myUid);
-            // get set of questions
-            Query qQuery = new Query("Question").setFilter(new Query.FilterPredicate(
-                    "category", Query.FilterOperator.EQUAL, "Random")).setKeysOnly();
-            PreparedQuery qpq = ds.prepare(qQuery);
-            int max = qpq.countEntities(FetchOptions.Builder.withDefaults());
-            int[] a = new int[max];
-            for (int i=0; i<max; ++i) {
-                a[i] = i;
-            }
-            int top = 0;
-            while (top < 10) {
-                int swap = (int) (Math.random() * (max - top) + top);
-                int tmp = a[swap];
-                a[swap] = a[top];
-                a[top] = tmp;
-                top++;
-            }
-            List<Entity> keys = qpq.asList(FetchOptions.Builder.withDefaults());
-            List<Long> questions = new ArrayList<>();
-            for (int i=0; i<10; i++) {
-                questions.add(keys.get(a[i]).getKey().getId());
-            }
-            episode.setQids(questions);
+            episode.setQids(getQids(ds));
         }
-        Utils.put(ds, episode);
+        EntityUtils.put(ds, episode);
         return episode;
+    }
+
+    @ApiMethod(name = "samesiesApi.connectEpisode",
+            path = "episode/connect/{myId}/{theirId}",
+            httpMethod = ApiMethod.HttpMethod.POST)
+    public Episode connectEpisode(@Named("myId") long myUid, @Named("theirId") long theirUid) throws ServiceException {
+        DatastoreService ds = getDS();
+        // TODO: handle categories
+        Episode episode = new Episode(myUid, theirUid);
+        episode.setQids(getQids(ds));
+        EntityUtils.put(ds, episode);
+        return episode;
+    }
+
+    @ApiMethod(name = "samesiesApi.acceptEpisode",
+            path = "episode/accept/{id}",
+            httpMethod = ApiMethod.HttpMethod.PUT)
+    public void acceptEpisode(@Named("id") long eid) throws ServiceException {
+        DatastoreService ds = getDS();
+        Episode episode = getEpisode(ds, eid);
+        episode.setStatus(Episode.Status.IN_PROGRESS);
+        EntityUtils.put(ds, episode);
     }
 
     @ApiMethod(name = "samesiesApi.getEpisode",
             path = "episode/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public Episode getEpisode(@Named("id") long eid) throws ServiceException {
-        DatastoreService ds = getDS();
-        return getEpisode(ds, eid);
+        return getEpisode(getDS(), eid);
     }
 
     @ApiMethod(name = "samesiesApi.answerEpisode",
@@ -386,7 +415,7 @@ public class SamesiesApi {
         }
         answers.add(answer);
         episode.setAnswers(is1, answers);
-        Utils.put(ds, episode);
+        EntityUtils.put(ds, episode);
         return episode;
     }
 
@@ -403,8 +432,36 @@ public class SamesiesApi {
         } else {
             episode.setStatus(Episode.Status.ABANDONED);
         }
-        Utils.put(ds, episode);
+        EntityUtils.put(ds, episode);
     }
+
+    @ApiMethod(name = "samesiesApi.getConnections",
+            path = "connections/{id}",
+            httpMethod = ApiMethod.HttpMethod.GET)
+    public List<Episode> getConnections(@Named("id") long uid) throws ServiceException {
+        DatastoreService ds = getDS();
+
+        Query query = new Query("Episode").setFilter(Query.CompositeFilterOperator.and(
+                Query.CompositeFilterOperator.or(
+                        new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, uid),
+                        new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, uid)),
+                new Query.FilterPredicate("isPersistent", Query.FilterOperator.EQUAL, true)))
+                .addSort("startDate", Query.SortDirection.ASCENDING); // TODO: maybe sort these differently?
+        PreparedQuery pq = ds.prepare(query);
+
+        List<Episode> connections = new ArrayList<>();
+        for (Entity e : pq.asIterable()) {
+            Episode episode = new Episode(e);
+            if (episode.getStatus() == Episode.Status.MATCHING || episode.getStatus() == Episode.Status.IN_PROGRESS) {
+                connections.add(new Episode(e));
+            }
+        }
+        return connections;
+    }
+
+    //----------------------------
+    //        Chat Calls
+    //----------------------------
 
     @ApiMethod(name = "samesiesApi.startChat",
             path = "chat/{myId}/{theirId}",
@@ -415,7 +472,7 @@ public class SamesiesApi {
         Chat chat = getChat(ds, uids); // make sure a chat between these users doesn't already exist
         if (chat == null) {
             chat = new Chat(uids[0], uids[1]);
-            Utils.put(ds, chat);
+            EntityUtils.put(ds, chat);
             return chat;
         } else {
             return chat;
@@ -436,10 +493,10 @@ public class SamesiesApi {
         DatastoreService ds = getDS();
         Chat chat = getChat(ds, cid);
         chat.modify();
-        Utils.put(ds, chat);
+        EntityUtils.put(ds, chat);
         // TODO: maybe try to include a check to stop double-sending???
         Message m = new Message(cid, myUid, message);
-        Utils.put(ds, m);
+        EntityUtils.put(ds, m);
         return m;
     }
 
@@ -448,8 +505,9 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Message> getMessages(@Named("chatId") long cid, @Named("after") Date after) throws ServiceException {
         DatastoreService ds = getDS();
-        Query query = new Query("Message").setFilter(Utils.makeDoubleFilter(Query.CompositeFilterOperator.AND,
-                "chatId", Query.FilterOperator.EQUAL, cid, "sentDate", Query.FilterOperator.GREATER_THAN, after))
+        Query query = new Query("Message").setFilter(Query.CompositeFilterOperator.and(
+                new Query.FilterPredicate("chatId", Query.FilterOperator.EQUAL, cid),
+                new Query.FilterPredicate("sentDate", Query.FilterOperator.GREATER_THAN, after)))
                 .addSort("sentDate", Query.SortDirection.ASCENDING);
         PreparedQuery pq = ds.prepare(query);
         List<Message> messages = new ArrayList<>();
@@ -458,6 +516,10 @@ public class SamesiesApi {
         }
         return messages;
     }
+
+    //----------------------------
+    //   Static Helper Methods
+    //----------------------------
 
     private static DatastoreService getDS() {
         return DatastoreServiceFactory.getDatastoreService();
@@ -516,6 +578,31 @@ public class SamesiesApi {
         }
     }
 
+    private static List<Long> getQids(DatastoreService ds) {
+        Query qQuery = new Query("Question").setFilter(new Query.FilterPredicate(
+                "category", Query.FilterOperator.EQUAL, "Random")).setKeysOnly();
+        PreparedQuery qpq = ds.prepare(qQuery);
+        int max = qpq.countEntities(FetchOptions.Builder.withDefaults());
+        int[] a = new int[max];
+        for (int i=0; i<max; ++i) {
+            a[i] = i;
+        }
+        int top = 0;
+        while (top < 10) {
+            int swap = (int) (Math.random() * (max - top) + top);
+            int tmp = a[swap];
+            a[swap] = a[top];
+            a[top] = tmp;
+            top++;
+        }
+        List<Entity> keys = qpq.asList(FetchOptions.Builder.withDefaults());
+        List<Long> questions = new ArrayList<>();
+        for (int i=0; i<10; i++) {
+            questions.add(keys.get(a[i]).getKey().getId());
+        }
+        return questions;
+    }
+
     private static Episode getEpisode(DatastoreService ds, long eid) throws NotFoundException {
         try {
             return new Episode(ds.get(KeyFactory.createKey("Episode", eid)));
@@ -533,8 +620,9 @@ public class SamesiesApi {
     }
 
     private static Chat getChat(DatastoreService ds, long[] uids) {
-        Query query = new Query("Chat").setFilter(Utils.makeDoubleFilter(Query.CompositeFilterOperator.AND,
-                "uid1", Query.FilterOperator.EQUAL, uids[0], "uid2", Query.FilterOperator.EQUAL, uids[1]));
+        Query query = new Query("Chat").setFilter(Query.CompositeFilterOperator.and(
+                new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, uids[0]),
+                new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, uids[1])));
         PreparedQuery pq = ds.prepare(query);
         Entity e = pq.asSingleEntity();
         if (e == null) {
