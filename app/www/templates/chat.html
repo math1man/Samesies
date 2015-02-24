@@ -1,5 +1,5 @@
 <ion-content ng-show="is('chat')">
-	<div class="chat" ng-repeat="message in chat.history track by $index">
+	<div class="chat" ng-repeat="message in chat.history track by $index | orderBy:'sentDate'">
 		<div class="item item-avatar-left item-text-wrap" ng-show="isYou(message)">
 			<img src="img/lone_icon.png">
 			{{message.message}}
@@ -14,10 +14,10 @@
 </ion-content>
 <ion-footer-bar class="bar-stable" ng-show="is('chat')">
 	<label class="item-input-wrapper">
-		<input id="chatInput" type="text" ng-model="chat.buffer" ng-keypress="$event.keyCode === 13 && sendChat()"
+		<input id="chatInput" type="text" ng-model="chat.buffer" ng-keypress="$event.keyCode === 13 && sendChat(0)"
 			   placeholder="Send to {{chat.recipient}}" autofocus/>
 	</label>
-	<button class="button button-small button-royal" ng-click="sendChat()">
+	<button class="button button-small button-royal" ng-click="sendChat(1)">
 		Send
 	</button>
 </ion-footer-bar>

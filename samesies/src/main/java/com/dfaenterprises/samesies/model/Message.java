@@ -14,6 +14,7 @@ public class Message implements Storable {
     private Long senderId;
     private String message;
     private Date sentDate;
+    private String random;
 
     public Message() {
     }
@@ -24,13 +25,19 @@ public class Message implements Storable {
         this.senderId = (Long) e.getProperty("senderId");
         this.message = (String) e.getProperty("message");
         this.sentDate = (Date) e.getProperty("sentDate");
+        this.random = (String) e.getProperty("random");
     }
 
     public Message(Long chatId, Long senderId, String message) {
+        this(chatId, senderId, message, randomId());
+    }
+
+    public Message(Long chatId, Long senderId, String message, String random) {
         this.chatId = chatId;
         this.senderId = senderId;
         this.message = message;
         this.sentDate = new Date();
+        this.random = random;
     }
 
     @Override
@@ -75,6 +82,14 @@ public class Message implements Storable {
         this.sentDate = sentDate;
     }
 
+    public String getRandom() {
+        return random;
+    }
+
+    public void setRandom(String random) {
+        this.random = random;
+    }
+
     @Override
     public Entity toEntity() {
         Entity entity;
@@ -87,6 +102,16 @@ public class Message implements Storable {
         entity.setProperty("senderId", senderId);
         entity.setUnindexedProperty("message", message);
         entity.setProperty("sentDate", sentDate);
+        entity.setUnindexedProperty("random", random);
         return entity;
+    }
+
+    public static String randomId() {
+        StringBuilder sb = new StringBuilder();
+        String possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        for (int i=0; i<20; i++) {
+            sb.append(possible.charAt((int) (Math.random() * possible.length())));
+        }
+        return sb.toString();
     }
 }

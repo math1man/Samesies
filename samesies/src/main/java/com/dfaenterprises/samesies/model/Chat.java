@@ -73,10 +73,6 @@ public class Chat implements Storable {
         this.lastModified = lastModified;
     }
 
-    public void modify() {
-        setLastModified(new Date());
-    }
-
     @Override
     public Entity toEntity() {
         Entity entity;

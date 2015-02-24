@@ -320,7 +320,11 @@
 		};
 
 		$scope.epIs = function(state) {
-			return ($scope.episodeData.state === state);
+			if ($scope.episodeData) {
+				return ($scope.episodeData.state === state);
+			} else {
+				return false;
+			}
 		};
 
 		$scope.find = function() {
@@ -437,7 +441,11 @@
 		};
 
 		$scope.getQuestion = function() {
-			return $scope.episodeData.questions[$scope.episodeData.stage - 1].q;
+			if ($scope.episodeData) {
+				return $scope.episodeData.questions[$scope.episodeData.stage - 1].q;
+			} else {
+				return "";
+			}
 		};
 
 		$scope.answer = function() {
@@ -539,27 +547,37 @@
 			});
 			$scope.go('chat');
 			interval(function() {
-				$scope.checkChat();
+				checkChat();
 			}, PING_INTERVAL);
 		};
 
-		// TODO: resolve weird double-message bug
+		var randomId = function() {
+			var output = "";
+			var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+			for(var i=0; i<20; i++) {
+				output += possible.charAt(Math.floor(Math.random() * possible.length));
+			}
+			return output;
+		};
+
 		$scope.sendChat = function() {
 			if ($scope.chat.buffer) {
-				$scope.checkChat();
+				var id = randomId();
 				$scope.chat.history.push({
 					message: $scope.chat.buffer,
-					senderId: $scope.user.id
+					senderId: $scope.user.id,
+					random: id
 				});
 				$ionicScrollDelegate.scrollBottom();
 				API.sendMessage({
 					chatId: $scope.chat.id,
 					myId: $scope.user.id,
-					message: $scope.chat.buffer
+					message: $scope.chat.buffer,
+					random: id
 				}).then(function (resp) {
-					$scope.chat.history.pop();
-					$scope.chat.history.push(resp.result);
-					$scope.chat.lastModified = resp.result.sentDate;
+					var message = resp.result;
+					$scope.chat.history.splice(historyIndexOf(message.random), 1, message);
+					updateLastModified(message.sentDate);
 				}, function(reason) {
 					$scope.error = reason;
 				});
@@ -567,15 +585,35 @@
 			}
 		};
 
-		$scope.checkChat = function() {
+		var historyIndexOf = function(random) {
+			for (var i=$scope.chat.history.length-1; i>=0; i--) {
+				if ($scope.chat.history[i].random === random) {
+					return i;
+				}
+			}
+			return -1;
+		};
+
+		var checkChat = function() {
 			getMessages($scope.chat.id, $scope.chat.lastModified).then(function (resp) {
-				if (resp.result.items.length > 0) {
-					$scope.chat.history = $scope.chat.history.concat(resp.result.items);
-					$scope.chat.lastModified = $scope.chat.history[$scope.chat.history.length - 1].sentDate;
+				var messages = resp.result.items;
+				if (messages.length > 0) {
+					for (var i=0; i<messages.length; i++) {
+						if (historyIndexOf(messages[i].random) === -1) {
+							$scope.chat.history.push(messages[i]);
+							updateLastModified(messages[i].sentDate);
+						}
+					}
 					$ionicScrollDelegate.scrollBottom();
 					document.getElementById("chatInput").focus();
 				}
 			});
+		};
+
+		var updateLastModified = function(modified) {
+			if (new Date(modified) > new Date($scope.chat.lastModified)) {
+				$scope.chat.lastModified = modified;
+			}
 		};
 
 		$scope.isYou = function(message) {
@@ -583,7 +621,11 @@
 		};
 
 		$scope.dispDate = function(message) {
-			return new Date(message.sentDate).toLocaleString();
+			if (message.sentDate) {
+				return new Date(message.sentDate).toLocaleString();
+			} else {
+				return null;
+			}
 		};
 
 		//----------------------------

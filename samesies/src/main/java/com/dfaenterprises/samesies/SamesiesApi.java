@@ -272,8 +272,31 @@ public class SamesiesApi {
         return new Community(location, users);
     }
 
-    @ApiMethod(name = "samesiesApi.getAllQuestions",
+    //----------------------------
+    //       Question Calls
+    //----------------------------
+
+    @ApiMethod(name = "samesiesApi.getQuestion",
+            path = "question/{id}",
+            httpMethod = ApiMethod.HttpMethod.GET)
+    public Question getQuestion(@Named("id") long qid) throws ServiceException {
+        return getQuestion(getDS(), qid);
+    }
+
+    @ApiMethod(name = "samesiesApi.getQuestions",
             path = "questions",
+            httpMethod = ApiMethod.HttpMethod.GET)
+    public List<Question> getQuestions(@Named("ids") long[] qids) throws ServiceException {
+        DatastoreService ds = getDS();
+        List<Question> questions = new ArrayList<>();
+        for (long qid : qids) {
+            questions.add(getQuestion(ds, qid));
+        }
+        return questions;
+    }
+
+    @ApiMethod(name = "samesiesApi.getAllQuestions",
+            path = "questions/all",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Question> getAllQuestions() throws ServiceException {
         DatastoreService ds = getDS();
@@ -285,29 +308,6 @@ public class SamesiesApi {
         List<Question> questions = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
             questions.add(new Question(e));
-        }
-        return questions;
-    }
-
-    //----------------------------
-    //       Question Calls
-    //----------------------------
-
-    @ApiMethod(name = "samesiesApi.getQuestion",
-            path = "questions/{id}",
-            httpMethod = ApiMethod.HttpMethod.GET)
-    public Question getQuestion(@Named("id") long qid) throws ServiceException {
-        return getQuestion(getDS(), qid);
-    }
-
-    @ApiMethod(name = "samesiesApi.getQuestions",
-            path = "questions/list",
-            httpMethod = ApiMethod.HttpMethod.GET)
-    public List<Question> getQuestions(@Named("ids") long[] qids) throws ServiceException {
-        DatastoreService ds = getDS();
-        List<Question> questions = new ArrayList<>();
-        for (long qid : qids) {
-            questions.add(getQuestion(ds, qid));
         }
         return questions;
     }
@@ -489,14 +489,13 @@ public class SamesiesApi {
     @ApiMethod(name = "samesiesApi.sendMessage",
             path = "message/{chatId}/{myId}/{message}",
             httpMethod = ApiMethod.HttpMethod.POST)
-    public Message sendMessage(@Named("chatId") long cid, @Named("myId") long myUid, @Named("message") String message) throws ServiceException {
+    public Message sendMessage(@Named("chatId") long cid, @Named("myId") long myUid,
+                               @Named("message") String message, @Named("random") String random) throws ServiceException {
         DatastoreService ds = getDS();
         Chat chat = getChat(ds, cid);
-        chat.modify();
-        EntityUtils.put(ds, chat);
-        // TODO: maybe try to include a check to stop double-sending???
-        Message m = new Message(cid, myUid, message);
-        EntityUtils.put(ds, m);
+        Message m = new Message(cid, myUid, message, random);
+        chat.setLastModified(m.getSentDate());
+        EntityUtils.put(ds, chat, m);
         return m;
     }
 

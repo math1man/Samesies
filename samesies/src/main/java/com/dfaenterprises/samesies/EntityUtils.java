@@ -36,9 +36,14 @@ public class EntityUtils {
         return list;
     }
 
-    public static void put(DatastoreService ds, Storable s) {
-        Entity entity = s.toEntity();
-        ds.put(entity);
-        s.setId(entity.getKey().getId());
+    public static void put(DatastoreService ds, Storable... ss) {
+        List<Entity> es = new ArrayList<>();
+        for (Storable s : ss) {
+            es.add(s.toEntity());
+        }
+        ds.put(es);
+        for (int i=0; i<es.size(); i++) {
+            ss[i].setId(es.get(i).getKey().getId());
+        }
     }
 }
