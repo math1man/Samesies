@@ -66,7 +66,7 @@
                     API.getUsers(uids).then(function (resp) {
                         var users = resp.result.items;
                         for (var i = 0; i < users.length; i++) {
-                            Data.connections[i].data.partner = Utils.dispName(users[i]);
+                            Data.connections[i].data.partner = users[i];
                         }
                     })
                 }
@@ -251,7 +251,8 @@
                         Utils.interval(function () {
                             API.getEpisode(episode.id).then(function (resp) {
                                 // second condition prevents multiple calls
-                                if (resp.result.status === "IN_PROGRESS" && $scope.is('matching')) {
+                                episode = resp.result;
+                                if (episode.status === "IN_PROGRESS" && $scope.is('matching')) {
                                     loadEpisode(episode);
                                 }
                             });
@@ -267,7 +268,7 @@
             $scope.episodeData = Utils.getData(ep);
             if (!$scope.episodeData.partner) {
                 API.getUser(Utils.getPartnerId(ep)).then(function (resp) {
-                    $scope.episodeData.partner = Utils.dispName(resp.result);
+                    $scope.episodeData.partner = resp.result;
                 });
             }
             if ($scope.episodeData.questions) {
@@ -350,6 +351,14 @@
             }
         };
 
+        $scope.dispName = function() {
+            if ($scope.episodeData && $scope.episodeData.partner) {
+                return Utils.dispName($scope.episodeData.partner);
+            } else {
+                return '';
+            }
+        };
+
         $scope.$on('$ionicView.leave', function() {
             Utils.interruptAll();
             if (episode.isPersistent) {
@@ -399,7 +408,7 @@
 
     });
 
-    app.controller('ConnectionsCtrl', function($scope, $state, Data, API) {
+    app.controller('ConnectionsCtrl', function($scope, $state, Data, API, Utils) {
         $scope.connections = Data.connections;
 
         $scope.accept = function(cxn) {
@@ -417,6 +426,10 @@
             Data.episode = cxn;
             $state.go('play');
         };
+
+        $scope.dispName = function(cxn) {
+            return Utils.dispName(cxn.data.partner);
+        }
     });
 
     app.controller('QuestionsCtrl', function($scope, $ionicPopover, $ionicScrollDelegate, Data) {
@@ -711,6 +724,9 @@
             API.connectEpisode(Data.user.id, $scope.tempUser.id).then(function(resp) {
                 var episode = resp.result;
                 episode.data = Utils.getData(episode);
+                API.getUser(Utils.getPartnerId(episode)).then(function(resp) {
+                    episode.data.partner = resp.result;
+                });
                 Data.connections.push(episode);
             });
             $ionicPopup.alert({
