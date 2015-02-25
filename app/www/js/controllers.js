@@ -18,7 +18,30 @@
                     Data.categories = resp.result.items;
                 });
 
-            }, 'http://localhost:8080/_ah/api');
+            }, 'https://samesies-app.appspot.com/_ah/api');
+            // https://samesies-app.appspot.com/_ah/api
+            // http://localhost:8080/_ah/api
+        };
+
+        $scope.dispName = function(user) {
+            if (!user) {
+                return '';
+            } else if (user.name) {
+                return user.name;
+            } else {
+                return user.alias;
+            }
+        };
+
+        $scope.hasQuestions = function(user) {
+            if (user && user.questions) {
+                for (var i = 0; i < 5; i++) {
+                    if (user.questions[i]) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         };
 
         $scope.back = function() {
@@ -53,23 +76,32 @@
             Data.user = user;
             API.getFriends(user.id).then(function(resp) {
                 Data.friends = resp.result.items;
-            });
-            API.getConnections(user.id).then(function(resp) {
-                Data.connections = resp.result.items;
-                if (Data.connections.length > 0) {
-                    var uids = [];
-                    for (var i = 0; i < Data.connections.length; i++) {
-                        var cxn = Data.connections[i];
-                        Data.connections[i].data = Utils.getData(cxn);
-                        uids.push(Utils.getPartnerId(cxn));
-                    }
-                    API.getUsers(uids).then(function (resp) {
-                        var users = resp.result.items;
-                        for (var i = 0; i < users.length; i++) {
-                            Data.connections[i].data.partner = users[i];
+                // nested so that it can pull from friends
+                API.getConnections(user.id).then(function(resp) {
+                    Data.connections = resp.result.items;
+                    if (Data.connections.length > 0) {
+                        var uids = [];
+                        for (var i = 0; i < Data.connections.length; i++) {
+                            var cxn = Data.connections[i];
+                            Data.connections[i].data = Utils.getData(cxn);
+                            uids.push(Utils.getPartnerId(cxn));
                         }
-                    })
-                }
+                        API.getUsers(uids).then(function (resp) {
+                            var users = resp.result.items;
+                            for (var i = 0; i < users.length; i++) {
+                                Data.connections[i].data.partner = users[i];
+                                // getUsers data is stranger data, so check if they are in friends
+                                var isFriend = false;
+                                for (var j=0; j<Data.friends.length && !isFriend; j++) {
+                                    if (Data.friends[j].id === uids[i]) {
+                                        isFriend = true;
+                                        Data.connections[i].data.partner = Data.friends[j];
+                                    }
+                                }
+                            }
+                        })
+                    }
+                });
             });
             $scope.closeLogin();
         };
@@ -155,8 +187,8 @@
         $scope.quickLogin = function() {
             $scope.loginData = {
                 error: false,
-                email: "luke@samesies.com",
-                password: "samesies456"
+                email: "ari@samesies.com",
+                password: "samesies123"
             };
             $scope.doLogin();
         };
@@ -181,7 +213,6 @@
         };
 
         $scope.getConnectionCount = function() {
-            // TODO: make this work properly
             var count = 0;
             for (var i=0; i<Data.connections.length; i++) {
                 var item = Data.connections[i];
@@ -243,7 +274,8 @@
             if (!episode || !episode.isPersistent) {
                 $scope.episodeData = {
                     state: 'matching',
-                    stage: 0
+                    stage: 0,
+                    partner: null
                 };
                 API.findEpisode(user.id).then(function (resp) {
                     episode = resp.result;
@@ -351,14 +383,6 @@
             }
         };
 
-        $scope.dispName = function() {
-            if ($scope.episodeData && $scope.episodeData.partner) {
-                return Utils.dispName($scope.episodeData.partner);
-            } else {
-                return '';
-            }
-        };
-
         $scope.$on('$ionicView.leave', function() {
             Utils.interruptAll();
             if (episode.isPersistent) {
@@ -373,8 +397,8 @@
         });
 
         if (Data.episode) {
-            // TODO: load episode here
             episode = Data.episode;
+            loadEpisode(episode);
         } else {
             $scope.find();
         }
@@ -393,19 +417,24 @@
         });
     });
 
-    app.controller('FriendsCtrl', function($scope, $state, Data, Utils) {
+    app.controller('FriendsCtrl', function($scope, $state, Data, API) {
         $scope.search = '';
         $scope.friends = Data.friends;
-
-        $scope.dispName = function(friend) {
-            return Utils.dispName(friend);
-        };
 
         $scope.profile = function(friend) {
             Data.tempUser = friend;
             $state.go('profile');
         };
 
+        $scope.$on('$ionicView.beforeEnter', function() {
+            API.getFriends(Data.user.id).then(function(resp) {
+                $scope.friends = resp.result.items;
+            });
+        });
+
+        $scope.$on('$ionicView.leave', function() {
+            Data.friends = $scope.friends;
+        });
     });
 
     app.controller('ConnectionsCtrl', function($scope, $state, Data, API, Utils) {
@@ -427,9 +456,37 @@
             $state.go('play');
         };
 
-        $scope.dispName = function(cxn) {
-            return Utils.dispName(cxn.data.partner);
-        }
+        $scope.$on('$ionicView.beforeEnter', function() {
+            API.getConnections(user.id).then(function(resp) {
+                var connections = resp.result.items;
+                if (connections.length > 0) {
+                    var uids = [];
+                    for (var i = 0; i < connections.length; i++) {
+                        var cxn = connections[i];
+                        connections[i].data = Utils.getData(cxn);
+                        uids.push(Utils.getPartnerId(cxn));
+                    }
+                    API.getUsers(uids).then(function (resp) {
+                        var users = resp.result.items;
+                        for (var i = 0; i < users.length; i++) {
+                            connections[i].data.partner = users[i];
+                            var isFriend = false;
+                            for (var j=0; j<Data.friends.length && !isFriend; j++) {
+                                if (Data.friends[j].id === uids[i]) {
+                                    isFriend = true;
+                                    connections[i].data.partner = Data.friends[j];
+                                }
+                            }
+                        }
+                        $scope.connections = connections;
+                    })
+                }
+            });
+        });
+
+        $scope.$on('$ionicView.leave', function() {
+            Data.connections = $scope.connections;
+        });
     });
 
     app.controller('QuestionsCtrl', function($scope, $ionicPopover, $ionicScrollDelegate, Data) {
@@ -592,19 +649,21 @@
     });
 
     app.controller('ChatCtrl', function($scope, $ionicScrollDelegate, API, Data, Utils) {
-        var user = Data.user;
-        var recipient = Data.tempUser;
         var chat;
-
+        var user = Data.user;
+        $scope.recipient = Data.tempUser;
         $scope.buffer = '';
         $scope.history = [];
 
-        API.startChat(user.id, recipient.id).then(function(resp) {
+        API.startChat(user.id, $scope.recipient.id).then(function(resp) {
             chat = resp.result;
             API.getMessages(chat.id, chat.startDate).then(function (resp) {
-                $scope.history = resp.result.items;
-                $scope.$apply();
-                $ionicScrollDelegate.scrollBottom();
+                if (resp.result.items) {
+                    $scope.history = resp.result.items;
+                    $scope.$apply();
+                    // the scroll delegate is actually the most annoying thing
+                    //$ionicScrollDelegate.scrollBottom();
+                }
                 focusInput();
                 Utils.interval(function() {
                     checkChat();
@@ -613,6 +672,15 @@
         }, function(reason) {
             console.log(reason);
         });
+
+        $scope.showAddFriend = function() {
+            for (var i = 0; i < Data.friends.length; i++) {
+                if (Data.friends[i].id === $scope.recipient.id) {
+                    return false;
+                }
+            }
+            return true;
+        };
 
         var randomId = function() {
             var output = "";
@@ -631,6 +699,7 @@
                     senderId: user.id,
                     random: random
                 });
+                // this one kind of works so it can stay
                 $ionicScrollDelegate.scrollBottom(true);
                 API.sendMessage(chat.id, user.id, $scope.buffer, random).then(function (resp) {
                     addMessage(resp.result);
@@ -645,7 +714,7 @@
         var addMessage = function(message) {
             var index = -1;
             // goes back to front because more likely to find it at back
-            for (var i=$scope.history.length-1; i>=0 && index === -1; i--) {
+            for (var i = $scope.history.length - 1; i >= 0 && index === -1; i--) {
                 if ($scope.history[i].random === message.random) {
                     index = i;
                 }
@@ -664,12 +733,13 @@
         var checkChat = function() {
             API.getMessages(chat.id, chat.lastModified).then(function (resp) {
                 var messages = resp.result.items;
-                if (messages.length > 0) {
+                if (messages && messages.length > 0) {
                     for (var i=0; i<messages.length; i++) {
                         addMessage(messages[i]);
                     }
                     $scope.$apply();
-                    $ionicScrollDelegate.scrollBottom(true);
+                    // this one also sucks
+                    //$ionicScrollDelegate.scrollBottom(true);
                     focusInput();
                 }
             });
@@ -677,10 +747,6 @@
 
         var focusInput = function() {
             document.getElementById("chatInput").focus();
-        };
-
-        $scope.dispName = function() {
-            return Utils.dispName(recipient);
         };
 
         $scope.isMine = function(message) {
@@ -704,14 +770,6 @@
     app.controller('ProfileCtrl', function($scope, $state, $ionicPopup, API, Data, Utils) {
         $scope.tempUser = Data.tempUser;
 
-        $scope.dispName = function() {
-            return Utils.dispName($scope.tempUser);
-        };
-
-        $scope.hasQuestions = function() {
-            return Utils.hasQuestions($scope.tempUser);
-        };
-
         $scope.isMe = function() {
             return Data.user.id === $scope.tempUser.id;
         };
@@ -724,14 +782,12 @@
             API.connectEpisode(Data.user.id, $scope.tempUser.id).then(function(resp) {
                 var episode = resp.result;
                 episode.data = Utils.getData(episode);
-                API.getUser(Utils.getPartnerId(episode)).then(function(resp) {
-                    episode.data.partner = resp.result;
-                });
+                episode.data.partner = $scope.tempUser;
                 Data.connections.push(episode);
             });
             $ionicPopup.alert({
                 title: 'Connection Sent',
-                template: 'You have sent a connection to ' + $scope.dispName() + '.',
+                template: 'You have sent a connection to ' + $scope.dispName($scope.tempUser) + '.',
                 okText: 'Okay',
                 okType: 'button-royal'
             });

@@ -82,21 +82,6 @@
         var promises = [];
 
         return {
-            dispName: function(user) {
-                if (user.name) {
-                    return user.name;
-                } else {
-                    return user.alias;
-                }
-            },
-            hasQuestions: function(user) {
-                for (var i=0; i<5; i++) {
-                    if (user.questions[i]) {
-                        return true;
-                    }
-                }
-                return false;
-            },
             getPartnerId: function(episode) {
                 if (episode.uid1 === Data.user.id) {
                     return episode.uid2;
