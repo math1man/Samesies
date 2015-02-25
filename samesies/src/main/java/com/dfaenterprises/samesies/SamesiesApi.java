@@ -4,6 +4,7 @@ import com.dfaenterprises.samesies.model.*;
 import com.google.api.server.spi.ServiceException;
 import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
+import com.google.api.server.spi.config.Nullable;
 import com.google.api.server.spi.response.BadRequestException;
 import com.google.api.server.spi.response.ForbiddenException;
 import com.google.api.server.spi.response.NotFoundException;
@@ -405,7 +406,8 @@ public class SamesiesApi {
     @ApiMethod(name = "samesiesApi.answerEpisode",
             path = "episode/answer/{id}/{myId}/{answer}",
             httpMethod = ApiMethod.HttpMethod.PUT)
-    public Episode answerEpisode(@Named("id") long eid, @Named("myId") long myUid, @Named("answer") String answer) throws ServiceException {
+    public Episode answerEpisode(@Named("id") long eid, @Named("myId") long myUid,
+                                 @Named("answer") String answer) throws ServiceException {
         DatastoreService ds = getDS();
         Episode episode = getEpisode(ds, eid);
         boolean is1 = (myUid == episode.getUid1());
@@ -489,8 +491,8 @@ public class SamesiesApi {
     @ApiMethod(name = "samesiesApi.sendMessage",
             path = "message/{chatId}/{myId}/{message}",
             httpMethod = ApiMethod.HttpMethod.POST)
-    public Message sendMessage(@Named("chatId") long cid, @Named("myId") long myUid,
-                               @Named("message") String message, @Named("random") String random) throws ServiceException {
+    public Message sendMessage(@Named("chatId") long cid, @Named("myId") long myUid, @Named("message") String message,
+                               @Named("random") @Nullable String random) throws ServiceException {
         DatastoreService ds = getDS();
         Chat chat = getChat(ds, cid);
         Message m = new Message(cid, myUid, message, random);

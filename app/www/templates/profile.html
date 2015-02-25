@@ -1,15 +1,9 @@
-<ion-modal-view>
-	<ion-header-bar class="bar-royal">
-		<button class="button button-icon" ng-click="close('profile')">
-			<i class="icon ion-chevron-left"></i>
-		</button>
-		<h1 class="title">Profile</h1>
-	</ion-header-bar>
-	<ion-content on-swipe-right="close('profile')">
+<ion-view view-title="Profile" ng-controller="ProfileCtrl">
+	<ion-content>
 		<div class="list card">
 			<div class="item item-avatar">
 				<img src="img/lone_icon.png">
-				<h2>{{displayName(tempUser)}}</h2>
+				<h2>{{dispName()}}</h2>
 				<p ng-show="tempUser.name">{{tempUser.alias}}</p>
 			</div>
 			<div class="item item-body">
@@ -20,19 +14,19 @@
 				</p>
 				<p><span ng-show="tempUser.gender">Gender: {{tempUser.gender}}</span></p>
 			</div>
-			<div class="item item-body" ng-show="hasQuestions(tempUser)">
+			<div class="item item-body" ng-show="hasQuestions()">
 				Personal Questions:
 				<p ng-repeat="question in tempUser.questions track by $index" ng-show="question">{{question}}</p>
 			</div>
-			<div class="row padding-horizontal" ng-show="is('friends')">
+			<div class="row padding-horizontal" ng-show="!isMe(tempUser)">
 				<div class="col">
-					<button class="button button-block button-stable" ng-click="message(tempUser)">Message</button>
+					<button class="button button-block button-stable" ng-click="message()">Message</button>
 				</div>
 				<div class="col">
-					<button class="button button-block button-royal" ng-click="connect(tempUser)">Connect!</button>
+					<button class="button button-block button-royal" ng-click="connect()">Connect!</button>
 				</div>
 			</div>
 		</div>
 	</ion-content>
-</ion-modal-view>
+</ion-view>
 

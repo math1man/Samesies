@@ -29,7 +29,7 @@ public class Message implements Storable {
     }
 
     public Message(Long chatId, Long senderId, String message) {
-        this(chatId, senderId, message, randomId());
+        this(chatId, senderId, message, null);
     }
 
     public Message(Long chatId, Long senderId, String message, String random) {
@@ -37,7 +37,7 @@ public class Message implements Storable {
         this.senderId = senderId;
         this.message = message;
         this.sentDate = new Date();
-        this.random = random;
+        this.random = (random == null ? randomId() : random);
     }
 
     @Override

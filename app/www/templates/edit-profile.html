@@ -1,61 +1,58 @@
-<ion-content ng-show="is('edit')">
-	<div class="item item-divider">
-		Core Profile
-	</div>
-	<div class="item align-right">
-		<span class="item-note float-left">Email</span>
-		{{user.email}}
-	</div>
-	<div class="item align-right" ng-click="editPassword()">
-		<span class="item-note float-left">Password</span>
-		••••••••
-	</div>
-	<div class="item align-right" ng-click="edit('Alias', 'alias', 'text', true)">
-		<span class="item-note float-left">Alias</span>
-		{{user.alias}}
-	</div>
-	<div class="item align-right" ng-click="edit('Location', 'location', 'text', true)">
-		<!-- eventually add GPS support? Dropdown? -->
-		<span class="item-note float-left">Location</span>
-		{{user.location}}
-	</div>
-	<!-- eventually need to not hardcode profile picture -->
-	<div class="item item-avatar-right" ng-click="">
-		<img src="img/lone_icon.png">
-		<span class="item-note float-left">Profile Picture</span>
-	</div>
-	<div class="item item-divider">
-		Optional Profile
-	</div>
-	<div class="item align-right" ng-click="edit('Name', 'name', 'text')">
-		<span class="item-note float-left">Name</span>
-		{{user.name}}
-	</div>
-	<div class="item align-right" ng-click="edit('Age', 'age', 'number')">
-		<span class="item-note float-left">Age</span>
-		{{user.age}}
-	</div>
-	<div class="item align-right" ng-click="edit('Gender', 'gender', 'text')">
-		<span class="item-note float-left">Gender</span>
-		{{user.gender}}
-	</div>
-	<div class="item align-right" ng-click="edit('About Me', 'aboutMe', 'textarea')">
-		<span class="item-note float-left padding-right">About Me</span>
-		{{user.aboutMe}}
-	</div>
-	<div class="item item-divider">
-		Personal Questions
-	</div>
-	<div class="item" ng-click="editQuestion($index)" ng-repeat="question in user.questions track by $index">
-		<span class="item-note float-left" ng-hide="user.questions[$index]">Question {{$index+1}}</span>
-		{{user.questions[$index]}}
-	</div>
-	<div class="row padding-horizontal">
-		<div class="col">
-			<button class="button button-block button-stable" ng-click="saveProfile()">Save</button>
+<ion-view view-title="Edit Profile" ng-controller="EditProfileCtrl">
+	<ion-content>
+		<div class="item item-divider">
+			Core Profile
 		</div>
-		<div class="col">
-			<button class="button button-block button-royal" ng-click="preview(user)">Preview</button>
+		<div class="item align-right">
+			<span class="item-note float-left">Email</span>
+			{{user.email}}
 		</div>
-	</div>
-</ion-content>
+		<div class="item align-right" ng-click="editPassword()">
+			<span class="item-note float-left">Password</span>
+			••••••••
+		</div>
+		<div class="item align-right" ng-click="edit('Alias', 'alias', 'text', true)">
+			<span class="item-note float-left">Alias</span>
+			{{user.alias}}
+		</div>
+		<div class="item align-right" ng-click="edit('Location', 'location', 'text', true)">
+			<!-- eventually add GPS support? Dropdown? -->
+			<span class="item-note float-left">Location</span>
+			{{user.location}}
+		</div>
+		<!-- eventually need to not hardcode profile picture -->
+		<div class="item item-avatar-right" ng-click="">
+			<img src="img/lone_icon.png">
+			<span class="item-note float-left">Profile Picture</span>
+		</div>
+		<div class="item item-divider">
+			Optional Profile
+		</div>
+		<div class="item align-right" ng-click="edit('Name', 'name', 'text')">
+			<span class="item-note float-left">Name</span>
+			{{user.name}}
+		</div>
+		<div class="item align-right" ng-click="edit('Age', 'age', 'number')">
+			<span class="item-note float-left">Age</span>
+			{{user.age}}
+		</div>
+		<div class="item align-right" ng-click="edit('Gender', 'gender', 'text')">
+			<span class="item-note float-left">Gender</span>
+			{{user.gender}}
+		</div>
+		<div class="item align-right" ng-click="edit('About Me', 'aboutMe', 'textarea')">
+			<span class="item-note float-left padding-right">About Me</span>
+			{{user.aboutMe}}
+		</div>
+		<div class="item item-divider">
+			Personal Questions
+		</div>
+		<div class="item" ng-click="editQuestion($index)" ng-repeat="question in user.questions track by $index">
+			<span class="item-note float-left" ng-hide="user.questions[$index]">Question {{$index+1}}</span>
+			{{user.questions[$index]}}
+		</div>
+		<div class="item">
+				<button class="button button-block button-royal" ng-click="preview()">Preview</button>
+		</div>
+	</ion-content>
+</ion-view>

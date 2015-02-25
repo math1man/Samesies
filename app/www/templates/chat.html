@@ -1,23 +1,25 @@
-<ion-content ng-show="is('chat')">
-	<div class="chat" ng-repeat="message in chat.history track by $index | orderBy:'sentDate'">
-		<div class="item item-avatar-left item-text-wrap" ng-show="isYou(message)">
-			<img src="img/lone_icon.png">
-			{{message.message}}
-			<h6 ng-show="message.sentDate">Sent on {{dispDate(message)}}</h6>
+<ion-view view-title="Chat" ng-controller="ChatCtrl">
+	<ion-content delegate-handle="mainScroll">
+		<div class="chat" ng-repeat="message in history track by $index | orderBy:'sentDate'">
+			<div class="item item-avatar-left item-text-wrap" ng-show="isMine(message)">
+				<img src="img/lone_icon.png">
+				{{message.message}}
+				<h6 ng-show="message.sentDate">{{dispDate(message)}}</h6>
+			</div>
+			<div class="item item-avatar-right item-text-wrap align-right" ng-show="!isMine(message)">
+				<img src="img/lone_icon.png">
+				{{message.message}}
+				<h6 ng-show="message.sentDate">{{dispDate(message)}}</h6>
+			</div>
 		</div>
-		<div class="item item-avatar-right item-text-wrap align-right" ng-show="!isYou(message)">
-			<img src="img/lone_icon.png">
-			{{message.message}}
-			<h6 ng-show="message.sentDate">Sent on {{dispDate(message)}}</h6>
-		</div>
-	</div>
-</ion-content>
-<ion-footer-bar class="bar-stable" ng-show="is('chat')">
-	<label class="item-input-wrapper">
-		<input id="chatInput" type="text" ng-model="chat.buffer" ng-keypress="$event.keyCode === 13 && sendChat(0)"
-			   placeholder="Send to {{chat.recipient}}" autofocus/>
-	</label>
-	<button class="button button-small button-royal" ng-click="sendChat(1)">
-		Send
-	</button>
-</ion-footer-bar>
+	</ion-content>
+	<ion-footer-bar class="bar-stable">
+		<label class="item-input-wrapper">
+			<input id="chatInput" type="text" ng-model="buffer" ng-keypress="$event.keyCode === 13 && sendChat()"
+				   placeholder="Send to {{dispName()}}"/>
+		</label>
+		<button class="button button-small button-royal" ng-click="sendChat()">
+			Send
+		</button>
+	</ion-footer-bar>
+</ion-view>

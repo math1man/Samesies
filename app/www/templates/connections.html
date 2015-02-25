@@ -1,44 +1,50 @@
-<div ng-show="is('connections')">
-	<label class="item item-divider item-input">
-		<i class="icon ion-search placeholder-icon"></i>
-		<input type="text" placeholder="Search">
-	</label>
-	<ion-content class="has-header">
-		<!--<ion-refresher pulling-text="Pull to refresh..." on-refresh="getCxns()"></ion-refresher>-->
-		<div class="item item-divider">
-			Requests
-		</div>
-		<div class="item item-avatar item-button-right" ng-repeat="cxn in connections | requestConnections"
-			 ng-click="acceptCxn(cxn)">
-			<img src="img/lone_icon.png">
-			{{cxn.data.partner}}
-			<!--Display Category-->
-			<p>Mode: Random</p>
-			<div class="buttons">
-				<button class="button button-round button-stable" ng-click="endEpisode(cxn)">
-					<i class="icon ion-close-round"></i>
-				</button>
+<ion-view view-title="Connections" ng-controller="ConnectionsCtrl">
+	<ion-content scroll="false">
+		<label class="item item-divider item-input">
+			<i class="icon ion-search placeholder-icon"></i>
+			<input type="text" placeholder="Search">
+		</label>
+		<ion-content class="has-header">
+			<!--<ion-refresher pulling-text="Pull to refresh..." on-refresh="getCxns()"></ion-refresher>-->
+			<div class="item item-divider">
+				Requests
 			</div>
-		</div>
-		<div class="item item-divider">
-			Your Response
-		</div>
-		<div class="item item-avatar" ng-repeat="cxn in connections | yourTurnConnections" ng-click="playCxn(cxn)">
-			<img src="img/lone_icon.png">
-			{{cxn.data.partner}}
-			<span class="item-note">Stage {{cxn.data.stage}}</span>
-			<!--Display Category-->
-			<p>Mode: Random</p>
-		</div>
-		<div class="item item-divider">
-			Awaiting Response
-		</div>
-		<div class="item item-avatar" ng-repeat="cxn in connections | waitingConnections" ng-click="playCxn(cxn)">
-			<img src="img/lone_icon.png">
-			{{cxn.data.partner}}
-			<span class="item-note">Stage {{cxn.data.stage}}</span>
-			<!--Display Category-->
-			<p>Mode: Random</p>
-		</div>
+			<div class="item item-avatar item-button-right" ng-repeat="cxn in connections | requestConnections"
+				 ng-click="accept(cxn)">
+				<img src="img/lone_icon.png">
+				{{cxn.data.partner}}
+				<p>Mode: {{cxn.data.category}}</p>
+				<div class="buttons">
+					<button class="button button-round button-stable" ng-click="reject(cxn)">
+						<i class="icon ion-close-round"></i>
+					</button>
+				</div>
+			</div>
+			<div class="item item-divider">
+				Your Response
+			</div>
+			<div class="item item-avatar" ng-repeat="cxn in connections | yourTurnConnections" ng-click="play(cxn)">
+				<img src="img/lone_icon.png">
+				{{cxn.data.partner}}
+				<span class="item-note">Stage {{cxn.data.stage}}</span>
+				<p>Mode: {{cxn.data.category}}</p>
+			</div>
+			<div class="item item-divider">
+				Awaiting Response
+			</div>
+			<div class="item item-avatar" ng-repeat="cxn in connections | pendingConnections">
+				<img src="img/lone_icon.png">
+				{{cxn.data.partner}}
+				<span class="item-note">Pending</span>
+				<p>Mode: {{cxn.data.category}}</p>
+			</div>
+			<div class="item item-avatar" ng-repeat="cxn in connections | waitingConnections | orderBy:'data.stage'"
+				 ng-click="play(cxn)">
+				<img src="img/lone_icon.png">
+				{{cxn.data.partner}}
+				<span class="item-note">Stage {{cxn.data.stage}}</span>
+				<p>Mode: {{cxn.data.category}}</p>
+			</div>
+		</ion-content>
 	</ion-content>
-</div>
+</ion-view>

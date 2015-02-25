@@ -4,8 +4,8 @@
     </ion-header-bar>
     <ion-content>
         <div class="list">
-            <ion-radio ng-model="selected.cat" ng-value="category" ng-repeat="category in categories" ng-click="close('category')">
-                {{category}}
+            <ion-radio ng-model="category[0]" ng-value="cat" ng-repeat="cat in categories" ng-click="closePopup()">
+                {{cat}}
             </ion-radio>
         </div>
     </ion-content>

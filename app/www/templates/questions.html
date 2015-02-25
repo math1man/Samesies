@@ -1,0 +1,14 @@
+<ion-view view-title="Questions" ng-controller="QuestionsCtrl">
+	<ion-content scroll="false">
+		<div class="item item-divider item-input item-button-right">
+			<i class="icon ion-search placeholder-icon"></i>
+			<input type="text" ng-model="search" placeholder="Search">
+			<button class="button button-small button-clear button-icon icon ion-more" ng-click="selectCategory($event)"></button>
+		</div>
+		<ion-content class="has-header">
+			<div class="item item-text-wrap" ng-repeat="question in questions | questionFilter:search:category[0]">
+				{{question.q}}
+			</div>
+		</ion-content>
+	</ion-content>
+</ion-view>

@@ -1,14 +1,16 @@
-<div ng-show="is('friends')">
-	<label class="item item-divider item-input">
-		<i class="icon ion-search placeholder-icon"></i>
-		<input type="text" ng-model="search[0]" placeholder="Search">
-	</label>
-	<ion-content class="has-header">
-		<!--Eventually need to add friend requests here-->
-		<div class="item item-avatar" ng-repeat="friend in friends | checkName:search[0]" ng-click="preview(friend)">
-			<img src="img/lone_icon.png">
-			{{displayName(friend)}}
-			<p ng-show="friend.name">{{friend.alias}}</p>
-		</div>
+<ion-view view-title="Friends" ng-controller="FriendsCtrl">
+	<ion-content scroll="false">
+		<label class="item item-divider item-input">
+			<i class="icon ion-search placeholder-icon"></i>
+			<input type="text" ng-model="search" placeholder="Search">
+		</label>
+		<ion-content class="has-header">
+			<!--Eventually need to add friend requests here-->
+			<div class="item item-avatar" ng-repeat="friend in friends | checkName:search" ng-click="profile(friend)">
+				<img src="img/lone_icon.png">
+				{{dispName(friend)}}
+				<p ng-show="friend.name">{{friend.alias}}</p>
+			</div>
+		</ion-content>
 	</ion-content>
-</div>
+</ion-view>

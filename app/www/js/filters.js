@@ -1,6 +1,6 @@
 (function() {
 
-    var app = angular.module('filters', ['ionic']);
+    var app = angular.module('samesies.filters', []);
 
     app.filter('checkName', function () {
         return function (items, string) {
@@ -30,12 +30,12 @@
         };
     });
 
-    app.filter('filterSelf', function () {
-        return function (items, user) {
+    app.filter('filterSelf', function (Data) {
+        return function (items) {
             var filtered = [];
             for (var i = 0; i < items.length; i++) {
                 var item = items[i];
-                if (item.id != user.id) {
+                if (item.id != Data.user.id) {
                     filtered.push(item);
                 }
             }
@@ -69,13 +69,25 @@
         };
     });
 
+    app.filter('pendingConnections', function () {
+        return function (items) {
+            var filtered = [];
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                if (item.status === 'MATCHING' && item.data.is1) {
+                    filtered.push(item);
+                }
+            }
+            return filtered;
+        };
+    });
+
     app.filter('waitingConnections', function () {
         return function (items) {
             var filtered = [];
             for (var i = 0; i < items.length; i++) {
                 var item = items[i];
-                if (item.status === 'MATCHING' && item.data.is1
-                    || item.status === 'IN_PROGRESS' && item.data.state === 'waiting') {
+                if (item.status === 'IN_PROGRESS' && item.data.state === 'waiting') {
                     filtered.push(item);
                 }
             }
