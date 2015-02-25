@@ -79,7 +79,7 @@
                 // nested so that it can pull from friends
                 API.getConnections(user.id).then(function(resp) {
                     Data.connections = resp.result.items;
-                    if (Data.connections.length > 0) {
+                    if (Data.connections) {
                         var uids = [];
                         for (var i = 0; i < Data.connections.length; i++) {
                             var cxn = Data.connections[i];
@@ -209,20 +209,26 @@
 
         $scope.getFriendRequestCount = function() {
             // TODO: make this work properly
-            return Data.friends.length;
+            if (Data.friends) {
+                return Data.friends.length;
+            } else {
+                return 0;
+            }
         };
 
         $scope.getConnectionCount = function() {
             var count = 0;
-            for (var i=0; i<Data.connections.length; i++) {
-                var item = Data.connections[i];
-                if (item.data) { // Connections pending your approval
-                    if (item.status === 'MATCHING' && !item.data.is1) {
-                        count++;
-                    }
-                    // Connections pending your response
-                    if (item.status === 'IN_PROGRESS' && item.data.state != 'waiting') {
-                        count++;
+            if (Data.connections) {
+                for (var i = 0; i < Data.connections.length; i++) {
+                    var item = Data.connections[i];
+                    if (item.data) { // Connections pending your approval
+                        if (item.status === 'MATCHING' && !item.data.is1) {
+                            count++;
+                        }
+                        // Connections pending your response
+                        if (item.status === 'IN_PROGRESS' && item.data.state != 'waiting') {
+                            count++;
+                        }
                     }
                 }
             }
@@ -235,7 +241,22 @@
 
     });
 
-    app.controller('EpisodeCtrl', function($scope, $state, API, Utils, Data) {
+    app.controller('EpisodeCtrl', function($scope, $state, $ionicModal, API, Utils, Data) {
+
+        $ionicModal.fromTemplateUrl('templates/help-episode.html', {
+            scope: $scope,
+            animation: 'slide-in-left'
+        }).then(function(modal) {
+            $scope.helpPopup = modal;
+        });
+
+        $scope.showHelp = function() {
+            $scope.helpPopup.show();
+        };
+
+        $scope.closeHelp = function() {
+            $scope.helpPopup.hide();
+        };
 
         var episode;
         var user = Data.user;
@@ -396,6 +417,10 @@
             }
         });
 
+        $scope.$on('destroy', function() {
+            $scope.helpPopup.remove();
+        });
+
         if (Data.episode) {
             episode = Data.episode;
             loadEpisode(episode);
@@ -405,16 +430,59 @@
 
     });
 
-    app.controller('CommunitiesCtrl', function($scope, API) {
-        $scope.community = {
-            location: '',
-            users: []
+    app.controller('CommunitiesCtrl', function($scope, $ionicPopover, API, Data) {
+        $scope.communities = ['Saint Paul, MN', 'Minneapolis, MN'];
+        $scope.selected = $scope.communities[0];
+
+        $scope.loadCommunity = function(community) {
+            $scope.community = {
+                location: community,
+                users: []
+            };
+            if ($scope.selectPopup) {
+                $scope.closeSelect();
+            }
+            API.getCommunity(community).then(function(resp) {
+                $scope.community = resp.result;
+                $scope.$apply();
+            });
         };
 
-        API.getCommunity("Saint Paul, MN").then(function(resp) {
-            $scope.community = resp.result;
-            console.log($scope.community);
+        $ionicPopover.fromTemplateUrl('templates/help-communities.html', {
+            scope: $scope
+        }).then(function(popover) {
+            $scope.helpPopup = popover;
         });
+
+        $ionicPopover.fromTemplateUrl('templates/select-community.html', {
+            scope: $scope
+        }).then(function(popover) {
+            $scope.selectPopup = popover;
+        });
+
+        $scope.showHelp = function($event) {
+            $scope.helpPopup.show($event);
+        };
+
+        $scope.closeHelp = function() {
+            $scope.helpPopup.hide();
+        };
+
+        $scope.showSelect = function($event) {
+            $scope.selectPopup.show($event);
+        };
+
+        $scope.closeSelect = function() {
+            $scope.selectPopup.hide();
+        };
+
+        $scope.$on('destroy', function() {
+            $scope.helpPopup.remove();
+            $scope.selectPopup.remove();
+        });
+
+        $scope.loadCommunity($scope.selected);
+
     });
 
     app.controller('FriendsCtrl', function($scope, $state, Data, API) {
@@ -457,9 +525,9 @@
         };
 
         $scope.$on('$ionicView.beforeEnter', function() {
-            API.getConnections(user.id).then(function(resp) {
+            API.getConnections(Data.user.id).then(function(resp) {
                 var connections = resp.result.items;
-                if (connections.length > 0) {
+                if (connections) {
                     var uids = [];
                     for (var i = 0; i < connections.length; i++) {
                         var cxn = connections[i];

@@ -146,6 +146,7 @@
     app.service('Data', function() {
         this.questions = [];
         this.categories = [];
+        this.communities = [];
         this.user = null;
         this.friends = [];
         this.connections = [];
