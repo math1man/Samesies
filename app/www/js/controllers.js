@@ -209,12 +209,16 @@
         };
 
         $scope.getFriendRequestCount = function() {
-            // TODO: make this work properly
-            if (Data.friends) {
-                return Data.friends.length;
-            } else {
-                return 0;
+            var count = 0;
+            if (Data.friends && Data.friends.length > 0) {
+                for (var i = 0; i < Data.friends.length; i++) {
+                    var item = Data.friends[i];
+                    if (item.status === 'PENDING' && item.uid2 === Data.user.id) { // Connections pending your approval
+                        count++;
+                    }
+                }
             }
+            return count;
         };
 
         $scope.getConnectionCount = function() {
