@@ -11,7 +11,7 @@
         </div>
         <ion-content class="has-header">
             <div class="item" ng-repeat="user in community.users | filterSelf" ng-click="connect(user)">
-                <img class="full-image" src="img/lone_icon.png">
+                <img class="full-image" ng-src="{{user.avatar}}">
                 <h2>{{user.alias}}</h2>
             </div>
         </ion-content>

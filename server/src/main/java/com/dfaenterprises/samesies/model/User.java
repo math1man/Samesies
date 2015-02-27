@@ -2,6 +2,7 @@ package com.dfaenterprises.samesies.model;
 
 import com.dfaenterprises.samesies.EntityUtils;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.Text;
 
 import java.util.Arrays;
 import java.util.List;
@@ -20,9 +21,9 @@ public class User implements Storable {
     private String password;
     private String location;
     private String alias;
-    // TODO: profile picture
+    private Text avatar;
     private String name;
-    private Integer age;
+    private Long age;
     private String gender;
     // TODO: interested in?
     private String aboutMe;
@@ -43,6 +44,7 @@ public class User implements Storable {
         this.id = entity.getKey().getId();
         this.location = (String) entity.getProperty("location");
         this.alias = (String) entity.getProperty("alias");
+        this.avatar = (Text) entity.getProperty("avatar");
         this.relation = relation;
         // private
         if (ordinal >= Relation.SELF.ordinal()) {
@@ -52,13 +54,7 @@ public class User implements Storable {
         // protected
         if (ordinal >= Relation.FRIEND.ordinal()) {
             this.name = (String) entity.getProperty("name");
-            // THIS FUCKING CODE SUCKS
-            Object o = entity.getProperty("age");
-            if (o == null) {
-                this.age = null;
-            } else {
-                this.age = ((Long) o).intValue();
-            }
+            this.age = (Long) entity.getProperty("age");
             this.gender = (String) entity.getProperty("gender");
             this.aboutMe = (String) entity.getProperty("aboutMe");
             this.questions = EntityUtils.entityToList(entity.getProperty("questions"), 5, String.class);
@@ -71,8 +67,9 @@ public class User implements Storable {
         this.password = password;
         this.location = location;
         this.alias = alias;
+        this.avatar = new Text("img/lone_icon.png");
         this.name = name;
-        this.age = age;
+        this.age = Long.valueOf(age);
         this.gender = gender;
         this.aboutMe = aboutMe;
         this.questions = blankQuestions();
@@ -118,6 +115,14 @@ public class User implements Storable {
         this.alias = alias;
     }
 
+    public String getAvatar() {
+        return avatar.getValue();
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = new Text(avatar);
+    }
+
     public String getName() {
         return name;
     }
@@ -127,11 +132,15 @@ public class User implements Storable {
     }
 
     public Integer getAge() {
-        return age;
+        if (age == null) {
+            return null;
+        } else {
+            return age.intValue();
+        }
     }
 
     public void setAge(Integer age) {
-        this.age = age;
+        this.age = Long.valueOf(age);
     }
 
     public String getGender() {
@@ -177,6 +186,7 @@ public class User implements Storable {
         entity.setUnindexedProperty("password", password);
         entity.setProperty("location", location);
         entity.setProperty("alias", alias);
+        entity.setProperty("avatar", avatar);
         entity.setProperty("name", name);
         entity.setProperty("age", age);
         entity.setProperty("gender", gender);

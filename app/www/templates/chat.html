@@ -5,12 +5,12 @@
 	<ion-content delegate-handle="mainScroll">
 		<div class="chat" ng-repeat="message in history track by $index | orderBy:'sentDate'">
 			<div class="item item-avatar-left item-text-wrap" ng-show="isMine(message)">
-				<img src="img/lone_icon.png">
+				<img ng-src="{{user.avatar}}">
 				{{message.message}}
 				<h6 ng-show="message.sentDate">{{dispDate(message)}}</h6>
 			</div>
 			<div class="item item-avatar-right item-text-wrap align-right" ng-show="!isMine(message)">
-				<img src="img/lone_icon.png">
+				<img ng-src="{{recipient.avatar}}">
 				{{message.message}}
 				<h6 ng-show="message.sentDate">{{dispDate(message)}}</h6>
 			</div>

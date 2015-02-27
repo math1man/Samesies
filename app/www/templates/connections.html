@@ -11,7 +11,7 @@
 			</div>
 			<div class="item item-avatar item-button-right" ng-repeat="cxn in connections | requestConnections"
 				 ng-click="accept(cxn)">
-				<img src="img/lone_icon.png">
+				<img ng-src="{{cxn.data.partner.avatar}}">
 				{{dispName(cxn.data.partner)}}
 				<p>Mode: {{cxn.data.category}}</p>
 				<div class="buttons">
@@ -24,7 +24,7 @@
 				Your Response
 			</div>
 			<div class="item item-avatar" ng-repeat="cxn in connections | yourTurnConnections" ng-click="play(cxn)">
-				<img src="img/lone_icon.png">
+				<img ng-src="{{cxn.data.partner.avatar}}">
 				{{dispName(cxn.data.partner)}}
 				<span class="item-note">Stage {{cxn.data.stage}}</span>
 				<p>Mode: {{cxn.data.category}}</p>
@@ -33,14 +33,14 @@
 				Awaiting Response
 			</div>
 			<div class="item item-avatar" ng-repeat="cxn in connections | pendingConnections">
-				<img src="img/lone_icon.png">
+				<img ng-src="{{cxn.data.partner.avatar}}">
 				{{dispName(cxn.data.partner)}}
 				<span class="item-note">Pending</span>
 				<p>Mode: {{cxn.data.category}}</p>
 			</div>
 			<div class="item item-avatar" ng-repeat="cxn in connections | waitingConnections | orderBy:'data.stage'"
 				 ng-click="play(cxn)">
-				<img src="img/lone_icon.png">
+				<img ng-src="{{cxn.data.partner.avatar}}">
 				{{dispName(cxn.data.partner)}}
 				<span class="item-note">Stage {{cxn.data.stage}}</span>
 				<p>Mode: {{cxn.data.category}}</p>

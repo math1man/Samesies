@@ -1,0 +1,14 @@
+<div ng-controller="UploadCtrl">
+    <label class="item item-input" ng-show="false">
+        <input type="file" id="fileInput" placeholder=""/>
+    </label>
+    <!--<div class="item" ng-click="uploadImage()">-->
+        <!--Click to upload image-->
+    <!--</div>-->
+    <!--<div class="item item-avatar-left">-->
+        <!--<img ng-src="{{data.image}}" />-->
+        <!--{{user.name}}-->
+        <!--<p>{{user.alias}}</p>-->
+    <!--</div>-->
+    <img class=full-image ng-src="{{data.image}}" ng-click="uploadImage()"/>
+</div>

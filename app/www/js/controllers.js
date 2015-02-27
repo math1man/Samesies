@@ -555,7 +555,6 @@
         });
 
         $scope.$on('$destroy', function() {
-            console.log("Popover being removed");
             $scope.findPopup.remove();
         });
 
@@ -757,6 +756,36 @@
             });
         };
 
+        $scope.editAvatar = function() {
+            $scope.data = {
+                image: $scope.user.avatar
+            };
+            $ionicPopup.show({
+                scope: $scope,
+                title: 'Update Profile Picture',
+                templateUrl: 'templates/upload-avatar.html',
+                buttons: [
+                    {
+                        text: 'Cancel',
+                        type: 'button-stable',
+                        onTap: function() { return null; }
+                    }, {
+                        text: 'Okay',
+                        type: 'button-royal',
+                        onTap: function() {
+                            return $scope.data.image;
+                        }
+                    }
+                ]
+            }).then(function(image) {
+                if (image) {
+                    $scope.user.avatar = image;
+                    $scope.isChanged = true;
+                }
+                $scope.data = null;
+            });
+        };
+
         $scope.preview = function() {
             Data.tempUser = $scope.user;
             $state.go('profile');
@@ -774,12 +803,12 @@
 
     app.controller('ChatCtrl', function($scope, $ionicScrollDelegate, API, Data, Utils) {
         var chat;
-        var user = Data.user;
+        $scope.user = Data.user;
         $scope.recipient = Data.tempUser;
         $scope.buffer = '';
         $scope.history = [];
 
-        API.startChat(user.id, $scope.recipient.id).then(function(resp) {
+        API.startChat($scope.user.id, $scope.recipient.id).then(function(resp) {
             chat = resp.result;
             API.getMessages(chat.id, chat.startDate).then(function (resp) {
                 if (resp.result.items) {
@@ -811,12 +840,12 @@
                 var random = randomId();
                 addMessage({
                     message: $scope.buffer,
-                    senderId: user.id,
+                    senderId: $scope.user.id,
                     random: random
                 });
                 // this one kind of works so it can stay
                 $ionicScrollDelegate.scrollBottom(true);
-                API.sendMessage(chat.id, user.id, $scope.buffer, random).then(function (resp) {
+                API.sendMessage(chat.id, $scope.user.id, $scope.buffer, random).then(function (resp) {
                     addMessage(resp.result);
                 }, function(reason) {
                     console.log(reason);
@@ -865,7 +894,7 @@
         };
 
         $scope.isMine = function(message) {
-            return (message.senderId === user.id);
+            return (message.senderId === $scope.user.id);
         };
 
         $scope.dispDate = function(message) {
@@ -886,7 +915,7 @@
         };
 
         $scope.addFriend = function() {
-            API.addFriend(user.id, $scope.recipient.id).then(function(resp) {
+            API.addFriend($scope.user.id, $scope.recipient.id).then(function(resp) {
                 Data.friends.push(resp.result);
                 // TODO: some sort of friend indication? for both parties?
             });
@@ -960,6 +989,34 @@
             $scope.tempUser = null;
             $scope.email = [''];
         });
+
+    });
+
+    app.controller('UploadCtrl', function($scope) {
+
+        var fileInput = document.getElementById('fileInput');
+
+        fileInput.addEventListener('change', function() {
+            var file = fileInput.files[0];
+            var imageType = /image.*/;
+
+            if (file.type.match(imageType)) {
+                var reader = new FileReader();
+
+                reader.onload = function () {
+                    $scope.data.image = reader.result;
+                    $scope.$apply();
+                };
+
+                reader.readAsDataURL(file);
+            } else {
+                console.log("Bad file type");
+            }
+        });
+
+        $scope.uploadImage = function() {
+            document.getElementById('fileInput').click();
+        }
 
     });
 

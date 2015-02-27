@@ -21,8 +21,8 @@
 			{{user.location}}
 		</div>
 		<!-- eventually need to not hardcode profile picture -->
-		<div class="item item-avatar-right" ng-click="">
-			<img src="img/lone_icon.png">
+		<div class="item item-avatar-right" ng-click="editAvatar()">
+			<img ng-src="{{user.avatar}}">
 			<span class="item-note float-left">Profile Picture</span>
 		</div>
 		<div class="item item-divider">

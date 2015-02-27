@@ -84,3 +84,8 @@ h6 {
 .slide-in-left.ng-leave, .slide-in-left > .ng-leave {
     -webkit-transition: all ease-in-out 250ms;
     transition: all ease-in-out 250ms; }
+
+.item-avatar > img:first-child, .item-avatar-left > img:first-child, .item-avatar-right > img:first-child {
+    border-radius: 0;
+    /* because fuck this shit */
+}

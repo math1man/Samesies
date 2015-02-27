@@ -8,7 +8,7 @@
             <input type="email" ng-model="email[0]" placeholder="johndoe@samesies.org">
         </label>
         <div class="item item-avatar" ng-show="tempUser" ng-click="add()">
-            <img src="img/lone_icon.png">
+            <img ng-src="{{tempUser.avatar}}">
             {{tempUser.alias}}
         </div>
         <div class="item">

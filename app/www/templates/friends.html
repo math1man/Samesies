@@ -14,7 +14,7 @@
 			</div>
 			<div class="item item-avatar item-button-right" ng-repeat="friend in friends | friendRequests | checkName:search"
 				 ng-click="accept(friend)">
-				<img src="img/lone_icon.png">
+				<img ng-src="{{friend.user.avatar}}">
 				{{dispName(friend.user)}}
 				<p ng-show="friend.name">{{friend.user.alias}}</p>
 				<div class="buttons">
@@ -28,7 +28,7 @@
 			</div>
 			<div class="item item-avatar" ng-repeat="friend in friends | friends | checkName:search"
 				 ng-click="profile(friend.user)">
-				<img src="img/lone_icon.png">
+				<img ng-src="{{friend.user.avatar}}">
 				{{dispName(friend.user)}}
 				<p ng-show="friend.user.name">{{friend.user.alias}}</p>
 			</div>
@@ -36,7 +36,7 @@
 				Awaiting Response
 			</div>
 			<div class="item item-avatar" ng-repeat="friend in friends | pendingFriends | checkName:search">
-				<img src="img/lone_icon.png">
+				<img ng-src="{{friend.user.avatar}}">
 				{{dispName(friend.user)}}
 				<p ng-show="friend.name">{{friend.user.alias}}</p>
 			</div>
