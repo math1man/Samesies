@@ -9,7 +9,7 @@
 			<div class="item item-divider">
 				Requests
 			</div>
-			<div class="item item-avatar" ng-repeat="friend in friends | friendRequests | checkName:search"
+			<div class="item item-avatar item-button-right" ng-repeat="friend in friends | friendRequests | checkName:search"
 				 ng-click="accept(friend)">
 				<img src="img/lone_icon.png">
 				{{dispName(friend.user)}}

@@ -264,14 +264,14 @@ public class SamesiesApi {
         DatastoreService ds = getDS();
 
         Friend friend;
-        Query query = new Query("Friend").setFilter(Query.CompositeFilterOperator.or(
+        Query query = new Query("Friend").setFilter(Query.CompositeFilterOperator.and(
                 new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, myId),
                 new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, theirId)));
         PreparedQuery pq = ds.prepare(query);
         Entity e = pq.asSingleEntity();
         if (e == null) {
             // Try the other order
-            query = new Query("Friend").setFilter(Query.CompositeFilterOperator.or(
+            query = new Query("Friend").setFilter(Query.CompositeFilterOperator.and(
                     new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, theirId),
                     new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, myId)));
             pq = ds.prepare(query);

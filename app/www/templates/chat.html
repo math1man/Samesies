@@ -1,6 +1,6 @@
 <ion-view view-title="{{dispName(recipient)}}" ng-controller="ChatCtrl">
 	<ion-nav-buttons side="right">
-		<button class="button button-icon icon ion-person-add" ng-show="showAddFriend()"></button>
+		<button class="button button-icon icon ion-person-add" ng-show="showAddFriend()" ng-click="addFriend()"></button>
 	</ion-nav-buttons>
 	<ion-content delegate-handle="mainScroll">
 		<div class="chat" ng-repeat="message in history track by $index | orderBy:'sentDate'">

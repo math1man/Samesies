@@ -767,15 +767,6 @@
             console.log(reason);
         });
 
-        $scope.showAddFriend = function() {
-            for (var i = 0; i < Data.friends.length; i++) {
-                if (Data.friends[i].user.id === $scope.recipient.id) {
-                    return false;
-                }
-            }
-            return true;
-        };
-
         var randomId = function() {
             var output = "";
             var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -853,6 +844,22 @@
             } else {
                 return "Sending...";
             }
+        };
+
+        $scope.showAddFriend = function() {
+            for (var i = 0; i < Data.friends.length; i++) {
+                if (Data.friends[i].user.id === $scope.recipient.id) {
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        $scope.addFriend = function() {
+            API.addFriend(user.id, $scope.recipient.id).then(function(resp) {
+                Data.friends.push(resp.result);
+                // TODO: some sort of friend indication? for both parties?
+            });
         };
 
         $scope.$on('$ionicView.leave', function() {
