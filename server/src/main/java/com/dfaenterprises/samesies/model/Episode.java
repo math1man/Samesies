@@ -18,6 +18,7 @@ public class Episode implements Storable {
     private Long id;
     private Date startDate;
     private Boolean isPersistent;
+    private String mode;
     private Status status;
     private Long uid1;
     private Long uid2;
@@ -32,6 +33,7 @@ public class Episode implements Storable {
         this.id = e.getKey().getId();
         this.startDate = (Date) e.getProperty("startDate");
         this.isPersistent = (Boolean) e.getProperty("isPersistent");
+        this.mode = (String) e.getProperty("mode");
         this.status = Status.valueOf((String) e.getProperty("status"));
         this.uid1 = (Long) e.getProperty("uid1");
         this.uid2 = (Long) e.getProperty("uid2");
@@ -48,6 +50,7 @@ public class Episode implements Storable {
     public Episode(Long uid1) {
         this.startDate = new Date();
         this.isPersistent = false;
+        this.mode = "Random";
         this.status = Status.MATCHING;
         this.uid1 = uid1;
     }
@@ -61,6 +64,7 @@ public class Episode implements Storable {
     public Episode(Long uid1, Long uid2) {
         this.startDate = new Date();
         this.isPersistent = true;
+        this.mode = "Random";
         this.status = Status.MATCHING;
         this.uid1 = uid1;
         this.uid2 = uid2;
@@ -88,6 +92,14 @@ public class Episode implements Storable {
 
     public void setIsPersistent(Boolean isPersistent) {
         this.isPersistent = isPersistent;
+    }
+
+    public String getMode() {
+        return mode;
+    }
+
+    public void setMode(String mode) {
+        this.mode = mode;
     }
 
     public Status getStatus() {
@@ -163,6 +175,7 @@ public class Episode implements Storable {
         }
         e.setProperty("startDate", startDate);
         e.setProperty("isPersistent", isPersistent);
+        e.setProperty("mode", mode);
         e.setProperty("status", status.name());
         e.setProperty("uid1", uid1);
         e.setProperty("uid2", uid2);

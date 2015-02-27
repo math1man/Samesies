@@ -440,6 +440,7 @@ public class SamesiesApi {
             path = "episode/find/{myId}",
             httpMethod = ApiMethod.HttpMethod.POST)
     public Episode findEpisode(@Named("myId") long myUid) throws ServiceException {
+        // TODO: eventually handle mode here
         DatastoreService ds = getDS();
 
         Query query = new Query("Episode").setFilter(Query.CompositeFilterOperator.and(
