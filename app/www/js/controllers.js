@@ -139,6 +139,7 @@
                     } else {
                         $scope.loginData.error = 'Server error'
                     }
+                    $scope.$apply();
                 });
             }
         };
@@ -681,13 +682,11 @@
 
         $scope.editPassword = function() {
             $scope.data = {
-                oldPassword: '',
+                password: '',
                 newPassword: '',
                 confirmPassword: '',
                 error: function() {
-                    if ($scope.data.oldPassword != $scope.user.password) {
-                        return "Invalid password!";
-                    } else if ($scope.data.newPassword.length <= 5) {
+                    if ($scope.data.newPassword.length <= 5) {
                         return "New password too short!";
                     } else if ($scope.data.newPassword != $scope.data.confirmPassword) {
                         return "Passwords don't match!";
@@ -710,17 +709,35 @@
                         type: 'button-royal',
                         onTap: function(e) {
                             if (!$scope.data.error()) {
-                                return $scope.data.newPassword;
+                                return $scope.data;
                             } else {
                                 e.preventDefault();
                             }
                         }
                     }
                 ]
-            }).then(function(newPassword) {
-                if (newPassword) {
-                    $scope.user.password = newPassword;
-                    $scope.isChanged = true;
+            }).then(function(passwordData) {
+                if (passwordData) {
+                    $scope.user.password = passwordData.password;
+                    $scope.user.newPassword = passwordData.newPassword;
+                    API.updateUser($scope.user).then(function(resp){
+                        $ionicPopup.alert({
+                            title: 'Password Changed',
+                            template: 'Your password has successfully been changed.',
+                            okText: 'Okay',
+                            okType: 'button-royal'
+                        });
+                    }, function(reason) {
+                        if (reason.status === 400) {
+                            // TODO: recover password?
+                            $ionicPopup.alert({
+                                title: 'Invalid Password',
+                                template: 'The password you entered was invalid. Password has not been changed.',
+                                okText: 'Okay',
+                                okType: 'button-royal'
+                            });
+                        }
+                    });
                 }
                 $scope.data = null;
             });

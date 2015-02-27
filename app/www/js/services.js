@@ -22,7 +22,7 @@
                 return this.api.getUsers({ids: ids});
             },
             updateUser: function(user) {
-                this.api.updateUser(user).then();
+                return this.api.updateUser(user);
             },
             getFriends: function(id) {
                 return this.api.getFriends({id: id});

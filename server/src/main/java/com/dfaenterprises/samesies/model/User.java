@@ -3,6 +3,7 @@ package com.dfaenterprises.samesies.model;
 import com.dfaenterprises.samesies.EntityUtils;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Text;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.Arrays;
 import java.util.List;
@@ -19,6 +20,8 @@ public class User implements Storable {
     private Long id;
     private String email;
     private String password;
+    private String newPassword;
+    private String hashedPw;
     private String location;
     private String alias;
     private Text avatar;
@@ -49,7 +52,7 @@ public class User implements Storable {
         // private
         if (ordinal >= Relation.SELF.ordinal()) {
             this.email = (String) entity.getProperty("email");
-            this.password = (String) entity.getProperty("password");
+            this.hashedPw = (String) entity.getProperty("hashedPw");
         }
         // protected
         if (ordinal >= Relation.FRIEND.ordinal()) {
@@ -97,6 +100,22 @@ public class User implements Storable {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getNewPassword() {
+        return newPassword;
+    }
+
+    public void setNewPassword(String newPassword) {
+        this.newPassword = newPassword;
+    }
+
+    public String getHashedPw() {
+        return hashedPw;
+    }
+
+    public void setHashedPw(String hashedPw) {
+        this.hashedPw = hashedPw;
     }
 
     public String getLocation() {
@@ -183,7 +202,7 @@ public class User implements Storable {
             entity = new Entity("User", id);
         }
         entity.setProperty("email", email);
-        entity.setUnindexedProperty("password", password);
+        entity.setUnindexedProperty("hashedPw", BCrypt.hashpw(password, BCrypt.gensalt()));
         entity.setProperty("location", location);
         entity.setProperty("alias", alias);
         entity.setProperty("avatar", avatar);

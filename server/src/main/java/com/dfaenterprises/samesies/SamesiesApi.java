@@ -9,6 +9,7 @@ import com.google.api.server.spi.response.BadRequestException;
 import com.google.api.server.spi.response.ForbiddenException;
 import com.google.api.server.spi.response.NotFoundException;
 import com.google.appengine.api.datastore.*;
+import org.mindrot.jbcrypt.BCrypt;
 
 import javax.inject.Named;
 import java.util.*;
@@ -151,7 +152,7 @@ public class SamesiesApi {
         User dsUser = getUserByEmail(ds, email, User.Relation.SELF);
         if (dsUser == null) {
             throw new NotFoundException("Invalid Email");
-        } else if (password != null && password.equals(dsUser.getPassword())) {
+        } else if (password != null && BCrypt.checkpw(password, dsUser.getHashedPw())) {
             return dsUser;
         } else {
             throw new BadRequestException("Invalid Password");
@@ -217,11 +218,20 @@ public class SamesiesApi {
         if (user.getId() == null) {
             throw new BadRequestException("User ID not specified");
         }
-        if (contains(ds, user)) {
-            EntityUtils.put(ds, user);
-        } else {
+        String password = user.getPassword();
+        String newPassword = user.getNewPassword();
+        User dsUser = getUserById(ds, user.getId(), User.Relation.SELF);
+        if (dsUser == null) {
             throw new NotFoundException("User not found");
+        } else if (newPassword != null) {
+            // password is being changed
+            if (BCrypt.checkpw(password, dsUser.getHashedPw())) {
+                user.setPassword(user.getNewPassword());
+            } else {
+                throw new BadRequestException("Invalid Password");
+            }
         }
+        EntityUtils.put(ds, user);
     }
 
     @ApiMethod(name = "samesiesApi.findUser",
