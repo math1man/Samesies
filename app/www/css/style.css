@@ -19,6 +19,10 @@
     animation:spin 2s linear infinite;
 }
 
+h1 {
+    font-size: x-large;
+}
+
 h6 {
     color: #cccccc;
 }
