@@ -9,7 +9,7 @@
                 for (var i = 0; i < items.length; i++) {
                     var item = items[i];
                     var regex = new RegExp(".*" + string + ".*", 'i');
-                    if (regex.test(item.name) || regex.test(item.alias)) {
+                    if (regex.test(item.user.name) || regex.test(item.user.alias)) {
                         filtered.push(item);
                     }
                 }

@@ -27,6 +27,9 @@
             getFriends: function(id) {
                 return this.api.getFriends({id: id});
             },
+            findUser: function(email) {
+                return this.api.findUser({email: email});
+            },
             addFriend: function(myId, theirId) {
                 return this.api.addFriend({myId: myId, theirId: theirId});
             },

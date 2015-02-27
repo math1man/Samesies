@@ -159,7 +159,7 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.createUser",
-            path = "users",
+            path = "user/create",
             httpMethod = ApiMethod.HttpMethod.POST)
     public User createUser(User newUser) throws ServiceException {
         DatastoreService ds = getDS();
@@ -204,14 +204,13 @@ public class SamesiesApi {
         Map<Key, Entity> map = getDS().get(keys);
         List<User> users = new ArrayList<>();
         for (Key key : keys) {
-            // TODO: deal with friends' connections
             users.add(new User(map.get(key), User.Relation.STRANGER));
         }
         return users;
     }
 
     @ApiMethod(name = "samesiesApi.updateUser",
-            path = "user",
+            path = "user/update",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void updateUser(User user) throws ServiceException {
         DatastoreService ds = getDS();
@@ -223,6 +222,15 @@ public class SamesiesApi {
         } else {
             throw new NotFoundException("User not found");
         }
+    }
+
+    @ApiMethod(name = "samesiesApi.findUser",
+            path = "user/find/{email}",
+            httpMethod = ApiMethod.HttpMethod.GET)
+    public User findUser(@Named("email") String email) throws ServiceException {
+        DatastoreService ds = getDS();
+
+        return getUserByEmail(ds, email, User.Relation.STRANGER);
     }
 
     //----------------------------
@@ -262,6 +270,10 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.POST)
     public Friend addFriend(@Named("myId") long myId, @Named("theirId") long theirId) throws ServiceException {
         DatastoreService ds = getDS();
+
+        if (myId == theirId) {
+            throw new ForbiddenException("Cannot add oneself as a friend");
+        }
 
         Friend friend;
         Query query = new Query("Friend").setFilter(Query.CompositeFilterOperator.and(
@@ -327,7 +339,6 @@ public class SamesiesApi {
             throw new NotFoundException("Friend not found", e);
         }
     }
-
 
     //----------------------------
     //      Community Calls

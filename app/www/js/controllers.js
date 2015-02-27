@@ -1,13 +1,13 @@
 (function() {
 
     const URL = 'https://samesies-app.appspot.com/_ah/api';
+    // https://samesies-app.appspot.com/_ah/api
+    // http://localhost:8080/_ah/api
     const DEBUG_USER = {
         error: false,
         email: "ari@samesies.com",
         password: "samesies123"
     };
-    // https://samesies-app.appspot.com/_ah/api
-    // http://localhost:8080/_ah/api
     const PING_INTERVAL = 1000; // ms
 
     var app = angular.module('samesies.controllers', []);
@@ -483,7 +483,7 @@
             $scope.selectPopup.hide();
         };
 
-        $scope.$on('destroy', function() {
+        $scope.$on('$destroy', function() {
             $scope.helpPopup.remove();
             $scope.selectPopup.remove();
         });
@@ -492,7 +492,25 @@
 
     });
 
-    app.controller('FriendsCtrl', function($scope, $state, Data, API) {
+    app.controller('FriendsCtrl', function($scope, $state, $ionicPopover, Data, API) {
+
+        $ionicPopover.fromTemplateUrl('templates/find-friends.html', {
+            scope: $scope,
+            focusFirstInput: true
+        }).then(function(popover) {
+            $scope.findPopup = popover;
+        });
+
+        $scope.showFind = function($event) {
+            $scope.findPopup.show($event);
+        };
+
+        $scope.closeFind = function() {
+            $scope.tempUser = null;
+            $scope.email = [''];
+            $scope.findPopup.hide();
+        };
+
         $scope.search = '';
         $scope.friends = Data.friends;
 
@@ -535,6 +553,12 @@
         $scope.$on('$ionicView.leave', function() {
             Data.friends = $scope.friends;
         });
+
+        $scope.$on('$destroy', function() {
+            console.log("Popover being removed");
+            $scope.findPopup.remove();
+        });
+
     });
 
     app.controller('ConnectionsCtrl', function($scope, $state, Data, API, Utils) {
@@ -899,6 +923,44 @@
                 okType: 'button-royal'
             });
         }
+    });
+
+    app.controller('FindFriendCtrl', function($scope, API, Data) {
+        $scope.tempUser = null;
+        $scope.email = [''];
+
+        $scope.findFriend = function() {
+            API.findUser($scope.email[0]).then(function(resp) {
+                $scope.tempUser = resp.result;
+                $scope.$apply();
+            });
+        };
+
+        $scope.add = function() {
+            if ($scope.tempUser) {
+                API.addFriend(Data.user.id, $scope.tempUser.id).then(function(resp) {
+                    var friend = resp.result;
+                    var isFriend = false;
+                    for (var i=0; i<$scope.friends.length && !isFriend; i++) {
+                        if ($scope.friends[i].id === friend.id) {
+                            $scope.friends[i] = friend;
+                            isFriend = true;
+                        }
+                    }
+                    if (!isFriend) {
+                        $scope.friends.push(friend);
+                    }
+                    $scope.$apply();
+                });
+            }
+            $scope.closeFind();
+        };
+
+        $scope.$on('popover.hidden', function() {
+            $scope.tempUser = null;
+            $scope.email = [''];
+        });
+
     });
 
 })();
