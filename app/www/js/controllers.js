@@ -1,6 +1,11 @@
 (function() {
 
-    const URL = 'http://localhost:8080/_ah/api';
+    const URL = 'https://samesies-app.appspot.com/_ah/api';
+    const DEBUG_USER = {
+        error: false,
+        email: "ari@samesies.com",
+        password: "samesies123"
+    };
     // https://samesies-app.appspot.com/_ah/api
     // http://localhost:8080/_ah/api
     const PING_INTERVAL = 1000; // ms
@@ -186,11 +191,7 @@
         };
 
         $scope.quickLogin = function() {
-            $scope.loginData = {
-                error: false,
-                email: "ari@samesies.com",
-                password: "samesies123"
-            };
+            $scope.loginData = DEBUG_USER;
             $scope.doLogin();
         };
 
@@ -269,6 +270,7 @@
         var go = function(state) {
             Utils.interruptAll();
             $scope.episodeData.state = state;
+            $scope.$apply();
             if (state === 'waiting') {
                 Utils.interval(function () {
                     API.getEpisode(episode.id).then(function (resp) {
