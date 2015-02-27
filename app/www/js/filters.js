@@ -18,6 +18,51 @@
         };
     });
 
+    app.filter('friendRequests', function (Data) {
+        return function (items) {
+            var filtered = [];
+            if (items) {
+                for (var i = 0; i < items.length; i++) {
+                    var item = items[i];
+                    if (item.status === 'PENDING' && item.uid2 === Data.user.id) {
+                        filtered.push(item);
+                    }
+                }
+            }
+            return filtered;
+        };
+    });
+
+    app.filter('friends', function (Data) {
+        return function (items) {
+            var filtered = [];
+            if (items) {
+                for (var i = 0; i < items.length; i++) {
+                    var item = items[i];
+                    if (item.status === 'ACCEPTED') {
+                        filtered.push(item);
+                    }
+                }
+            }
+            return filtered;
+        };
+    });
+
+    app.filter('pendingFriends', function (Data) {
+        return function (items) {
+            var filtered = [];
+            if (items) {
+                for (var i = 0; i < items.length; i++) {
+                    var item = items[i];
+                    if (item.status === 'PENDING' && item.uid1 === Data.user.id) {
+                        filtered.push(item);
+                    }
+                }
+            }
+            return filtered;
+        };
+    });
+
     app.filter('questionFilter', function () {
         return function (items, string, category) {
             var filtered = [];

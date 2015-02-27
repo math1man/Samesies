@@ -40,10 +40,8 @@ public class SamesiesApi {
             EntityUtils.put(ds, user2);
 
             // initialize friends
-            Entity friendship = new Entity("Friend");
-            friendship.setProperty("uid1", user1.getId());
-            friendship.setProperty("uid2", user2.getId());
-            ds.put(friendship);
+            Friend friend = new Friend(user1.getId(), user2.getId(), Friend.Status.ACCEPTED);
+            EntityUtils.put(ds, friend);
 
             // initialize questions
             Question[] questions = {
@@ -150,7 +148,7 @@ public class SamesiesApi {
         if (email == null) {
             throw new BadRequestException("Invalid Email");
         }
-        User dsUser = getUserByEmail(ds, email);
+        User dsUser = getUserByEmail(ds, email, User.Relation.SELF);
         if (dsUser == null) {
             throw new NotFoundException("Invalid Email");
         } else if (password != null && password.equals(dsUser.getPassword())) {
@@ -167,20 +165,17 @@ public class SamesiesApi {
         DatastoreService ds = getDS();
 
         String email = newUser.getEmail();
-        String password = newUser.getPassword();
-        String location = newUser.getLocation();
-        String alias = newUser.getAlias();
         if (email == null) {
             throw new BadRequestException("Invalid Email");
         }
-        if (password == null) {
+        if (newUser.getPassword() == null) {
             throw new BadRequestException("Invalid Password");
         }
-        if (location == null) {
+        if (newUser.getLocation() == null) {
             throw new BadRequestException("Invalid Location");
         }
-        if (getUserByEmail(ds, email) == null) {
-            if (alias == null) {
+        if (getUserByEmail(ds, email, User.Relation.SELF) == null) {
+            if (newUser.getAlias() == null) {
                 newUser.setDefaultAlias();
             }
             newUser.setBlankQuestions();
@@ -195,7 +190,7 @@ public class SamesiesApi {
             path = "user/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public User getUser(@Named("id") long uid) throws ServiceException {
-        return getUserById(getDS(), uid, User.STRANGER);
+        return getUserById(getDS(), uid, User.Relation.STRANGER);
     }
 
     @ApiMethod(name = "samesiesApi.getUsers",
@@ -210,7 +205,7 @@ public class SamesiesApi {
         List<User> users = new ArrayList<>();
         for (Key key : keys) {
             // TODO: deal with friends' connections
-            users.add(new User(map.get(key), User.STRANGER));
+            users.add(new User(map.get(key), User.Relation.STRANGER));
         }
         return users;
     }
@@ -230,28 +225,109 @@ public class SamesiesApi {
         }
     }
 
+    //----------------------------
+    //        Friend Calls
+    //----------------------------
+
     @ApiMethod(name = "samesiesApi.getFriends",
-            path = "user/friends/{id}",
+            path = "friends/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
-    public List<User> getFriends(@Named("id") long uid) throws ServiceException {
+    public List<Friend> getFriends(@Named("id") long uid) throws ServiceException {
         DatastoreService ds = getDS();
 
         Query query = new Query("Friend").setFilter(Query.CompositeFilterOperator.or(
                 new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, uid),
                 new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, uid)));
         PreparedQuery pq = ds.prepare(query);
-        List<User> users = new ArrayList<>();
+        List<Friend> friends = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
-            long uid1 = (long) e.getProperty("uid1");
-            long uid2 = (long) e.getProperty("uid2");
-            if (uid1 == uid) {
-                users.add(getUserById(ds, uid2, User.FRIEND));
-            } else {
-                users.add(getUserById(ds, uid1, User.FRIEND));
+            Friend friend = new Friend(e);
+            if (!friend.getStatus().isDeleted()) {
+                long uid1 = friend.getUid1();
+                long uid2 = friend.getUid2();
+                User.Relation relation = friend.getStatus().getRelation();
+                if (uid1 == uid) {
+                    friend.setUser(getUserById(ds, uid2, relation));
+                } else {
+                    friend.setUser(getUserById(ds, uid1, relation));
+                }
+                friends.add(friend);
             }
         }
-        return users;
+        return friends;
     }
+
+    @ApiMethod(name = "samesiesApi.addFriend",
+            path = "friends/add/{myId}/{theirId}",
+            httpMethod = ApiMethod.HttpMethod.POST)
+    public Friend addFriend(@Named("myId") long myId, @Named("theirId") long theirId) throws ServiceException {
+        DatastoreService ds = getDS();
+
+        Friend friend;
+        Query query = new Query("Friend").setFilter(Query.CompositeFilterOperator.or(
+                new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, myId),
+                new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, theirId)));
+        PreparedQuery pq = ds.prepare(query);
+        Entity e = pq.asSingleEntity();
+        if (e == null) {
+            // Try the other order
+            query = new Query("Friend").setFilter(Query.CompositeFilterOperator.or(
+                    new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, theirId),
+                    new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, myId)));
+            pq = ds.prepare(query);
+            e = pq.asSingleEntity();
+            if (e == null) {
+                // create new friend
+                friend = new Friend(myId, theirId);
+            } else {
+                // friend exists in reverse order
+                friend = new Friend(e);
+                if (friend.getStatus() == Friend.Status.PENDING) {
+                    // if both have added each other, accept
+                    friend.setStatus(Friend.Status.ACCEPTED);
+                } else if (friend.getStatus() == Friend.Status.DELETED_2) {
+                    // if you had deleted them, set it back to pending
+                    friend.setUid1(myId);
+                    friend.setUid2(theirId);
+                    friend.setStatus(Friend.Status.PENDING);
+                }
+                // if already accepted or deleted by them, leave it
+            }
+        } else {
+            friend = new Friend(e);
+            if (friend.getStatus() == Friend.Status.DELETED_1) {
+                // if you had deleted them, set it back to pending
+                friend.setStatus(Friend.Status.PENDING);
+            }
+            // if already pending, accepted, or deleted by them, leave it
+        }
+        if (friend.getStatus().isDeleted()) {
+            return null;
+        } else {
+            EntityUtils.put(ds, friend); // update the friend in case it changed
+            friend.setUser(getUserById(ds, theirId, friend.getStatus().getRelation()));
+            return friend;
+        }
+    }
+
+    @ApiMethod(name = "samesiesApi.removeFriend",
+            path = "friends/remove/{id}/{myId}",
+            httpMethod = ApiMethod.HttpMethod.DELETE)
+    public void removeFriend(@Named("id") long fid, @Named("myId") long myId) throws ServiceException {
+        DatastoreService ds = getDS();
+        try {
+            Friend friend = new Friend(ds.get(KeyFactory.createKey("Friend", fid)));
+            if (myId == friend.getUid1()) {
+                friend.setStatus(Friend.Status.DELETED_1);
+            } else {
+                friend.setStatus(Friend.Status.DELETED_2);
+            }
+            EntityUtils.put(ds, friend);
+        } catch (EntityNotFoundException e) {
+            throw new NotFoundException("Friend not found", e);
+        }
+    }
+
 
     //----------------------------
     //      Community Calls
@@ -268,7 +344,7 @@ public class SamesiesApi {
         PreparedQuery pq = ds.prepare(query);
         List<User> users = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
-            users.add(new User(e, User.STRANGER));
+            users.add(new User(e, User.Relation.STRANGER));
         }
         return new Community(location, users);
     }
@@ -550,15 +626,15 @@ public class SamesiesApi {
         return uid != episode.getUid1();
     }
 
-    private static User getUserById(DatastoreService ds, long id, int type) throws NotFoundException {
+    private static User getUserById(DatastoreService ds, long id, User.Relation relation) throws NotFoundException {
         try {
-            return new User(ds.get(KeyFactory.createKey("User", id)), type);
+            return new User(ds.get(KeyFactory.createKey("User", id)), relation);
         } catch (EntityNotFoundException e) {
             throw new NotFoundException("Email not found", e);
         }
     }
 
-    private static User getUserByEmail(DatastoreService ds, String email) {
+    private static User getUserByEmail(DatastoreService ds, String email, User.Relation relation) {
         Query query = new Query("User").setFilter(new Query.FilterPredicate(
                 "email", Query.FilterOperator.EQUAL, email));
         PreparedQuery pq = ds.prepare(query);
@@ -567,7 +643,7 @@ public class SamesiesApi {
         if (e == null) {
             return null;
         } else {
-            return new User(e, User.SELF);
+            return new User(e, relation);
         }
     }
 

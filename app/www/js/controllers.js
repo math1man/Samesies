@@ -1,5 +1,8 @@
 (function() {
 
+    const URL = 'http://localhost:8080/_ah/api';
+    // https://samesies-app.appspot.com/_ah/api
+    // http://localhost:8080/_ah/api
     const PING_INTERVAL = 1000; // ms
 
     var app = angular.module('samesies.controllers', []);
@@ -18,9 +21,7 @@
                     Data.categories = resp.result.items;
                 });
 
-            }, 'https://samesies-app.appspot.com/_ah/api');
-            // https://samesies-app.appspot.com/_ah/api
-            // http://localhost:8080/_ah/api
+            }, URL);
         };
 
         $scope.dispName = function(user) {
@@ -79,7 +80,7 @@
                 // nested so that it can pull from friends
                 API.getConnections(user.id).then(function(resp) {
                     Data.connections = resp.result.items;
-                    if (Data.connections) {
+                    if (Data.connections && Data.connections.length > 0) {
                         var uids = [];
                         for (var i = 0; i < Data.connections.length; i++) {
                             var cxn = Data.connections[i];
@@ -93,9 +94,9 @@
                                 // getUsers data is stranger data, so check if they are in friends
                                 var isFriend = false;
                                 for (var j=0; j<Data.friends.length && !isFriend; j++) {
-                                    if (Data.friends[j].id === uids[i]) {
+                                    if (Data.friends[j].user.id === uids[i]) {
                                         isFriend = true;
-                                        Data.connections[i].data.partner = Data.friends[j];
+                                        Data.connections[i].data.partner = Data.friends[j].user;
                                     }
                                 }
                             }
@@ -489,9 +490,34 @@
         $scope.search = '';
         $scope.friends = Data.friends;
 
-        $scope.profile = function(friend) {
-            Data.tempUser = friend;
+        $scope.profile = function(user) {
+            Data.tempUser = user;
             $state.go('profile');
+        };
+
+        $scope.accept = function(friend) {
+            API.addFriend(Data.user.id, friend.user.id).then(function(resp) {
+                var friend = resp.result;
+                var done = false;
+                for (var i=0; i<$scope.friends.length && !done; i++) {
+                    if ($scope.friends[i].id === friend.id) {
+                        $scope.friends[i] = friend;
+                        done = true;
+                    }
+                }
+                $scope.profile(friend.user);
+            });
+        };
+
+        $scope.reject = function(friend) {
+            API.removeFriend(friend.id, Data.user.id);
+            var done = false;
+            for (var i=0; i<$scope.friends.length && !done; i++) {
+                if ($scope.friends[i].id === friend.id) {
+                    $scope.friends.splice(i, 1);
+                    done = true;
+                }
+            }
         };
 
         $scope.$on('$ionicView.beforeEnter', function() {
@@ -527,7 +553,7 @@
         $scope.$on('$ionicView.beforeEnter', function() {
             API.getConnections(Data.user.id).then(function(resp) {
                 var connections = resp.result.items;
-                if (connections) {
+                if (connections && connections.length > 0) {
                     var uids = [];
                     for (var i = 0; i < connections.length; i++) {
                         var cxn = connections[i];
@@ -540,9 +566,9 @@
                             connections[i].data.partner = users[i];
                             var isFriend = false;
                             for (var j=0; j<Data.friends.length && !isFriend; j++) {
-                                if (Data.friends[j].id === uids[i]) {
+                                if (Data.friends[j].user.id === uids[i]) {
                                     isFriend = true;
-                                    connections[i].data.partner = Data.friends[j];
+                                    connections[i].data.partner = Data.friends[j].user;
                                 }
                             }
                         }
@@ -743,7 +769,7 @@
 
         $scope.showAddFriend = function() {
             for (var i = 0; i < Data.friends.length; i++) {
-                if (Data.friends[i].id === $scope.recipient.id) {
+                if (Data.friends[i].user.id === $scope.recipient.id) {
                     return false;
                 }
             }

@@ -6,10 +6,36 @@
 		</label>
 		<ion-content class="has-header">
 			<!--Eventually need to add friend requests here-->
-			<div class="item item-avatar" ng-repeat="friend in friends | checkName:search" ng-click="profile(friend)">
+			<div class="item item-divider">
+				Requests
+			</div>
+			<div class="item item-avatar" ng-repeat="friend in friends | friendRequests | checkName:search"
+				 ng-click="accept(friend)">
 				<img src="img/lone_icon.png">
-				{{dispName(friend)}}
-				<p ng-show="friend.name">{{friend.alias}}</p>
+				{{dispName(friend.user)}}
+				<p ng-show="friend.name">{{friend.user.alias}}</p>
+				<div class="buttons">
+					<button class="button button-round button-stable" ng-click="reject(friend)">
+						<i class="icon ion-close-round"></i>
+					</button>
+				</div>
+			</div>
+			<div class="item item-divider">
+				Friends
+			</div>
+			<div class="item item-avatar" ng-repeat="friend in friends | friends | checkName:search"
+				 ng-click="profile(friend.user)">
+				<img src="img/lone_icon.png">
+				{{dispName(friend.user)}}
+				<p ng-show="friend.user.name">{{friend.user.alias}}</p>
+			</div>
+			<div class="item item-divider">
+				Awaiting Response
+			</div>
+			<div class="item item-avatar" ng-repeat="friend in friends | pendingFriends | checkName:search">
+				<img src="img/lone_icon.png">
+				{{dispName(friend.user)}}
+				<p ng-show="friend.name">{{friend.user.alias}}</p>
 			</div>
 		</ion-content>
 	</ion-content>

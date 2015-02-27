@@ -11,10 +11,9 @@ import java.util.List;
  */
 public class User implements Storable {
 
-    public static final int ADMIN = 100;
-    public static final int SELF = 32;
-    public static final int FRIEND = 16;
-    public static final int STRANGER = 0;
+    public static enum Relation {
+        STRANGER, FRIEND, SELF, ADMIN
+    }
 
     private Long id;
     private String email;
@@ -29,26 +28,29 @@ public class User implements Storable {
     private String aboutMe;
     private List<String> questions;
 
-    public User() {
+    private Relation relation;
 
+    public User() {
     }
 
     public User(Entity entity) {
-        this(entity, ADMIN);
+        this(entity, Relation.ADMIN);
     }
 
-    public User(Entity entity, int type) {
+    public User(Entity entity, Relation relation) {
+        int ordinal = relation.ordinal();
         // public
         this.id = entity.getKey().getId();
         this.location = (String) entity.getProperty("location");
         this.alias = (String) entity.getProperty("alias");
+        this.relation = relation;
         // private
-        if (type >= SELF) {
+        if (ordinal >= Relation.SELF.ordinal()) {
             this.email = (String) entity.getProperty("email");
             this.password = (String) entity.getProperty("password");
         }
         // protected
-        if (type >= FRIEND) {
+        if (ordinal >= Relation.FRIEND.ordinal()) {
             this.name = (String) entity.getProperty("name");
             // THIS FUCKING CODE SUCKS
             Object o = entity.getProperty("age");
@@ -154,6 +156,14 @@ public class User implements Storable {
 
     public void setQuestions(List<String> questions) {
         this.questions = questions;
+    }
+
+    public Relation getRelation() {
+        return relation;
+    }
+
+    public void setRelation(Relation relation) {
+        this.relation = relation;
     }
 
     public Entity toEntity() {

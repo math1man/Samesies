@@ -27,6 +27,12 @@
             getFriends: function(id) {
                 return this.api.getFriends({id: id});
             },
+            addFriend: function(myId, theirId) {
+                return this.api.addFriend({myId: myId, theirId: theirId});
+            },
+            removeFriend: function(id, myId) {
+                this.api.removeFriend({id: id, myId: myId}).then();
+            },
             getCommunity: function(location) {
                 return this.api.getCommunity({location: location});
             },
