@@ -218,14 +218,13 @@ public class SamesiesApi {
         if (user.getId() == null) {
             throw new BadRequestException("User ID not specified");
         }
-        String password = user.getPassword();
         String newPassword = user.getNewPassword();
         User dsUser = getUserById(ds, user.getId(), User.Relation.SELF);
         if (dsUser == null) {
             throw new NotFoundException("User not found");
         } else if (newPassword != null) {
             // password is being changed
-            if (BCrypt.checkpw(password, dsUser.getHashedPw())) {
+            if (BCrypt.checkpw(user.getPassword(), dsUser.getHashedPw())) {
                 user.setPassword(user.getNewPassword());
             } else {
                 throw new BadRequestException("Invalid Password");

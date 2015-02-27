@@ -815,7 +815,7 @@
             if ($scope.isChanged) {
                 $scope.isChanged = false;
                 Data.user = $scope.user;
-                API.updateUser($scope.user);
+                API.updateUser($scope.user).then();
             }
         });
 

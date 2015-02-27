@@ -206,7 +206,11 @@ public class User implements Storable {
             entity = new Entity("User", id);
         }
         entity.setProperty("email", email);
-        entity.setUnindexedProperty("hashedPw", BCrypt.hashpw(password, BCrypt.gensalt()));
+        if (password == null) {
+            entity.setUnindexedProperty("hashedPw", hashedPw);
+        } else {
+            entity.setUnindexedProperty("hashedPw", BCrypt.hashpw(password, BCrypt.gensalt()));
+        }
         entity.setProperty("location", location);
         entity.setProperty("alias", alias);
         entity.setProperty("avatar", avatar);
