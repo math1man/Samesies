@@ -56,7 +56,7 @@
 
     });
 
-    app.controller('MenuCtrl', function($scope, $window, $ionicModal, API, Data, Utils) {
+    app.controller('MenuCtrl', function($scope, $window, $ionicModal, $ionicPopup, API, Data, Utils) {
 
         $ionicModal.fromTemplateUrl('templates/login.html', {
             scope: $scope,
@@ -145,6 +145,7 @@
         };
 
         $scope.createAccount = function() {
+            $scope.loginData.location = 'Saint Paul, MN';
             if (!$scope.loginData.email) {
                 $scope.loginData.error = "Invalid email";
             } else if (!$scope.loginData.password || $scope.loginData.password.length <= 5) {
@@ -174,7 +175,9 @@
         $scope.logout = function() {
             Data.user = null;
             $scope.loginData = {
-                error: false
+                error: false,
+                location: 'Saint Paul, MN',
+                avatar: 'img/lone_icon.png'
             };
             $scope.showLogin();
         };
@@ -439,7 +442,7 @@
     });
 
     app.controller('CommunitiesCtrl', function($scope, $ionicPopover, API, Data) {
-        $scope.communities = ['Saint Paul, MN', 'Minneapolis, MN'];
+        $scope.communities = ['Saint Paul, MN'];
         $scope.selected = $scope.communities[0];
 
         $scope.loadCommunity = function(community) {

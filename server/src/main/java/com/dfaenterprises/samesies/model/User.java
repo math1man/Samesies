@@ -70,7 +70,7 @@ public class User implements Storable {
         this.password = password;
         this.location = location;
         this.alias = alias;
-        this.avatar = new Text("img/lone_icon.png");
+        this.avatar = getDefaultAvatar();
         this.name = name;
         this.age = Long.valueOf(age);
         this.gender = gender;
@@ -139,7 +139,11 @@ public class User implements Storable {
     }
 
     public void setAvatar(String avatar) {
-        this.avatar = new Text(avatar);
+        if (avatar == null) {
+            this.avatar = getDefaultAvatar();
+        } else {
+            this.avatar = new Text(avatar);
+        }
     }
 
     public String getName() {
@@ -226,6 +230,10 @@ public class User implements Storable {
 
     public static String getAlias(String email) {
         return email.substring(0, email.indexOf('@'));
+    }
+
+    private static Text getDefaultAvatar() {
+        return new Text("img/lone_icon.png");
     }
 
     private static List<String> blankQuestions() {
