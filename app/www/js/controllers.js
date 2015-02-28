@@ -183,13 +183,11 @@
         };
 
         $scope.recoverPassword = function() {
-            $ionicPopup.confirm({
+            $ionicPopup.alert({
                 scope: $scope,
                 title: 'Recover Password',
-                template: 'Shit sucks...',
-                cancelText: 'Cancel',
-                cancelType: 'button-stable',
-                okText: 'Okay :(',
+                template: 'Sorry, this feature has not been implemented yet.',
+                okText: 'Okay',
                 okType: 'button-royal'
             });
         };
