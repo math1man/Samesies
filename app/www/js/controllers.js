@@ -418,8 +418,7 @@
             if (episode.isPersistent) {
                 if (episode.status === "IN_PROGRESS") {
                     episode.data = $scope.episodeData;
-                    Data.episode = episode;
-                    // TODO handle this
+                    Data.connections.push(episode);
                 }
             } else {
                 API.endEpisode(episode.id);
@@ -574,11 +573,22 @@
         $scope.reject = function(cxn) {
             cxn.status = "UNMATCHED";
             API.endEpisode(cxn.id);
+            removeCxn(cxn);
         };
 
         $scope.play = function(cxn) {
             Data.episode = cxn;
+            removeCxn(cxn);
             $state.go('play');
+        };
+
+        var removeCxn = function(cxn) {
+            for (var i=0; i<$scope.connections.length; i++) {
+                if ($scope.connections[i].id === cxn.id) {
+                    $scope.connections.splice(i, 1);
+                    return;
+                }
+            }
         };
 
         $scope.$on('$ionicView.beforeEnter', function() {
