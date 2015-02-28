@@ -51,11 +51,11 @@
             getCategories: function() {
                 return this.api.getCategories();
             },
-            findEpisode: function(myId) {
-                return this.api.findEpisode({myId: myId});
+            findEpisode: function(myId, mode) {
+                return this.api.findEpisode({myId: myId, mode: mode});
             },
-            connectEpisode: function(myId, theirId) {
-                return this.api.connectEpisode({myId: myId, theirId: theirId});
+            connectEpisode: function(myId, theirId, mode) {
+                return this.api.connectEpisode({myId: myId, theirId: theirId, mode: mode});
             },
             acceptEpisode: function(id) {
                 return this.api.acceptEpisode({id: id});

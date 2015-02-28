@@ -122,15 +122,15 @@ public class SamesiesApi {
                 q.setCategory("Random");
                 EntityUtils.put(ds, q);
             }
-            for (Question q : questionsBad) {
-                q.setCategory("Bad");
-                EntityUtils.put(ds, q);
-            }
+//            for (Question q : questionsBad) {
+//                q.setCategory("Bad");
+//                EntityUtils.put(ds, q);
+//            }
 
             // initialize question categories
             ds.put(new Entity("Category", "All"));
             ds.put(new Entity("Category", "Random"));
-            ds.put(new Entity("Category", "Bad"));
+//            ds.put(new Entity("Category", "Bad"));
         }
     }
 
@@ -437,15 +437,15 @@ public class SamesiesApi {
      * @throws ServiceException
      */
     @ApiMethod(name = "samesiesApi.findEpisode",
-            path = "episode/find/{myId}",
+            path = "episode/find/{myId}/{mode}",
             httpMethod = ApiMethod.HttpMethod.POST)
-    public Episode findEpisode(@Named("myId") long myUid) throws ServiceException {
-        // TODO: eventually handle mode here
+    public Episode findEpisode(@Named("myId") long myUid, @Named("mode") String mode) throws ServiceException {
         DatastoreService ds = getDS();
 
         Query query = new Query("Episode").setFilter(Query.CompositeFilterOperator.and(
                         new Query.FilterPredicate("status", Query.FilterOperator.EQUAL, Episode.Status.MATCHING.name()),
-                        new Query.FilterPredicate("isPersistent", Query.FilterOperator.EQUAL, false)))
+                        new Query.FilterPredicate("isPersistent", Query.FilterOperator.EQUAL, false),
+                        new Query.FilterPredicate("mode", Query.FilterOperator.EQUAL, mode)))
                 .addSort("startDate", Query.SortDirection.ASCENDING);
         PreparedQuery pq = ds.prepare(query);
 
@@ -457,11 +457,10 @@ public class SamesiesApi {
                 episode = temp;
             }
         }
-        // TODO: handle categories
         if (episode == null) {
             // rather than order episode uids, makes more sense to have uid1 be
             // the initiator and uid2 be the responder, for record-keeping's sake
-            episode = new Episode(myUid);
+            episode = new Episode(myUid, mode);
         } else {
             episode.setStatus(Episode.Status.IN_PROGRESS);
             episode.setUid2(myUid);
@@ -472,12 +471,12 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.connectEpisode",
-            path = "episode/connect/{myId}/{theirId}",
+            path = "episode/connect/{myId}/{theirId}/{mode}",
             httpMethod = ApiMethod.HttpMethod.POST)
-    public Episode connectEpisode(@Named("myId") long myUid, @Named("theirId") long theirUid) throws ServiceException {
+    public Episode connectEpisode(@Named("myId") long myUid, @Named("theirId") long theirUid,
+                                  @Named("mode") String mode) throws ServiceException {
         DatastoreService ds = getDS();
-        // TODO: handle categories
-        Episode episode = new Episode(myUid, theirUid);
+        Episode episode = new Episode(myUid, theirUid, mode);
         episode.setQids(getQids(ds));
         EntityUtils.put(ds, episode);
         return episode;

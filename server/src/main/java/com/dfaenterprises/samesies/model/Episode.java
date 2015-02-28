@@ -47,10 +47,10 @@ public class Episode implements Storable {
      * (Random match mode)
      * @param uid1
      */
-    public Episode(Long uid1) {
+    public Episode(Long uid1, String mode) {
         this.startDate = new Date();
         this.isPersistent = false;
-        this.mode = "Random";
+        this.mode = mode;
         this.status = Status.MATCHING;
         this.uid1 = uid1;
     }
@@ -61,10 +61,10 @@ public class Episode implements Storable {
      * @param uid1
      * @param uid2
      */
-    public Episode(Long uid1, Long uid2) {
+    public Episode(Long uid1, Long uid2, String mode) {
         this.startDate = new Date();
         this.isPersistent = true;
-        this.mode = "Random";
+        this.mode = mode;
         this.status = Status.MATCHING;
         this.uid1 = uid1;
         this.uid2 = uid2;

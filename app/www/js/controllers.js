@@ -307,7 +307,8 @@
                     stage: 0,
                     partner: null
                 };
-                API.findEpisode(user.id).then(function (resp) {
+                // TODO: handle mode here
+                API.findEpisode(user.id, 'Random').then(function (resp) {
                     episode = resp.result;
                     if (episode.status === "MATCHING") {
                         Utils.interval(function () {
@@ -438,7 +439,7 @@
 
     });
 
-    app.controller('CommunitiesCtrl', function($scope, $ionicPopover, API, Data) {
+    app.controller('CommunitiesCtrl', function($scope, $ionicPopover, API) {
         $scope.communities = ['Saint Paul, MN'];
         $scope.selected = $scope.communities[0];
 
@@ -967,7 +968,8 @@
         };
 
         $scope.connect = function() {
-            API.connectEpisode(Data.user.id, $scope.tempUser.id).then(function(resp) {
+            // TODO: handle mode here
+            API.connectEpisode(Data.user.id, $scope.tempUser.id, 'Random').then(function(resp) {
                 var episode = resp.result;
                 episode.data = Utils.getData(episode);
                 episode.data.partner = $scope.tempUser;
