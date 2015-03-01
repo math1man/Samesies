@@ -1,16 +1,16 @@
-<ion-view view-title="{{dispName(recipient)}}" ng-controller="ChatCtrl">
+<ion-view view-title="{{dispName(data('tempUser'))}}" ng-controller="ChatCtrl">
 	<ion-nav-buttons side="right">
 		<button class="button button-icon icon ion-person-add" ng-show="showAddFriend()" ng-click="addFriend()"></button>
 	</ion-nav-buttons>
 	<ion-content delegate-handle="mainScroll">
 		<div class="chat" ng-repeat="message in history track by $index | orderBy:'sentDate'">
 			<div class="item item-avatar-left item-text-wrap" ng-show="isMine(message)">
-				<img ng-src="{{user.avatar}}">
+				<img ng-src="{{data('user').avatar}}">
 				{{message.message}}
 				<h6 ng-show="message.sentDate">{{dispDate(message)}}</h6>
 			</div>
 			<div class="item item-avatar-right item-text-wrap align-right" ng-show="!isMine(message)">
-				<img ng-src="{{recipient.avatar}}">
+				<img ng-src="{{data('tempUser').avatar}}">
 				{{message.message}}
 				<h6 ng-show="message.sentDate">{{dispDate(message)}}</h6>
 			</div>
@@ -19,7 +19,7 @@
 	<ion-footer-bar class="bar-stable">
 		<label class="item-input-wrapper">
 			<input id="chatInput" type="text" ng-model="buffer" ng-keypress="$event.keyCode === 13 && sendChat()"
-				   placeholder="Send to {{dispName(recipient)}}"/>
+				   placeholder="Send to {{dispName(data('tempUser'))}}"/>
 		</label>
 		<button class="button button-small button-royal" ng-click="sendChat()">
 			Send

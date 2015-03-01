@@ -428,6 +428,8 @@ public class SamesiesApi {
     //       Episode Calls
     //----------------------------
 
+    // TODO: game modes
+
     /**
      * Finds a new random episode.
      * If a currently matching episode matches with the user, matches the episode and returns it.

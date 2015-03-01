@@ -1,11 +1,11 @@
 <ion-popover-view>
     <ion-header-bar class="bar-stable">
-        <h1 class="title">Select a Category</h1>
+        <h1 class="title">Select a Game Mode</h1>
     </ion-header-bar>
     <ion-content>
         <div class="list">
-            <ion-radio ng-model="category[0]" ng-value="cat" ng-repeat="cat in data('categories')" ng-click="closePopup()">
-                {{cat}}
+            <ion-radio ng-model="selected" ng-value="mode" ng-repeat="mode in data('modes')" ng-click="selectMode(mode)">
+                {{mode}}
             </ion-radio>
         </div>
     </ion-content>

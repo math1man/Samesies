@@ -2,23 +2,23 @@
 	<ion-content>
 		<div class="list card">
 			<div class="item item-thumbnail-left">
-				<img ng-src="{{tempUser.avatar}}">
-				<h1>{{dispName(tempUser)}}</h1>
-				<p ng-show="tempUser.name">{{tempUser.alias}}</p>
+				<img ng-src="{{data('tempUser').avatar}}">
+				<h1>{{dispName(data('tempUser'))}}</h1>
+				<p ng-show="data('data('tempUser')').name">{{data('tempUser').alias}}</p>
 			</div>
 			<div class="item item-body">
-				<span ng-show="tempUser.aboutMe">{{tempUser.aboutMe}}</span>
+				<span ng-show="data('tempUser').aboutMe">{{data('tempUser').aboutMe}}</span>
 				<p>
-					<span ng-show="tempUser.age">Age: {{tempUser.age}}</span>
-					<span class="float-right">{{tempUser.location}}</span>
+					<span ng-show="data('tempUser').age">Age: {{data('tempUser').age}}</span>
+					<span class="float-right">{{data('tempUser').location}}</span>
 				</p>
-				<p><span ng-show="tempUser.gender">Gender: {{tempUser.gender}}</span></p>
+				<p><span ng-show="data('tempUser').gender">Gender: {{data('tempUser').gender}}</span></p>
 			</div>
 			<div class="item item-body" ng-show="hasQuestions()">
 				Personal Questions:
-				<p ng-repeat="question in tempUser.questions track by $index" ng-show="question">{{question}}</p>
+				<p ng-repeat="question in data('tempUser').questions track by $index" ng-show="question">{{question}}</p>
 			</div>
-			<div class="row padding-horizontal" ng-show="!isMe(tempUser)">
+			<div class="row padding-horizontal" ng-show="!isMe(data('tempUser'))">
 				<div class="col">
 					<button class="button button-block button-stable" ng-click="message()">Message</button>
 				</div>

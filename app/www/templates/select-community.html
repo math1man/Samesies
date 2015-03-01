@@ -4,7 +4,7 @@
     </ion-header-bar>
     <ion-content>
         <div class="list">
-            <ion-radio ng-model="selected" ng-value="com" ng-repeat="com in communities" ng-click="loadCommunity(com)">
+            <ion-radio ng-model="selected" ng-value="com" ng-repeat="com in data('communities')" ng-click="loadCommunity(com)">
                 {{com}}
             </ion-radio>
         </div>

@@ -11,10 +11,19 @@
 	<!--</ion-nav-buttons>-->
 	<ion-content>
 		<div class="list">
-			<a class="item item-icon-left" href="#/play">
-				<i class="icon ion-play"></i>
-				Play Samesies!
-			</a>
+			<div class="row hidden-grid">
+				<div class="col col-80">
+					<a class="item item-icon-left" href="#/play">
+						<i class="icon ion-play"></i>
+						Play Samesies!
+					</a>
+				</div>
+				<div class="col col-20">
+					<a class="item item-icon-left" href="">
+						<span class="item-note" ng-click="showMode($event)">{{data('mode')}}</span>
+					</a>
+				</div>
+			</div>
 			<a class="item item-icon-left" href="#/communities">
 				<i class="icon ion-ios7-people"></i>
 				Browse Communities

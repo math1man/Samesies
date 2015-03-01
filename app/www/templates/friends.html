@@ -12,7 +12,7 @@
 			<div class="item item-divider">
 				Requests
 			</div>
-			<div class="item item-avatar item-button-right" ng-repeat="friend in friends | friendRequests | checkName:search"
+			<div class="item item-avatar item-button-right" ng-repeat="friend in data('friends') | friendRequests | checkName:search"
 				 ng-click="accept(friend)">
 				<img ng-src="{{friend.user.avatar}}">
 				{{dispName(friend.user)}}
@@ -26,7 +26,7 @@
 			<div class="item item-divider">
 				Friends
 			</div>
-			<div class="item item-avatar" ng-repeat="friend in friends | friends | checkName:search"
+			<div class="item item-avatar" ng-repeat="friend in data('friends') | friends | checkName:search"
 				 ng-click="profile(friend.user)">
 				<img ng-src="{{friend.user.avatar}}">
 				{{dispName(friend.user)}}
@@ -35,7 +35,7 @@
 			<div class="item item-divider">
 				Awaiting Response
 			</div>
-			<div class="item item-avatar" ng-repeat="friend in friends | pendingFriends | checkName:search">
+			<div class="item item-avatar" ng-repeat="friend in data('friends') | pendingFriends | checkName:search">
 				<img ng-src="{{friend.user.avatar}}">
 				{{dispName(friend.user)}}
 				<p ng-show="friend.name">{{friend.user.alias}}</p>

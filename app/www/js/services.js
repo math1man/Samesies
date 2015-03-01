@@ -155,7 +155,9 @@
     app.service('Data', function() {
         this.questions = [];
         this.categories = [];
-        this.communities = [];
+        this.communities = ['Saint Paul, MN'];
+        this.modes = ['Random', 'Personal'];
+        this.mode = 'Random';
         this.user = null;
         this.friends = [];
         this.connections = [];
