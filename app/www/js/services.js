@@ -156,7 +156,7 @@
         this.questions = [];
         this.categories = [];
         this.communities = ['Saint Paul, MN'];
-        this.modes = ['Random', 'Personal'];
+        this.modes = ['Random'];
         this.mode = 'Random';
         this.user = null;
         this.friends = [];
