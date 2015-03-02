@@ -4,7 +4,6 @@ app/platforms
 app/plugins
 .idea
 
-*/.DS_Store
 *.ai
 *.iml
 
