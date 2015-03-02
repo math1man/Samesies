@@ -1,7 +1,7 @@
-<label class="item item-input" ng-show="data.type === 'textarea'">
-	<textarea placeholder="{{data.placeholder}}" ng-model="data.value" rows="10"></textarea>
+<label class="item item-input" ng-show="tempData.type === 'textarea'">
+	<textarea placeholder="{{tempData.placeholder}}" ng-model="data.value" rows="10"></textarea>
 </label>
-<label class="item item-input" ng-show="data.type != 'textarea'">
+<label class="item item-input" ng-show="tempData.type != 'textarea'">
 	<!-- min and max parameters only apply to age (number) -->
-	<input type="{{data.type}}" placeholder="{{data.placeholder}}" ng-model="data.value" min="0" max="150"/>
+	<input type="{{tempData.type}}" placeholder="{{tempData.placeholder}}" ng-model="tempData.value" min="0" max="150"/>
 </label>

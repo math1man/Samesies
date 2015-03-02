@@ -61,7 +61,7 @@
 
     });
 
-    app.controller('LoginCtrl', function($scope, API, Data) {
+    app.controller('LoginCtrl', function($scope, API, Data, Utils) {
 
         $scope.login = function(user) {
             $scope.loginData = null;
@@ -667,7 +667,7 @@
         var isChanged = false;
 
         $scope.edit = function(property, field, type, required) {
-            $scope.data = {
+            $scope.tempData = {
                 value: Data.user[field],
                 type: type,
                 placeholder: property
@@ -685,8 +685,8 @@
                         text: 'Okay',
                         type: 'button-royal',
                         onTap: function(e) {
-                            if (!required || $scope.data.value) {
-                                return $scope.data.value;
+                            if (!required || $scope.tempData.value) {
+                                return $scope.tempData.value;
                             } else {
                                 e.preventDefault();
                             }
@@ -698,19 +698,19 @@
                     Data.user[field] = update;
                     isChanged = true;
                 }
-                $scope.data = null;
+                $scope.tempData = null;
             });
         };
 
         $scope.editPassword = function() {
-            $scope.data = {
+            $scope.tempData = {
                 password: '',
                 newPassword: '',
                 confirmPassword: '',
                 error: function() {
-                    if ($scope.data.newPassword.length <= 5) {
+                    if ($scope.tempData.newPassword.length <= 5) {
                         return "New password too short!";
-                    } else if ($scope.data.newPassword != $scope.data.confirmPassword) {
+                    } else if ($scope.tempData.newPassword != $scope.tempData.confirmPassword) {
                         return "Passwords don't match!";
                     } else {
                         return "";
@@ -730,8 +730,8 @@
                         text: 'Okay',
                         type: 'button-royal',
                         onTap: function(e) {
-                            if (!$scope.data.error()) {
-                                return $scope.data;
+                            if (!$scope.tempData.error()) {
+                                return $scope.tempData;
                             } else {
                                 e.preventDefault();
                             }
@@ -761,12 +761,12 @@
                         }
                     });
                 }
-                $scope.data = null;
+                $scope.tempData = null;
             });
         };
 
         $scope.editQuestion = function(num) {
-            $scope.data = {
+            $scope.tempData = {
                 value: Data.user.questions[num],
                 type: "textarea",
                 placeholder: "Question"
@@ -783,7 +783,7 @@
                     }, {
                         text: 'Okay',
                         type: 'button-royal',
-                        onTap: function() { return $scope.data.value; }
+                        onTap: function() { return $scope.tempData.value; }
                     }
                 ]
             }).then(function(update) {
@@ -791,12 +791,12 @@
                     Data.user.questions[num] = update;
                     isChanged = true;
                 }
-                $scope.data = null;
+                $scope.tempData = null;
             });
         };
 
         $scope.editAvatar = function() {
-            $scope.data = {
+            $scope.tempData = {
                 image: Data.user.avatar
             };
             $ionicPopup.show({
@@ -812,7 +812,7 @@
                         text: 'Okay',
                         type: 'button-royal',
                         onTap: function() {
-                            return $scope.data.image;
+                            return $scope.tempData.image;
                         }
                     }
                 ]
@@ -821,7 +821,7 @@
                     Data.user.avatar = image;
                     isChanged = true;
                 }
-                $scope.data = null;
+                $scope.tempData = null;
             });
         };
 
@@ -1040,7 +1040,7 @@
                 var reader = new FileReader();
 
                 reader.onload = function () {
-                    $scope.data.image = reader.result;
+                    $scope.tempData.image = reader.result;
                     $scope.$apply();
                 };
 
