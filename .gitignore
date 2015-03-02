@@ -1,13 +1,13 @@
 
 server/target
-app/platforms/
-.idea/
-helloendpoints
-helloworld
+app/platforms
+app/plugins
+.idea
 
 *.ai
 *.iml
 
 Letter of Understanding.docx
 
-samesies/eclipse-launch-profiles
+server/eclipse-launch-profiles
+old
