@@ -674,13 +674,28 @@
             $scope.categoryPopup.show($event);
         };
 
-        $scope.closePopup = function() {
+        $scope.closeCategoryPopup = function() {
             $scope.categoryPopup.hide();
             $ionicScrollDelegate.scrollTop(true);
         };
 
+        $ionicPopover.fromTemplateUrl('templates/suggest-question.html', {
+            scope: $scope
+        }).then(function(popover) {
+            $scope.suggestPopup = popover;
+        });
+
+        $scope.makeSuggestion = function($event) {
+            $scope.suggestPopup.show($event);
+        };
+
+        $scope.closeSuggestPopup = function() {
+            $scope.suggestPopup.hide();
+        };
+
         $scope.$on('$destroy', function() {
             $scope.categoryPopup.remove();
+            $scope.suggestPopup.remove();
         })
 
     });
@@ -1069,6 +1084,18 @@
             if ($scope.feedback) {
                 API.sendFeedback($scope.feedback);
             }
+        }
+    });
+
+    app.controller('SuggestCtrl', function($scope, API) {
+        $scope.suggestedQuestion = [''];
+
+        $scope.suggest = function() {
+            if ($scope.suggestedQuestion[0]) {
+                API.suggestQuestion($scope.suggestedQuestion[0]);
+                $scope.suggestedQuestion = [''];
+            }
+            $scope.closeSuggestPopup();
         }
     });
 

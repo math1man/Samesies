@@ -644,10 +644,6 @@ public class SamesiesApi {
         return DatastoreServiceFactory.getDatastoreService();
     }
 
-    private static boolean contains(DatastoreService ds, Storable s) {
-        return contains(ds, s.toEntity());
-    }
-
     private static boolean contains(DatastoreService ds, Entity entity) {
         try {
             ds.get(entity.getKey());

@@ -1,0 +1,15 @@
+<ion-popover-view ng-controller="SuggestCtrl">
+    <ion-header-bar class="bar-stable">
+        <h1 class="title">Suggest a Question</h1>
+    </ion-header-bar>
+    <ion-content>
+        <label class="item item-input">
+            <textarea rows="8" placeholder="My Question" ng-model="suggestedQuestion[0]"></textarea>
+        </label>
+        <div class="item">
+            <div class="button button-block button-royal" ng-click="suggest()">
+                Suggest
+            </div>
+        </div>
+    </ion-content>
+</ion-popover-view>
