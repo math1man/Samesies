@@ -56,6 +56,11 @@
                 cache: false,
                 url: "/chat",
                 templateUrl: "templates/chat.html"
+            })
+            .state('feedback', {
+                cache: false,
+                url: "/feedback",
+                templateUrl: "templates/feedback.html"
             });
 
         // if none of the above states are matched, use this as the fallback

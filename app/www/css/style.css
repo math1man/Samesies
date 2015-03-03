@@ -35,11 +35,17 @@ h6 {
     border-radius: 100%;
 }
 
+.label-text-wrap {
+    white-space:normal;
+    width: 65%;
+    max-width: none;
+}
+
 .hidden-grid, .hidden-grid .col {
     padding: 0;
 }
 
-.hidden-grid a {
+.hidden-grid a, .hidden-grid div, .hidden-grid label {
     border: 0;
 }
 

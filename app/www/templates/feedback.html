@@ -1,0 +1,169 @@
+<ion-view view-title="Feedback" ng-controller="FeedbackCtrl">
+    <ion-content>
+        <div class="item item-text-wrap">
+            Hello, and thank you for playing Samesies! We, the developers Ari and Paul,
+            would love to here what you think about our app.  What you like, what you
+            don't like, suggestions that you think would improve the app. So please,
+            take a minute and fill out the following completely anonymous survey to
+            make Samesies the best it can be.
+        </div>
+        <div class="item item-text-wrap">
+            Answer as much or as little of the survey as you want. Anything is helpful.
+        </div>
+        <div class="item item-divider">
+            General Thoughts
+        </div>
+        <label class="item item-input item-select">
+            <span class="input-label label-text-wrap">
+                On a scale of 0 to 10, how much do you enjoy playing Samesies?
+            </span>
+            <select ng-model="feedback.enjoy">
+                <option selected></option>
+                <option>0</option>
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>4</option>
+                <option>5</option>
+                <option>6</option>
+                <option>7</option>
+                <option>8</option>
+                <option>9</option>
+                <option>10</option>
+            </select>
+        </label>
+        <div class="item item-text-wrap">
+            What, if anything, do you like about Samesies?
+        </div>
+        <label class="item item-input">
+            <textarea rows="3" placeholder="What do you like?" ng-model="feedback.like"></textarea>
+        </label>
+        <div class="item item-text-wrap">
+            What, if anything, do you dislike about Samesies?
+        </div>
+        <label class="item item-input">
+            <textarea rows="3" placeholder="What do you dislike?" ng-model="feedback.dislike"></textarea>
+        </label>
+        <div class="item item-divider">
+            How do you use Samesies?
+        </div>
+        <label class="item item-input item-select">
+            <span class="input-label label-text-wrap">
+                How often do you play Samesies by random match?
+            </span>
+            <select ng-model="feedback.random">
+                <option selected></option>
+                <option>Never</option>
+                <option>Sometimes</option>
+                <option>Often</option>
+                <option>Very Often</option>
+            </select>
+        </label>
+        <label class="item item-input">
+            <textarea rows="3" placeholder="Comments about random matching" ng-model="feedback.randomComments"></textarea>
+        </label>
+        <label class="item item-input item-select">
+            <span class="input-label label-text-wrap">
+                How often do you play Samesies by browsing?
+            </span>
+            <select ng-model="feedback.browse">
+                <option selected></option>
+                <option>Never</option>
+                <option>Sometimes</option>
+                <option>Often</option>
+                <option>Very Often</option>
+            </select>
+        </label>
+        <label class="item item-input">
+            <textarea rows="3" placeholder="Comments about browsing" ng-model="feedback.browseComments"></textarea>
+        </label>
+        <label class="item item-input item-select">
+            <span class="input-label label-text-wrap">
+                How often do you play Samesies with friends?
+            </span>
+            <select ng-model="feedback.friends">
+                <option selected></option>
+                <option>Never</option>
+                <option>Sometimes</option>
+                <option>Often</option>
+                <option>Very Often</option>
+            </select>
+        </label>
+        <label class="item item-input">
+            <textarea rows="3" placeholder="Comments about playing with friends" ng-model="feedback.friendsComments"></textarea>
+        </label>
+        <div class="item item-divider">
+            Other Questions
+        </div>
+        <label class="item item-input item-select">
+            <span class="input-label label-text-wrap">
+                Would you recommend Samesies to a friend?
+            </span>
+            <select ng-model="feedback.recommend">
+                <option selected></option>
+                <option>Yes</option>
+                <option>No</option>
+            </select>
+        </label>
+        <label class="item item-input item-select">
+            <span class="input-label label-text-wrap">
+                <b>We do not expect to ever make Samesies cost money.</b><br/>
+                In an alternate reality, would you buy Samesies for 99 cents?
+            </span>
+            <select ng-model="feedback.buy">
+                <option selected></option>
+                <option>Yes</option>
+                <option>No</option>
+            </select>
+        </label>
+        <label class="item item-input item-select">
+            <span class="input-label label-text-wrap">
+                Do you think you would eventually get bored with Samesies?
+                If so, how long would that take?
+            </span>
+            <select ng-model="feedback.bored">
+                <option selected></option>
+                <option>Never</option>
+                <option>A week</option>
+                <option>A month</option>
+                <option>A few months</option>
+                <option>A year</option>
+            </select>
+        </label>
+        <div class="item item-divider">
+            Comments and Suggestions
+        </div>
+        <div class="item item-text-wrap">
+            Do you have any suggestions for changes or features for Samesies?
+        </div>
+        <label class="item item-input">
+            <textarea rows="3" placeholder="Suggestions" ng-model="feedback.suggestions"></textarea>
+        </label>
+        <div class="item item-text-wrap">
+            Is there anything you would really like to see changed? If so, how?
+        </div>
+        <label class="item item-input">
+            <textarea rows="3" placeholder="Changes" ng-model="feedback.changes"></textarea>
+        </label>
+        <div class="item item-text-wrap">
+            Do you have any other comments?
+        </div>
+        <label class="item item-input">
+            <textarea rows="3" placeholder="Other Comments" ng-model="feedback.comments"></textarea>
+        </label>
+        <div class="item item-divider">
+            Demographics
+        </div>
+        <label class="item item-input">
+            <span class="input-label">Age</span>
+            <input type="number" ng-model="feedback.age" placeholder="Age" min="0" max="150">
+        </label>
+        <label class="item item-input">
+            <span class="input-label">Gender</span>
+            <input type="text" ng-model="feedback.gender" placeholder="Gender">
+        </label>
+        <div class="item">
+            <button class="button button-block button-royal" ng-click="submit()">Submit Feedback!</button>
+        </div>
+    </ion-content>
+</ion-view>

@@ -79,15 +79,26 @@
 
     app.controller('LoginCtrl', function($scope, API, Data, Utils) {
 
+        $scope.$on('modal.shown', function() {
+            $scope.loginData = {
+                error: false,
+                location: 'Saint Paul, MN',
+                avatar: 'img/lone_icon.png'
+            };
+        });
+
         $scope.login = function(user) {
             $scope.loginData = null;
             Data.user = user;
             API.getFriends(user.id).then(function(resp) {
-                Data.friends = resp.result.items;
+                var friends = resp.result.items;
+                if (friends) {
+                    Data.friends = friends;
+                }
                 // nested so that it can pull from friends
                 API.getConnections(user.id).then(function(resp) {
                     Data.connections = resp.result.items;
-                    if (Data.connections && Data.connections.length > 0) {
+                    if (Data.connections && Data.connections.length) {
                         var uids = [];
                         for (var i = 0; i < Data.connections.length; i++) {
                             var cxn = Data.connections[i];
@@ -229,11 +240,6 @@
 
         $scope.logout = function() {
             Data.user = null;
-            $scope.loginData = {
-                error: false,
-                location: 'Saint Paul, MN',
-                avatar: 'img/lone_icon.png'
-            };
             $scope.showLogin();
         };
 
@@ -648,7 +654,7 @@
                             }
                         }
                         Data.connections = connections;
-                    })
+                    });
                 }
             });
         });
@@ -1051,9 +1057,19 @@
         });
 
         $scope.uploadImage = function() {
-            document.getElementById('fileInput').click();
+            fileInput.click();
         }
 
+    });
+
+    app.controller('FeedbackCtrl', function($scope, API) {
+        $scope.feedback = {};
+
+        $scope.submit = function() {
+            if ($scope.feedback) {
+                API.sendFeedback($scope.feedback);
+            }
+        }
     });
 
 })();

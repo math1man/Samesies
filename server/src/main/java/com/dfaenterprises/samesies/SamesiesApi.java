@@ -404,7 +404,10 @@ public class SamesiesApi {
         PreparedQuery pq = ds.prepare(query);
         List<Question> questions = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
-            questions.add(new Question(e));
+            Question question = new Question(e);
+            if (!question.getCategory().equals("suggestion")) {
+                questions.add(question);
+            }
         }
         return questions;
     }
@@ -424,11 +427,17 @@ public class SamesiesApi {
         return categories;
     }
 
+    @ApiMethod(name = "samesiesApi.suggestQuestion",
+            path = "question/suggest/{question}",
+            httpMethod = ApiMethod.HttpMethod.POST)
+    public void suggestQuestion(@Named("question") String question) throws ServiceException {
+        Question q = new Question(question, null, "suggestion");
+        EntityUtils.put(getDS(), q);
+    }
+
     //----------------------------
     //       Episode Calls
     //----------------------------
-
-    // TODO: game modes
 
     /**
      * Finds a new random episode.
@@ -614,6 +623,17 @@ public class SamesiesApi {
             messages.add(new Message(e));
         }
         return messages;
+    }
+
+    //----------------------------
+    //      Feedback Calls
+    //----------------------------
+
+    @ApiMethod(name = "samesiesApi.sendFeedback",
+            path = "feedback",
+            httpMethod = ApiMethod.HttpMethod.POST)
+    public void sendFeedback(Feedback feedback) throws ServiceException {
+        EntityUtils.put(getDS(), feedback);
     }
 
     //----------------------------

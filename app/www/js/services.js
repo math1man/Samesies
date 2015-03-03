@@ -51,6 +51,9 @@
             getCategories: function() {
                 return this.api.getCategories();
             },
+            suggestQuestion: function(question) {
+                this.api.suggestQuestion({question: question}).then();
+            },
             findEpisode: function(myId, mode) {
                 return this.api.findEpisode({myId: myId, mode: mode});
             },
@@ -83,6 +86,9 @@
             },
             getMessages: function(chatId, after) {
                 return this.api.getMessages({chatId: chatId, after: after});
+            },
+            sendFeedback: function(feedback) {
+                this.api.sendFeedback(feedback).then();
             }
         };
     });
