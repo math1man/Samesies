@@ -12,7 +12,7 @@
 
     var app = angular.module('samesies.controllers', []);
 
-    app.controller('IndexCtrl', function($scope, $window, $ionicHistory, API, Data) {
+    app.controller('IndexCtrl', function($scope, $window, $ionicHistory, $ionicPopup, API, Data, Utils) {
         $window.init = function() {
             gapi.client.load('samesies', 'v1', function() {
                 // initialize API variable
@@ -49,6 +49,22 @@
                 }
             }
             return false;
+        };
+
+        $scope.connect = function(user) {
+            // TODO: handle mode here
+            API.connectEpisode(Data.user.id, user.id, 'Random').then(function(resp) {
+                var episode = resp.result;
+                episode.data = Utils.getData(episode);
+                episode.data.partner = user;
+                Data.connections.push(episode);
+            });
+            $ionicPopup.alert({
+                title: 'Connection Sent',
+                template: 'You have sent a connection to ' + $scope.dispName(user) + '.',
+                okText: 'Okay',
+                okType: 'button-royal'
+            });
         };
 
         $scope.data = function (field) {
@@ -963,7 +979,7 @@
 
     });
 
-    app.controller('ProfileCtrl', function($scope, $state, $ionicPopup, API, Data, Utils) {
+    app.controller('ProfileCtrl', function($scope, $state, $ionicPopup, API, Data) {
 
         $scope.isMe = function() {
             return Data.user.id === Data.tempUser.id;
@@ -972,22 +988,6 @@
         $scope.message = function() {
             $state.go('chat');
         };
-
-        $scope.connect = function() {
-            // TODO: handle mode here
-            API.connectEpisode(Data.user.id, Data.tempUser.id, 'Random').then(function(resp) {
-                var episode = resp.result;
-                episode.data = Utils.getData(episode);
-                episode.data.partner = Data.tempUser;
-                Data.connections.push(episode);
-            });
-            $ionicPopup.alert({
-                title: 'Connection Sent',
-                template: 'You have sent a connection to ' + $scope.dispName(Data.tempUser) + '.',
-                okText: 'Okay',
-                okType: 'button-royal'
-            });
-        }
     });
 
     app.controller('FindFriendCtrl', function($scope, API, Data) {
