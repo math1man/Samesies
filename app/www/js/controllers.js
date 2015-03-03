@@ -77,7 +77,7 @@
 
     });
 
-    app.controller('LoginCtrl', function($scope, API, Data, Utils) {
+    app.controller('LoginCtrl', function($scope, $ionicPopup, API, Data, Utils) {
 
         $scope.$on('modal.shown', function() {
             $scope.loginData = {
@@ -85,10 +85,12 @@
                 location: 'Saint Paul, MN',
                 avatar: 'img/lone_icon.png'
             };
+            $scope.isLoading = false;
         });
 
         $scope.login = function(user) {
             $scope.loginData = null;
+            $scope.isLoading = false;
             Data.user = user;
             API.getFriends(user.id).then(function(resp) {
                 var friends = resp.result.items;
@@ -144,9 +146,11 @@
                 $scope.loginData.error = "";
             }
             if (!$scope.loginData.error) {
+                $scope.isLoading = true;
                 API.login($scope.loginData).then(function (resp) {
                     $scope.login(resp.result);
                 }, function (reason) { // error
+                    $scope.isLoading = false;
                     if (reason.status === 404) {
                         $scope.loginData.error = 'Invalid email';
                     } else if (reason.status === 400) {
@@ -173,16 +177,19 @@
                 $scope.loginData.error = "";
             }
             if (!$scope.loginData.error) {
+                $scope.isLoading = true;
                 API.createUser($scope.loginData).then(function(resp){
                     $scope.login(resp.result);
                 }, function () { // error
+                    $scope.isLoading = false;
+                    $scope.loginData.error = '';
+                    $scope.$apply();
                     $ionicPopup.alert({
                         title: 'Invalid Email',
                         template: 'That email is already being used.',
                         okText: 'Okay',
                         okType: 'button-royal'
                     });
-                    $scope.loginData.error = '';
                 });
             }
         };
@@ -206,6 +213,7 @@
 
         $scope.toggle = function() {
             toggle = !toggle;
+            $scope.loginData.error = false;
         };
 
         $scope.isToggled = function() {

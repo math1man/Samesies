@@ -28,7 +28,10 @@
         <div class="item assertive" ng-show="loginData.error">
             {{loginData.error}}
         </div>
-        <div class="row padding-horizontal" ng-show="isToggled()">
+        <div class="item" ng-show="isLoading">
+            <h1 class="align-center"><i class="icon ion-loading-c"></i></h1>
+        </div>
+        <div class="row padding-horizontal" ng-show="isToggled() && !isLoading">
             <div class="col">
                 <button class="button button-block button-stable" ng-click="toggle()">Cancel</button>
             </div>
@@ -37,9 +40,9 @@
             </div>
         </div>
         <div ng-show="!isToggled()">
-            <label class="item">
+            <div class="item" ng-show="!isLoading">
                 <button class="button button-block button-royal" ng-click="doLogin()">Log in</button>
-            </label>
+            </div>
             <div class="item">
                 <a href="" ng-click="toggle()">Create Account</a>
                 <span class="float-right"><a href="" ng-click="recoverPassword()">Forgot your Password?</a></span>
