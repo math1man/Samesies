@@ -77,7 +77,7 @@
 
     });
 
-    app.controller('LoginCtrl', function($scope, API, Data, Utils) {
+    app.controller('LoginCtrl', function($scope, $ionicPopup, API, Data, Utils) {
 
         $scope.$on('modal.shown', function() {
             $scope.loginData = {
@@ -90,6 +90,7 @@
 
         $scope.login = function(user) {
             $scope.loginData = null;
+            $scope.loginKey = [''];
             Data.user = user;
             API.getFriends(user.id).then(function(resp) {
                 var friends = resp.result.items;
@@ -164,6 +165,8 @@
             }
         };
 
+        $scope.loginKey = [''];
+
         $scope.createAccount = function() {
             if (!$scope.loginData.email) {
                 $scope.loginData.error = "Invalid email";
@@ -173,6 +176,8 @@
                 $scope.loginData.error = "Passwords don't match";
             } else if (!$scope.loginData.location) {
                 $scope.loginData.error = "Invalid location";
+            } else if (!$scope.loginKey[0] || $scope.loginKey[0].toLowerCase() != 'macalester') {
+                $scope.loginData.error = "Invalid login key";
             } else {
                 $scope.loginData.error = "";
             }

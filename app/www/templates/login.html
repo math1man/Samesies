@@ -24,6 +24,10 @@
                 <span class="input-label">Alias</span>
                 <input type="text" ng-model="loginData.alias" placeholder="Alias">
             </label>
+            <label class="item item-input">
+                <span class="input-label">Login Key</span>
+                <input type="text" ng-model="loginKey[0]" placeholder="Key">
+            </label>
         </div>
         <div class="item assertive" ng-show="loginData.error">
             {{loginData.error}}
@@ -31,12 +35,18 @@
         <div class="item" ng-show="isLoading">
             <h1 class="align-center"><i class="icon ion-loading-c"></i></h1>
         </div>
-        <div class="row padding-horizontal" ng-show="isToggled() && !isLoading">
-            <div class="col">
-                <button class="button button-block button-stable" ng-click="toggle()">Cancel</button>
+        <div ng-show="isToggled()">
+            <div class="row padding-horizontal" ng-show="!isLoading">
+                <div class="col">
+                    <button class="button button-block button-stable" ng-click="toggle()">Cancel</button>
+                </div>
+                <div class="col">
+                    <button class="button button-block button-royal" ng-click="createAccount()">Create!</button>
+                </div>
             </div>
-            <div class="col">
-                <button class="button button-block button-royal" ng-click="createAccount()">Create!</button>
+            <div class="item item-text-wrap">
+                Samesies is currently in a closed Beta testing cycle. In order to
+                create an account a user must have the correct login validation key.
             </div>
         </div>
         <div ng-show="!isToggled()">
