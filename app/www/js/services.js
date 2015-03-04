@@ -164,7 +164,7 @@
     app.service('Data', function() {
         this.questions = [];
         this.categories = [];
-        this.communities = ['Saint Paul, MN'];
+        this.communities = ['Macalester College'];
         this.modes = ['Random'];
         this.settings = {
             mode: 'Random',

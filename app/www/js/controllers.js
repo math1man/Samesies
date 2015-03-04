@@ -100,10 +100,12 @@
                 var friends = resp.result.items;
                 if (friends) {
                     Data.friends = friends;
+                    $scope.$apply();
                 }
                 // nested so that it can pull from friends
                 API.getConnections(user.id).then(function(resp) {
                     Data.connections = resp.result.items;
+                    $scope.$apply();
                     if (Data.connections && Data.connections.length) {
                         var uids = [];
                         for (var i = 0; i < Data.connections.length; i++) {
@@ -124,7 +126,7 @@
                                     }
                                 }
                             }
-                        })
+                        });
                     }
                 });
             });
@@ -271,7 +273,7 @@
 
         $scope.getFriendRequestCount = function() {
             var count = 0;
-            if (Data.friends && Data.friends.length > 0) {
+            if (Data.user && Data.friends && Data.friends.length) {
                 for (var i = 0; i < Data.friends.length; i++) {
                     var item = Data.friends[i];
                     if (item.status === 'PENDING' && item.uid2 === Data.user.id) { // Connections pending your approval
@@ -607,7 +609,11 @@
 
         $scope.$on('$ionicView.beforeEnter', function() {
             API.getFriends(Data.user.id).then(function(resp) {
-                Data.friends = resp.result.items;
+                var friends = resp.result.items;
+                if (friends) {
+                    Data.friends = friends;
+                    $scope.$apply();
+                }
             });
         });
 
@@ -1070,7 +1076,7 @@
                 API.addFriend(Data.user.id, $scope.tempUser.id).then(function(resp) {
                     var friend = resp.result;
                     var isFriend = false;
-                    for (var i=0; i<Data.friends.length && !isFriend; i++) {
+                    for (var i = 0; i < Data.friends.length && !isFriend; i++) {
                         if (Data.friends[i].id === friend.id) {
                             Data.friends[i] = friend;
                             isFriend = true;
