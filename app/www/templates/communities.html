@@ -3,11 +3,13 @@
         <button class="button button-icon icon ion-help" ng-click="showHelp($event)"></button>
     </ion-nav-buttons>
     <ion-content scroll="false">
-        <!--Eventually allow community selection via this header-->
-        <div class="bar bar-header bar-stable" ng-click="showSelect($event)">
+        <ion-header-bar class="bar-stable" ng-click="showSelect($event)">
             <div class="title">{{community.location}}</div>
-        </div>
-        <ion-content class="has-header">
+        </ion-header-bar>
+        <ion-content>
+            <div class="item item-text-wrap">
+                Click on a person's picture to make a connection with them.
+            </div>
             <div class="item" ng-repeat="user in community.users | filterSelf" ng-click="connect(user)">
                 <img class="full-image" ng-src="{{user.avatar}}">
                 <h2>{{user.alias}}</h2>

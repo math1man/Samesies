@@ -15,10 +15,6 @@
     app.controller('IndexCtrl', function($scope, $state, $window, $ionicHistory, $ionicPopup, API, Data, Utils){
 
         $window.init = function() {
-            $ionicHistory.nextViewOptions({
-                disableBack: true
-            });
-            $state.go('menu');
             gapi.client.load('samesies', 'v1', function() {
                 // initialize API variable
                 API.init(gapi.client.samesies.samesiesApi);
@@ -328,6 +324,10 @@
 
         var episode;
 
+        $scope.isPersistent = function() {
+           return episode && episode.isPersistent;
+        };
+
         var go = function(state) {
             Utils.interruptAll();
             $scope.episodeData.state = state;
@@ -359,7 +359,7 @@
         };
 
         $scope.find = function() {
-            if (!episode || !episode.isPersistent) {
+            if (!$scope.isPersistent()) {
                 if (episode) {
                     API.endEpisode(episode.id);
                     episode = null;

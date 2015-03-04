@@ -8,9 +8,13 @@
 			{{matchText()}} <span class="item-note">{{episodeData.stage}}/10</span>
 		</div>
 
-		<!-- temporary way to initiate the episode with the bot -->
-		<div class="item" ng-show="is('matching')">
-			<img class="full-image spinner" src="img/icon.png">
+		<div ng-show="is('matching')">
+			<div class="item">
+				<img class="full-image spinner" src="img/icon.png">
+			</div>
+			<div class="item item-text-wrap">
+				Remember that you can make a new connection by swiping left at any time.
+			</div>
 		</div>
 
 		<!-- question -->

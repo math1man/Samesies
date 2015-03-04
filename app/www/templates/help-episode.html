@@ -4,22 +4,22 @@
     </ion-header-bar>
     <ion-content>
         <div class="item item-text-wrap">
-            You are in an episode!
+            You have made a connection!
         </div>
         <div class="item item-text-wrap">
-            In each episode, you are matched with a partner, and you will
+            In each connection, you are matched with a partner, and you will
             both be given the same question. Once you answer the question,
             you may view your partner's answer. Then, when you are ready,
             you can continue to the next question.
         </div>
         <div class="item item-text-wrap">
             After you and your partner complete 10 questions, you will
-            be taken to a free chat.
+            be able to freely chat.
         </div>
-        <div class="item item-text-wrap" ng-show="!episode.isPersistent">
-            If at any point you wish to end the episode, simply swipe
+        <div class="item item-text-wrap" ng-show="!isPersistent()">
+            If at any point you wish to make a new connection, simply swipe
             left for a new episode, or swipe right to return to the main
-            menu.
+            menu. This will end your previous connection.
         </div>
         <div class="item">
             <button class="button button-block button-royal" ng-click="closeHelp()">
