@@ -5,7 +5,7 @@
     // http://localhost:8080/_ah/api
     const DEBUG_USER = {
         error: false,
-        email: "ari@samesies.com",
+        email: "ari@samesies.org",
         password: "samesies123"
     };
     const PING_INTERVAL = 1000; // ms
@@ -94,7 +94,6 @@
 
         $scope.login = function(user) {
             $scope.loginData = null;
-            $scope.isLoading = false;
             Data.user = user;
             API.getFriends(user.id).then(function(resp) {
                 var friends = resp.result.items;

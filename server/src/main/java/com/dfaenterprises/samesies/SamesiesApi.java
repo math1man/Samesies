@@ -33,10 +33,10 @@ public class SamesiesApi {
             ds.put(initTest);
 
             // initialize users
-            User user1 = new User("ari@samesies.com", "samesies123", "Saint Paul, MN", "Ajawa",
+            User user1 = new User("ari@samesies.org", "samesies123", "Saint Paul, MN", "Ajawa",
                     "Ari Weiland", 20, "Male", "I am a junior Physics and Computer Science major at Macalester College.");
             EntityUtils.put(ds, user1);
-            User user2 = new User("luke@samesies.com", "samesies456", "Saint Paul, MN", "KoboldForeman",
+            User user2 = new User("luke@samesies.org", "samesies456", "Saint Paul, MN", "KoboldForeman",
                     "Luke Gehman", 21, "Male", "I am a junior Biology major at Macalester College. I play a lot of Dota 2.");
             EntityUtils.put(ds, user2);
 
