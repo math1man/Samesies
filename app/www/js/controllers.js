@@ -82,7 +82,7 @@
         $scope.$on('modal.shown', function() {
             $scope.loginData = {
                 error: false,
-                location: 'Saint Paul, MN',
+                location: 'Macalester College',
                 avatar: 'img/lone_icon.png'
             };
             $scope.isLoading = false;

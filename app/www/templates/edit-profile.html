@@ -15,12 +15,12 @@
 			<span class="item-note float-left">Alias</span>
 			{{data('user').alias}}
 		</div>
-		<div class="item align-right" ng-click="edit('Location', 'location', 'text', true)">
+		<!--<div class="item align-right" ng-click="edit('Location', 'location', 'text', true)">-->
+		<div class="item align-right" ng-click="">
 			<!-- eventually add GPS support? Dropdown? -->
 			<span class="item-note float-left">Location</span>
 			{{data('user').location}}
 		</div>
-		<!-- eventually need to not hardcode profile picture -->
 		<div class="item item-avatar-right" ng-click="editAvatar()">
 			<img ng-src="{{data('user').avatar}}">
 			<span class="item-note float-left">Profile Picture</span>
