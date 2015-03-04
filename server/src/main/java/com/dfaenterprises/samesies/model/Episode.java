@@ -18,7 +18,7 @@ public class Episode implements Storable {
     private Long id;
     private Date startDate;
     private Boolean isPersistent;
-    private String mode;
+    private Settings settings;
     private Status status;
     private Long uid1;
     private Long uid2;
@@ -33,7 +33,11 @@ public class Episode implements Storable {
         this.id = e.getKey().getId();
         this.startDate = (Date) e.getProperty("startDate");
         this.isPersistent = (Boolean) e.getProperty("isPersistent");
-        this.mode = (String) e.getProperty("mode");
+        this.settings = new Settings(
+                (String) e.getProperty("mode"),
+                (Boolean) e.getProperty("matchMale"),
+                (Boolean) e.getProperty("matchFemale"),
+                (Boolean) e.getProperty("matchOther"));
         this.status = Status.valueOf((String) e.getProperty("status"));
         this.uid1 = (Long) e.getProperty("uid1");
         this.uid2 = (Long) e.getProperty("uid2");
@@ -47,10 +51,10 @@ public class Episode implements Storable {
      * (Random match mode)
      * @param uid1
      */
-    public Episode(Long uid1, String mode) {
+    public Episode(Long uid1, Settings settings) {
         this.startDate = new Date();
         this.isPersistent = false;
-        this.mode = mode;
+        this.settings = settings;
         this.status = Status.MATCHING;
         this.uid1 = uid1;
     }
@@ -61,10 +65,10 @@ public class Episode implements Storable {
      * @param uid1
      * @param uid2
      */
-    public Episode(Long uid1, Long uid2, String mode) {
+    public Episode(Long uid1, Long uid2, Settings settings) {
         this.startDate = new Date();
         this.isPersistent = true;
-        this.mode = mode;
+        this.settings = settings;
         this.status = Status.MATCHING;
         this.uid1 = uid1;
         this.uid2 = uid2;
@@ -94,12 +98,12 @@ public class Episode implements Storable {
         this.isPersistent = isPersistent;
     }
 
-    public String getMode() {
-        return mode;
+    public Settings getSettings() {
+        return settings;
     }
 
-    public void setMode(String mode) {
-        this.mode = mode;
+    public void setSettings(Settings settings) {
+        this.settings = settings;
     }
 
     public Status getStatus() {
@@ -175,7 +179,10 @@ public class Episode implements Storable {
         }
         e.setProperty("startDate", startDate);
         e.setProperty("isPersistent", isPersistent);
-        e.setProperty("mode", mode);
+        e.setProperty("mode", settings.getMode());
+        e.setProperty("matchMale", settings.getMatchMale());
+        e.setProperty("matchFemale", settings.getMatchFemale());
+        e.setProperty("matchOther", settings.getMatchOther());
         e.setProperty("status", status.name());
         e.setProperty("uid1", uid1);
         e.setProperty("uid2", uid2);

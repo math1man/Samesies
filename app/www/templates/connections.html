@@ -13,7 +13,7 @@
 				 ng-click="accept(cxn)">
 				<img ng-src="{{cxn.data.partner.avatar}}">
 				{{dispName(cxn.data.partner)}}
-				<p>Mode: {{cxn.mode}}</p>
+				<p>Mode: {{cxn.settings.mode}}</p>
 				<div class="buttons">
 					<button class="button button-round button-stable" ng-click="reject(cxn)">
 						<i class="icon ion-close-round"></i>
@@ -27,7 +27,7 @@
 				<img ng-src="{{cxn.data.partner.avatar}}">
 				{{dispName(cxn.data.partner)}}
 				<span class="item-note">Stage {{cxn.data.stage}}</span>
-				<p>Mode: {{cxn.mode}}</p>
+				<p>Mode: {{cxn.settings.mode}}</p>
 			</div>
 			<div class="item item-divider">
 				Awaiting Response
@@ -36,14 +36,14 @@
 				<img ng-src="{{cxn.data.partner.avatar}}">
 				{{dispName(cxn.data.partner)}}
 				<span class="item-note">Pending</span>
-				<p>Mode: {{cxn.mode}}</p>
+				<p>Mode: {{cxn.settings.mode}}</p>
 			</div>
 			<div class="item item-avatar" ng-repeat="cxn in data('connections') | waitingConnections | orderBy:'data.stage'"
 				 ng-click="play(cxn)">
 				<img ng-src="{{cxn.data.partner.avatar}}">
 				{{dispName(cxn.data.partner)}}
 				<span class="item-note">Stage {{cxn.data.stage}}</span>
-				<p>Mode: {{cxn.mode}}</p>
+				<p>Mode: {{cxn.settings.mode}}</p>
 			</div>
 		</ion-content>
 	</ion-content>

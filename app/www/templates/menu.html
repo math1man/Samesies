@@ -4,26 +4,18 @@
 			Log Out
 		</button>
 	 </ion-nav-buttons>
-	<!--<ion-nav-buttons side="right">-->
-		<!--<button class="button button-icon" ng-click="show('help')">-->
-			<!--<i class="icon ion-help-circled"></i>-->
-		<!--</button>-->
-	<!--</ion-nav-buttons>-->
+	<ion-nav-buttons side="right">
+		<button class="button button-icon" ng-click="showSettings()">
+			<i class="icon ion-gear-a"></i>
+		</button>
+	</ion-nav-buttons>
 	<ion-content>
 		<div class="list">
-			<div class="row hidden-grid">
-				<div class="col col-80">
-					<a class="item item-icon-left" href="#/play">
-						<i class="icon ion-play"></i>
-						Play Samesies!
-					</a>
-				</div>
-				<div class="col col-20">
-					<a class="item" href="" ng-click="showMode($event)">
-						<span class="item-note">{{data('mode')}}</span>
-					</a>
-				</div>
-			</div>
+			<a class="item item-icon-left" href="#/play">
+				<i class="icon ion-play"></i>
+				Play Samesies!
+				<span class="item-note">{{data('settings').mode}}</span>
+			</a>
 			<a class="item item-icon-left" href="#/communities">
 				<i class="icon ion-ios7-people"></i>
 				Browse Communities

@@ -52,8 +52,7 @@
         };
 
         $scope.connect = function(user) {
-            // TODO: handle mode here
-            API.connectEpisode(Data.user.id, user.id, 'Random').then(function(resp) {
+            API.connectEpisode(Data.user.id, user.id, Data.settings).then(function(resp) {
                 var episode = resp.result;
                 episode.data = Utils.getData(episode);
                 episode.data.partner = user;
@@ -77,7 +76,7 @@
 
     });
 
-    app.controller('LoginCtrl', function($scope, $ionicPopup, API, Data, Utils) {
+    app.controller('LoginCtrl', function($scope, API, Data, Utils) {
 
         $scope.$on('modal.shown', function() {
             $scope.loginData = {
@@ -164,7 +163,6 @@
         };
 
         $scope.createAccount = function() {
-            $scope.loginData.location = 'Saint Paul, MN';
             if (!$scope.loginData.email) {
                 $scope.loginData.error = "Invalid email";
             } else if (!$scope.loginData.password || $scope.loginData.password.length <= 5) {
@@ -246,24 +244,24 @@
             $scope.loginPopup.hide();
         };
 
+        $ionicModal.fromTemplateUrl('templates/game-settings.html', {
+            scope: $scope,
+            animation: 'slide-in-left'
+        }).then(function(modal) {
+            $scope.settingsPopup = modal;
+        });
+
+        $scope.showSettings = function() {
+            $scope.settingsPopup.show();
+        };
+
+        $scope.closeSettings = function() {
+            $scope.settingsPopup.hide();
+        };
+
         $scope.logout = function() {
             Data.user = null;
             $scope.showLogin();
-        };
-
-        $ionicPopover.fromTemplateUrl('templates/select-mode.html', {
-            scope: $scope
-        }).then(function(popover) {
-            $scope.modePopup = popover;
-        });
-
-        $scope.showMode = function($event) {
-            $scope.modePopup.show($event);
-        };
-
-        $scope.selectMode = function(mode) {
-            Data.mode = mode;
-            $scope.modePopup.hide();
         };
 
         $scope.getFriendRequestCount = function() {
@@ -300,12 +298,12 @@
 
         $scope.$on('$destroy', function() {
             $scope.loginPopup.remove();
-            $scope.modePopup.remove();
+            $scope.settingsPopup.remove();
         });
 
     });
 
-    app.controller('EpisodeCtrl', function($scope, $state, $ionicModal, API, Utils, Data) {
+    app.controller('EpisodeCtrl', function($scope, $state, $ionicPopup, $ionicModal, API, Utils, Data) {
 
         $ionicModal.fromTemplateUrl('templates/help-episode.html', {
             scope: $scope,
@@ -327,7 +325,6 @@
         var go = function(state) {
             Utils.interruptAll();
             $scope.episodeData.state = state;
-            $scope.$apply();
             if (state === 'waiting') {
                 Utils.interval(function () {
                     API.getEpisode(episode.id).then(function (resp) {
@@ -357,12 +354,16 @@
 
         $scope.find = function() {
             if (!episode || !episode.isPersistent) {
+                if (episode) {
+                    API.endEpisode(episode.id);
+                    episode = null;
+                }
                 $scope.episodeData = {
                     state: 'matching',
                     stage: 0,
                     partner: null
                 };
-                API.findEpisode(Data.user.id, Data.mode).then(function (resp) {
+                API.findEpisode(Data.user.id, Data.settings).then(function (resp) {
                     episode = resp.result;
                     if (episode.status === "MATCHING") {
                         Utils.interval(function () {
@@ -393,6 +394,7 @@
             } else {
                 API.getQuestions(ep.qids).then(function (resp) {
                     $scope.episodeData.questions = resp.result.items;
+                    $scope.$apply();
                     go($scope.episodeData.state);
                 });
             }
@@ -1008,7 +1010,7 @@
 
     });
 
-    app.controller('ProfileCtrl', function($scope, $state, $ionicPopup, API, Data) {
+    app.controller('ProfileCtrl', function($scope, $state, API, Data) {
 
         $scope.isMe = function() {
             return Data.user.id === Data.tempUser.id;
@@ -1105,6 +1107,26 @@
             }
             $scope.closeSuggestPopup();
         }
+    });
+
+    app.controller('SettingsCtrl', function($scope, $ionicPopup, Data) {
+
+        $scope.settings = Data.settings;
+
+        $scope.saveSettings = function() {
+            if (!$scope.settings.matchMale && !$scope.settings.matchFemale && !$scope.settings.matchOther) {
+                $ionicPopup.alert({
+                    title: 'Cannot Match',
+                    template: 'You must specify at least one gender to match with.',
+                    okText: 'Okay',
+                    okType: 'button-royal'
+                });
+            } else {
+                Data.settings = $scope.settings;
+                $scope.closeSettings();
+            }
+        }
+
     });
 
 })();

@@ -448,10 +448,13 @@ public class SamesiesApi {
      * @throws ServiceException
      */
     @ApiMethod(name = "samesiesApi.findEpisode",
-            path = "episode/find/{myId}/{mode}",
+            path = "episode/find/{myId}/{mode}/{matchMale}/{matchFemale}/{matchOther}",
             httpMethod = ApiMethod.HttpMethod.POST)
-    public Episode findEpisode(@Named("myId") long myUid, @Named("mode") String mode) throws ServiceException {
+    public Episode findEpisode(@Named("myId") long myUid, @Named("mode") String mode, @Named("matchMale") boolean matchMale,
+                               @Named("matchFemale") boolean matchFemale, @Named("matchOther") boolean matchOther) throws ServiceException {
         DatastoreService ds = getDS();
+
+        Settings settings = new Settings(mode, matchMale, matchFemale, matchOther);
 
         Query query = new Query("Episode").setFilter(Query.CompositeFilterOperator.and(
                         new Query.FilterPredicate("status", Query.FilterOperator.EQUAL, Episode.Status.MATCHING.name()),
@@ -464,14 +467,12 @@ public class SamesiesApi {
         Episode episode = null;
         while (episode == null && iter.hasNext()) {
             Episode temp = new Episode(iter.next());
-            if (isMatch(myUid, temp)) {
+            if (isMatch(ds, myUid, settings, temp.getUid1(), temp.getSettings())) {
                 episode = temp;
             }
         }
         if (episode == null) {
-            // rather than order episode uids, makes more sense to have uid1 be
-            // the initiator and uid2 be the responder, for record-keeping's sake
-            episode = new Episode(myUid, mode);
+            episode = new Episode(myUid, settings);
         } else {
             episode.setStatus(Episode.Status.IN_PROGRESS);
             episode.setUid2(myUid);
@@ -482,12 +483,13 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.connectEpisode",
-            path = "episode/connect/{myId}/{theirId}/{mode}",
+            path = "episode/connect/{myId}/{theirId}/{mode}/{matchMale}/{matchFemale}/{matchOther}",
             httpMethod = ApiMethod.HttpMethod.POST)
-    public Episode connectEpisode(@Named("myId") long myUid, @Named("theirId") long theirUid,
-                                  @Named("mode") String mode) throws ServiceException {
+    public Episode connectEpisode(@Named("myId") long myUid, @Named("theirId") long theirUid, @Named("mode") String mode,
+                                  @Named("matchMale") boolean matchMale, @Named("matchFemale") boolean matchFemale,
+                                  @Named("matchOther") boolean matchOther) throws ServiceException {
         DatastoreService ds = getDS();
-        Episode episode = new Episode(myUid, theirUid, mode);
+        Episode episode = new Episode(myUid, theirUid, new Settings(mode, matchMale, matchFemale, matchOther));
         episode.setQids(getQids(ds));
         EntityUtils.put(ds, episode);
         return episode;
@@ -655,13 +657,31 @@ public class SamesiesApi {
 
     /**
      * This method decides whether a user is compatible with a matching-state episode
-     * @param uid
-     * @param episode
+     * @param ds
+     * @param uid1
+     * @param settings1
+     * @param uid2
+     * @param settings2
      * @return
      */
-    private static boolean isMatch(long uid, Episode episode) {
-        // TODO: logic here
-        return uid != episode.getUid1();
+    private static boolean isMatch(DatastoreService ds, Long uid1, Settings settings1, Long uid2, Settings settings2) throws NotFoundException {
+        if (uid1.equals(uid2)) { // cannot match with yourself (somehow)
+            return false;
+        }
+        // finally check that genders are acceptable to each other
+        return isMatch(getUserById(ds, uid1, User.Relation.ADMIN).getGender(), settings2)
+                && isMatch(getUserById(ds, uid2, User.Relation.ADMIN).getGender(), settings1);
+    }
+
+    private static boolean isMatch(String gender, Settings settings) {
+        switch (gender) {
+            case "Male":
+                return settings.getMatchMale();
+            case "Female":
+                return settings.getMatchFemale();
+            default:
+                return settings.getMatchOther();
+        }
     }
 
     private static User getUserById(DatastoreService ds, long id, User.Relation relation) throws NotFoundException {

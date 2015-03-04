@@ -54,11 +54,14 @@
             suggestQuestion: function(question) {
                 this.api.suggestQuestion({question: question}).then();
             },
-            findEpisode: function(myId, mode) {
-                return this.api.findEpisode({myId: myId, mode: mode});
+            findEpisode: function(myId, settings) {
+                settings.myId = myId;
+                return this.api.findEpisode(settings);
             },
-            connectEpisode: function(myId, theirId, mode) {
-                return this.api.connectEpisode({myId: myId, theirId: theirId, mode: mode});
+            connectEpisode: function(myId, theirId, settings) {
+                settings.myId = myId;
+                settings.theirId = theirId;
+                return this.api.connectEpisode(settings);
             },
             acceptEpisode: function(id) {
                 return this.api.acceptEpisode({id: id});
@@ -163,7 +166,12 @@
         this.categories = [];
         this.communities = ['Saint Paul, MN'];
         this.modes = ['Random'];
-        this.mode = 'Random';
+        this.settings = {
+            mode: 'Random',
+            matchMale: true,
+            matchFemale: true,
+            matchOther: true
+        };
         this.user = null;
         this.friends = [];
         this.connections = [];
