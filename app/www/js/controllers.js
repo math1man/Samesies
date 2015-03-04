@@ -816,6 +816,35 @@
             });
         };
 
+        $scope.editGender = function() {
+            $scope.tempData = {
+                value: Data.user.gender
+            };
+            $ionicPopup.show({
+                scope: $scope,
+                title: 'Edit Gender',
+                templateUrl: 'templates/edit-gender.html',
+                buttons: [
+                    {
+                        text: 'Cancel',
+                        type: 'button-stable'
+                    }, {
+                        text: 'Okay',
+                        type: 'button-royal',
+                        onTap: function() {
+                            return $scope.tempData.value;
+                        }
+                    }
+                ]
+            }).then(function(update) {
+                if (angular.isDefined(update)) {
+                    Data.user.gender = update;
+                    isChanged = true;
+                }
+                $scope.tempData = null;
+            });
+        };
+
         $scope.editQuestion = function(num) {
             $scope.tempData = {
                 value: Data.user.questions[num],
