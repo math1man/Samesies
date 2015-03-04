@@ -153,9 +153,9 @@
                 }, function (reason) { // error
                     $scope.isLoading = false;
                     if (reason.status === 404) {
-                        $scope.loginData.error = 'Invalid email';
+                        $scope.loginData.error = 'Email not found';
                     } else if (reason.status === 400) {
-                        $scope.loginData.error = 'Invalid password';
+                        $scope.loginData.error = 'Incorrect password';
                     } else {
                         $scope.loginData.error = 'Server error'
                     }
@@ -185,8 +185,8 @@
                     $scope.loginData.error = '';
                     $scope.$apply();
                     $ionicPopup.alert({
-                        title: 'Invalid Email',
-                        template: 'That email is already being used.',
+                        title: 'Bad Email',
+                        template: 'That email is already in use.',
                         okText: 'Okay',
                         okType: 'button-royal'
                     });
@@ -809,8 +809,8 @@
                         if (reason.status === 400) {
                             // TODO: recover password?
                             $ionicPopup.alert({
-                                title: 'Invalid Password',
-                                template: 'The password you entered was invalid. Password has not been changed.',
+                                title: 'Incorrect Password',
+                                template: 'The password you entered was incorrect. Password has not been changed.',
                                 okText: 'Okay',
                                 okType: 'button-royal'
                             });
