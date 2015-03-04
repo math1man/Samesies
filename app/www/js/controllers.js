@@ -12,8 +12,13 @@
 
     var app = angular.module('samesies.controllers', []);
 
-    app.controller('IndexCtrl', function($scope, $window, $ionicHistory, $ionicPopup, API, Data, Utils) {
+    app.controller('IndexCtrl', function($scope, $state, $window, $ionicHistory, $ionicPopup, API, Data, Utils){
+
         $window.init = function() {
+            $ionicHistory.nextViewOptions({
+                disableBack: true
+            });
+            $state.go('menu');
             gapi.client.load('samesies', 'v1', function() {
                 // initialize API variable
                 API.init(gapi.client.samesies.samesiesApi);
@@ -726,8 +731,7 @@
                 buttons: [
                     {
                         text: 'Cancel',
-                        type: 'button-stable',
-                        onTap: function() { return false; }
+                        type: 'button-stable'
                     }, {
                         text: 'Okay',
                         type: 'button-royal',
@@ -741,7 +745,7 @@
                     }
                 ]
             }).then(function(update) {
-                if (update != false) {
+                if (angular.isDefined(update)) {
                     Data.user[field] = update;
                     isChanged = true;
                 }
