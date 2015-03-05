@@ -15,7 +15,7 @@
 			</div>
 		</div>
 		<div class="item item-divider">
-			Your Response
+			Your Turn
 		</div>
 		<div class="item item-avatar" ng-repeat="cxn in data('connections') | yourTurnConnections" ng-click="play(cxn)">
 			<img ng-src="{{cxn.data.partner.avatar}}">
@@ -24,7 +24,7 @@
 			<p>Mode: {{cxn.settings.mode}}</p>
 		</div>
 		<div class="item item-divider">
-			Awaiting Response
+			Their Turn
 		</div>
 		<div class="item item-avatar" ng-repeat="cxn in data('connections') | pendingConnections">
 			<img ng-src="{{cxn.data.partner.avatar}}">

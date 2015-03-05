@@ -64,7 +64,7 @@
                 return this.api.connectEpisode(settings);
             },
             acceptEpisode: function(id) {
-                return this.api.acceptEpisode({id: id});
+                this.api.acceptEpisode({id: id}).then();
             },
             getEpisode: function(id) {
                 return this.api.getEpisode({id: id});

@@ -450,7 +450,7 @@
                 Utils.interruptAll();
                 $ionicPopup.confirm({
                     title: 'Partner Left',
-                    template: 'Your partner has left the episode.',
+                    template: 'Your partner has left the connection.',
                     okText: 'Play Again!',
                     okType: 'button-royal',
                     cancelText: 'Back',
@@ -679,6 +679,7 @@
                             }
                         }
                         Data.connections = connections;
+                        $scope.$apply();
                     });
                 }
             });
