@@ -310,6 +310,26 @@
 
     });
 
+    app.controller('SettingsCtrl', function($scope, $ionicPopup, Data) {
+
+        $scope.settings = Data.settings;
+
+        $scope.saveSettings = function() {
+            if (!$scope.settings.matchMale && !$scope.settings.matchFemale && !$scope.settings.matchOther) {
+                $ionicPopup.alert({
+                    title: 'Cannot Match',
+                    template: 'You must specify at least one gender to match with.',
+                    okText: 'Okay',
+                    okType: 'button-royal'
+                });
+            } else {
+                Data.settings = $scope.settings;
+                $scope.closeSettings();
+            }
+        }
+
+    });
+
     app.controller('EpisodeCtrl', function($scope, $state, $ionicPopup, $ionicModal, API, Utils, Data) {
 
         $ionicModal.fromTemplateUrl('templates/help-episode.html', {
@@ -398,6 +418,11 @@
             if (!$scope.episodeData.partner) {
                 API.getUser(Utils.getPartnerId(ep)).then(function (resp) {
                     $scope.episodeData.partner = resp.result;
+                    $ionicPopup.alert({
+                        scope: $scope,
+                        title: 'Matched!',
+                        templateUrl: 'templates/matched-popup.html'
+                    });
                 });
             }
             if ($scope.episodeData.questions) {
@@ -627,6 +652,44 @@
 
     });
 
+    app.controller('FindFriendCtrl', function($scope, API, Data) {
+        $scope.tempUser = null;
+        $scope.email = [''];
+
+        $scope.findFriend = function() {
+            API.findUser($scope.email[0]).then(function(resp) {
+                $scope.tempUser = resp.result;
+                $scope.$apply();
+            });
+        };
+
+        $scope.add = function() {
+            if ($scope.tempUser) {
+                API.addFriend(Data.user.id, $scope.tempUser.id).then(function(resp) {
+                    var friend = resp.result;
+                    var isFriend = false;
+                    for (var i = 0; i < Data.friends.length && !isFriend; i++) {
+                        if (Data.friends[i].id === friend.id) {
+                            Data.friends[i] = friend;
+                            isFriend = true;
+                        }
+                    }
+                    if (!isFriend) {
+                        Data.friends.push(friend);
+                    }
+                    $scope.$apply();
+                });
+            }
+            $scope.closeFind();
+        };
+
+        $scope.$on('popover.hidden', function() {
+            $scope.tempUser = null;
+            $scope.email = [''];
+        });
+
+    });
+
     app.controller('ConnectionsCtrl', function($scope, $state, Data, API, Utils) {
 
         $scope.accept = function(cxn) {
@@ -724,6 +787,18 @@
             $scope.suggestPopup.remove();
         })
 
+    });
+
+    app.controller('SuggestCtrl', function($scope, API) {
+        $scope.suggestedQuestion = [''];
+
+        $scope.suggest = function() {
+            if ($scope.suggestedQuestion[0]) {
+                API.suggestQuestion($scope.suggestedQuestion[0]);
+                $scope.suggestedQuestion = [''];
+            }
+            $scope.closeSuggestPopup();
+        }
     });
 
     app.controller('EditProfileCtrl', function($scope, $state, $ionicPopup, Data, API) {
@@ -930,6 +1005,45 @@
 
     });
 
+    app.controller('UploadCtrl', function($scope) {
+
+        var fileInput = document.getElementById('fileInput');
+
+        fileInput.addEventListener('change', function() {
+            var file = fileInput.files[0];
+            var imageType = /image.*/;
+
+            if (file.type.match(imageType)) {
+                var reader = new FileReader();
+
+                reader.onload = function () {
+                    $scope.tempData.image = reader.result;
+                    $scope.$apply();
+                };
+
+                reader.readAsDataURL(file);
+            } else {
+                console.log("Bad file type");
+            }
+        });
+
+        $scope.uploadImage = function() {
+            fileInput.click();
+        }
+
+    });
+
+    app.controller('ProfileCtrl', function($scope, $state, API, Data) {
+
+        $scope.isMe = function() {
+            return Data.user.id === Data.tempUser.id;
+        };
+
+        $scope.message = function() {
+            $state.go('chat');
+        };
+    });
+
     app.controller('ChatCtrl', function($scope, $ionicScrollDelegate, API, Data, Utils) {
         var chat;
         $scope.buffer = '';
@@ -1054,83 +1168,6 @@
 
     });
 
-    app.controller('ProfileCtrl', function($scope, $state, API, Data) {
-
-        $scope.isMe = function() {
-            return Data.user.id === Data.tempUser.id;
-        };
-
-        $scope.message = function() {
-            $state.go('chat');
-        };
-    });
-
-    app.controller('FindFriendCtrl', function($scope, API, Data) {
-        $scope.tempUser = null;
-        $scope.email = [''];
-
-        $scope.findFriend = function() {
-            API.findUser($scope.email[0]).then(function(resp) {
-                $scope.tempUser = resp.result;
-                $scope.$apply();
-            });
-        };
-
-        $scope.add = function() {
-            if ($scope.tempUser) {
-                API.addFriend(Data.user.id, $scope.tempUser.id).then(function(resp) {
-                    var friend = resp.result;
-                    var isFriend = false;
-                    for (var i = 0; i < Data.friends.length && !isFriend; i++) {
-                        if (Data.friends[i].id === friend.id) {
-                            Data.friends[i] = friend;
-                            isFriend = true;
-                        }
-                    }
-                    if (!isFriend) {
-                        Data.friends.push(friend);
-                    }
-                    $scope.$apply();
-                });
-            }
-            $scope.closeFind();
-        };
-
-        $scope.$on('popover.hidden', function() {
-            $scope.tempUser = null;
-            $scope.email = [''];
-        });
-
-    });
-
-    app.controller('UploadCtrl', function($scope) {
-
-        var fileInput = document.getElementById('fileInput');
-
-        fileInput.addEventListener('change', function() {
-            var file = fileInput.files[0];
-            var imageType = /image.*/;
-
-            if (file.type.match(imageType)) {
-                var reader = new FileReader();
-
-                reader.onload = function () {
-                    $scope.tempData.image = reader.result;
-                    $scope.$apply();
-                };
-
-                reader.readAsDataURL(file);
-            } else {
-                console.log("Bad file type");
-            }
-        });
-
-        $scope.uploadImage = function() {
-            fileInput.click();
-        }
-
-    });
-
     app.controller('FeedbackCtrl', function($scope, API) {
         $scope.feedback = {};
 
@@ -1139,38 +1176,6 @@
                 API.sendFeedback($scope.feedback);
             }
         }
-    });
-
-    app.controller('SuggestCtrl', function($scope, API) {
-        $scope.suggestedQuestion = [''];
-
-        $scope.suggest = function() {
-            if ($scope.suggestedQuestion[0]) {
-                API.suggestQuestion($scope.suggestedQuestion[0]);
-                $scope.suggestedQuestion = [''];
-            }
-            $scope.closeSuggestPopup();
-        }
-    });
-
-    app.controller('SettingsCtrl', function($scope, $ionicPopup, Data) {
-
-        $scope.settings = Data.settings;
-
-        $scope.saveSettings = function() {
-            if (!$scope.settings.matchMale && !$scope.settings.matchFemale && !$scope.settings.matchOther) {
-                $ionicPopup.alert({
-                    title: 'Cannot Match',
-                    template: 'You must specify at least one gender to match with.',
-                    okText: 'Okay',
-                    okType: 'button-royal'
-                });
-            } else {
-                Data.settings = $scope.settings;
-                $scope.closeSettings();
-            }
-        }
-
     });
 
 })();
