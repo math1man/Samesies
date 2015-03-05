@@ -421,7 +421,9 @@
                     $ionicPopup.alert({
                         scope: $scope,
                         title: 'Matched!',
-                        templateUrl: 'templates/matched-popup.html'
+                        templateUrl: 'templates/matched-popup.html',
+                        okText: 'Okay',
+                        okType: 'button-royal'
                     });
                 });
             }
