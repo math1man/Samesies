@@ -674,6 +674,9 @@ public class SamesiesApi {
     }
 
     private static boolean isMatch(String gender, Settings settings) {
+        if (gender == null) {
+            return settings.getMatchOther();
+        }
         switch (gender) {
             case "Male":
                 return settings.getMatchMale();
