@@ -180,9 +180,9 @@ public class Episode implements Storable {
         e.setProperty("startDate", startDate);
         e.setProperty("isPersistent", isPersistent);
         e.setProperty("mode", settings.getMode());
-        e.setProperty("matchMale", settings.getMatchMale());
-        e.setProperty("matchFemale", settings.getMatchFemale());
-        e.setProperty("matchOther", settings.getMatchOther());
+        e.setUnindexedProperty("matchMale", settings.getMatchMale());
+        e.setUnindexedProperty("matchFemale", settings.getMatchFemale());
+        e.setUnindexedProperty("matchOther", settings.getMatchOther());
         e.setProperty("status", status.name());
         e.setProperty("uid1", uid1);
         e.setProperty("uid2", uid2);
