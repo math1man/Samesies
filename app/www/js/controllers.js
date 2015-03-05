@@ -1016,14 +1016,45 @@
             var imageType = /image.*/;
 
             if (file.type.match(imageType)) {
-                var reader = new FileReader();
 
-                reader.onload = function () {
-                    $scope.tempData.image = reader.result;
-                    $scope.$apply();
-                };
+                var orientation;
 
-                reader.readAsDataURL(file);
+                loadImage.parseMetaData(file, function (data) {
+                    if (data.exif) {
+                        orientation = data.exif.get('Orientation');
+                    }
+                });
+
+                loadImage(
+                    file,
+                    function (image) {
+                        var canvas = document.createElement('canvas');
+                        if (!orientation || orientation < 5) { // image is fine or upside down
+                            canvas.width = image.width;
+                            canvas.height = image.height;
+                        } else {                               // image is sideways
+                            canvas.width = image.height;
+                            canvas.height = image.width;
+                        }
+                        var ctx = canvas.getContext('2d');
+                        if (orientation && orientation > 2) { // image is rotated
+                            ctx.translate(canvas.width * 0.5, canvas.height * 0.5);
+                            if (orientation > 6) {
+                                ctx.rotate(1.5 * Math.PI);
+                            } else if (orientation > 4) {
+                                ctx.rotate(0.5 * Math.PI);
+                            } else {
+                                ctx.rotate(Math.PI);
+                            }
+                            ctx.translate(image.width * -0.5, image.height * -0.5);
+                        }
+                        ctx.drawImage(image, 0, 0);
+
+                        $scope.tempData.image = canvas.toDataURL('image/jpeg');
+                        $scope.$apply();
+                    }
+                );
+
             } else {
                 console.log("Bad file type");
             }
