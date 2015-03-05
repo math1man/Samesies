@@ -34,7 +34,7 @@ h6 {
 .button-round {
     height: 40px;
     width: 40px;
-    padding: 10%;
+    padding: 4px;
     top: 8px;
     border-radius: 100%;
 }

@@ -20,6 +20,9 @@
 				{{dispName(friend.user)}}
 				<p ng-show="friend.name">{{friend.user.alias}}</p>
 				<div class="buttons">
+					<button class="button button-round button-royal" ng-click="accept(friend)">
+						<i class="icon ion-checkmark-round"></i>
+					</button>
 					<button class="button button-round button-stable" ng-click="reject(friend)">
 						<i class="icon ion-close-round"></i>
 					</button>

@@ -165,6 +165,10 @@
         this.questions = [];
         this.categories = [];
         this.communities = ['Macalester College'];
+        this.community = {
+            location: this.communities[0],
+            users: []
+        };
         this.modes = ['Random'];
         this.settings = {
             mode: 'Random',
