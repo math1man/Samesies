@@ -422,13 +422,6 @@
             if (!$scope.episodeData.partner) {
                 API.getUser(Utils.getPartnerId(ep)).then(function (resp) {
                     $scope.episodeData.partner = resp.result;
-                    $ionicPopup.alert({
-                        scope: $scope,
-                        title: 'Matched!',
-                        templateUrl: 'templates/matched-popup.html',
-                        okText: 'Okay',
-                        okType: 'button-royal'
-                    });
                 });
             }
             if ($scope.episodeData.questions) {
