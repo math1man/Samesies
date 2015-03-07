@@ -2,6 +2,7 @@
 server/target
 app/platforms
 app/plugins
+app/node_modules
 .idea
 
 */.DS_Store
