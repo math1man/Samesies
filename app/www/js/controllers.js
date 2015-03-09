@@ -479,6 +479,7 @@
         };
 
         var getResponse = function(ep) {
+            // TODO: figure out why this gets called if YOU abandon
             episode = ep;
             if (episode.status === "ABANDONED") {
                 Utils.interruptAll();
