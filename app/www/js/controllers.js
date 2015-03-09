@@ -344,7 +344,7 @@
 
     });
 
-    app.controller('EpisodeCtrl', function($scope, $state, $ionicPopup, $ionicModal, API, Utils, Data) {
+    app.controller('EpisodeCtrl', function($scope, $state, $window, $ionicPopup, $ionicModal, API, Utils, Data) {
 
         $ionicModal.fromTemplateUrl('templates/help-episode.html', {
             scope: $scope,
@@ -370,6 +370,7 @@
         var go = function(state) {
             Utils.interruptAll();
             $scope.episodeData.state = state;
+            $scope.$apply();
             if (state === 'waiting') {
                 Utils.interval(function () {
                     API.getEpisode(episode.id).then(function (resp) {
@@ -479,7 +480,6 @@
         };
 
         var getResponse = function(ep) {
-            // TODO: figure out why this gets called if YOU abandon
             episode = ep;
             if (episode.status === "ABANDONED") {
                 Utils.interruptAll();
@@ -516,21 +516,32 @@
             }
         };
 
-        $scope.$on('$ionicView.leave', function() {
+        var cleanUpEpisode = function() {
             Utils.interruptAll();
-            if (episode.isPersistent) {
-                if (episode.status === "IN_PROGRESS") {
-                    episode.data = $scope.episodeData;
-                    Data.connections.push(episode);
+            if (episode) {
+                if (episode.isPersistent) {
+                    if (episode.status === "IN_PROGRESS") {
+                        episode.data = $scope.episodeData;
+                        Data.connections.push(episode);
+                    }
+                } else {
+                    API.endEpisode(episode.id);
                 }
-            } else {
-                API.endEpisode(episode.id);
             }
+        };
+
+        $scope.$on('$ionicView.leave', function() {
+            cleanUpEpisode();
         });
 
         $scope.$on('destroy', function() {
             $scope.helpPopup.remove();
+            cleanUpEpisode();
         });
+
+        $window.onbeforeunload = function() {
+            cleanUpEpisode();
+        };
 
         if (Data.episode) {
             episode = Data.episode;

@@ -28,7 +28,6 @@ public class User implements Storable {
     private String name;
     private Long age;
     private String gender;
-    // TODO: interested in?
     private String aboutMe;
     private List<String> questions;
 
