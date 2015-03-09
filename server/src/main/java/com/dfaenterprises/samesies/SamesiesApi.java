@@ -25,113 +25,95 @@ import java.util.*;
         audiences = {Constants.ANDROID_AUDIENCE})
 public class SamesiesApi {
 
-    public void init() throws ServiceException {
+    public void initQuestions() throws ServiceException {
         DatastoreService ds = getDS();
-        // if this entity is in the ds, it has already been initialized, so don't init
-        Entity initTest = new Entity("INIT", "INIT_TEST");
-        if (!contains(ds, initTest)) {
-            ds.put(initTest);
 
-            // initialize users
-            User user1 = new User("ari@samesies.org", "samesies123", "Saint Paul, MN", "Ajawa",
-                    "Ari Weiland", 20, "Male", "I am a junior Physics and Computer Science major at Macalester College.");
-            EntityUtils.put(ds, user1);
-            User user2 = new User("luke@samesies.org", "samesies456", "Saint Paul, MN", "KoboldForeman",
-                    "Luke Gehman", 21, "Male", "I am a junior Biology major at Macalester College. I play a lot of Dota 2.");
-            EntityUtils.put(ds, user2);
-
-            // initialize friends
-            Friend friend = new Friend(user1.getId(), user2.getId(), Friend.Status.ACCEPTED);
-            EntityUtils.put(ds, friend);
-
-            // initialize questions
-            Question[] questions = {
-                    new Question("What do you like to do on a first date?",
-                            "Dinner and a movie.  Call me old fashioned if you like."),
-                    new Question("What is your go-to conversation starter?",
-                            "Have you heard about what happened to Pluto? Shame..."),
-                    new Question("If you had to take a date to dinner, where would you go?",
-                            "I would go to Pad Thai on Grand Ave."),
-                    new Question("If you could have a superpower, what would it be and why?",
-                            "I would be able to teleport.  That way I could avoid the cold."),
-                    new Question("Given the choice of anyone in the world, whom would you want as a dinner guest?",
-                            "I think it would be really interesting to pick Albert Einstein's brain."),
-                    new Question("Would you like to be famous? In what way?",
-                            "I just want to do something notable with my life, like discover something significant."),
-                    new Question("Before making a telephone call, do you ever rehearse what you are going to say and why?",
-                            "Only if I'm nervous about the call."),
-                    new Question("What would constitute a \"perfect\" day for you?",
-                            "No obligations, just relaxing and having fun."),
-                    new Question("When did you last sing to yourself? To someone else?",
-                            "I on occasion sing to myself in the shower."),
-                    new Question("If you were able to live to the age of 90 and retain either the mind or body of a " +
-                            "30-year-old for the last 60 years of your life, which would you want and why?",
-                            "Probably the mind of a 30 year old. I really value my mental acuity."),
-                    new Question("For what in your life do you feel most grateful?",
-                            "My family. I love them a lot."),
-                    new Question("If you could change anything about the way you were raised, what would it be?",
-                            "Sometimes I wish I was raised in a different part of the country."),
-                    new Question("If you could wake up tomorrow having gained any one quality or ability, what would it be?",
-                            "I would love to be better at playing the piano than I am."),
-                    new Question("If a crystal ball could tell you the truth about yourself, your life, the future " +
-                            "or any one thing, what would you want to know?",
-                            "I would ask it what I should focus my energy on most to be happiest."),
-                    new Question("Is there something that you've dreamed of doing for a long time? Why haven't you done it?",
-                            "I've kind of always wanted to go skydiving, but the opportunity just never came up."),
-                    new Question("What is the greatest accomplishment of your life?",
-                            "When I finish this app, it will probably be it."),
-                    new Question("What do you value most in a friendship?",
-                            "Being able to talk about anything, free of judgment."),
-                    new Question("What is your most treasured memory?",
-                            "I have a memory of the night my brother was born. It probably isn't real, but I still treasure it."),
-                    new Question("What is your most terrible memory?",
-                            "They aren't exactly memories, but some things that I have done while drunk I really regret."),
-                    new Question("If you knew that in one year you would die suddenly, would you change anything " +
-                            "about the way you are now living and why?",
-                            "Not really. I am fairly happy with my life."),
-                    new Question("When did you last cry in front of another person? By yourself?",
-                            "I cried by myself when my grandmother died last May. I have no idea the last time I " +
-                            "cried in front of another person."),
-                    new Question("What, if anything, is too serious to be joked about?",
-                            "I feel like there is definitely a line, but I can't think of what's across it."),
-                    new Question("If you were to die this evening with no opportunity to communicate with anyone, " +
-                            "what would you most regret not having told someone? Why haven't you told them yet?",
-                            "I'd probably regret not having talked to my parents in a few weeks."),
-                    new Question("Your house, containing everything you own, catches fire. After saving your loved ones and " +
-                            "pets, you have time to safely make a final dash to save any one item. What would it be and why?",
-                            "Obviously my computer. Basically my entire life is on that thing."),
-                    new Question("What is the most important thing your close friends should know about you?",
-                            "I sometimes can be a bit of an asshole."),
-                    new Question("What is one of your most embarrassing moments?",
-                            "The one time I made out with my ex-girlfriend.")
-            };
-            Question[] questionsBad = {
-                    new Question("How do you feel about long walks on the beach?",
-                            "I prefer to go swimming than to walk."),
-                    new Question("What is your favorite type of music?",
-                            "Anything they play on the radio is fine with me."),
-                    new Question("Complete the sentence \"I wish I had someone with whom I could share...\""),
-                    new Question("Do you have a secret hunch about how you will die?"),
-                    new Question("How do you feel about your relationship with your mother?"),
-                    new Question("What does friendship mean to you?"),
-                    new Question("What roles do love and affection play in your life?"),
-                    new Question("How close and warm is your family? Do you feel your childhood was happier than most other people's?"),
-                    new Question("Of all the people in your family, whose death would you find most disturbing? Why?")
-            };
-            for (Question q : questions) {
-                q.setCategory("Random");
-                EntityUtils.put(ds, q);
-            }
-//            for (Question q : questionsBad) {
-//                q.setCategory("Bad");
-//                EntityUtils.put(ds, q);
-//            }
-
-            // initialize question categories
-            ds.put(new Entity("Category", "All"));
-            ds.put(new Entity("Category", "Random"));
-//            ds.put(new Entity("Category", "Bad"));
+        Question[] questions = {
+                new Question("What do you like to do on a first date?",
+                        "Dinner and a movie.  Call me old fashioned if you like."),
+                new Question("What is your go-to conversation starter?",
+                        "Have you heard about what happened to Pluto? Shame..."),
+                new Question("If you had to take a date to dinner, where would you go?",
+                        "I would go to Pad Thai on Grand Ave."),
+                new Question("If you could have a superpower, what would it be and why?",
+                        "I would be able to teleport.  That way I could avoid the cold."),
+                new Question("Given the choice of anyone in the world, whom would you want as a dinner guest?",
+                        "I think it would be really interesting to pick Albert Einstein's brain."),
+                new Question("Would you like to be famous? In what way?",
+                        "I just want to do something notable with my life, like discover something significant."),
+                new Question("Before making a telephone call, do you ever rehearse what you are going to say and why?",
+                        "Only if I'm nervous about the call."),
+                new Question("What would constitute a \"perfect\" day for you?",
+                        "No obligations, just relaxing and having fun."),
+                new Question("When did you last sing to yourself? To someone else?",
+                        "I on occasion sing to myself in the shower."),
+                new Question("If you were able to live to the age of 90 and retain either the mind or body of a " +
+                        "30-year-old for the last 60 years of your life, which would you want and why?",
+                        "Probably the mind of a 30 year old. I really value my mental acuity."),
+                new Question("For what in your life do you feel most grateful?",
+                        "My family. I love them a lot."),
+                new Question("If you could change anything about the way you were raised, what would it be?",
+                        "Sometimes I wish I was raised in a different part of the country."),
+                new Question("If you could wake up tomorrow having gained any one quality or ability, what would it be?",
+                        "I would love to be better at playing the piano than I am."),
+                new Question("If a crystal ball could tell you the truth about yourself, your life, the future " +
+                        "or any one thing, what would you want to know?",
+                        "I would ask it what I should focus my energy on most to be happiest."),
+                new Question("Is there something that you've dreamed of doing for a long time? Why haven't you done it?",
+                        "I've kind of always wanted to go skydiving, but the opportunity just never came up."),
+                new Question("What is the greatest accomplishment of your life?",
+                        "When I finish this app, it will probably be it."),
+                new Question("What do you value most in a friendship?",
+                        "Being able to talk about anything, free of judgment."),
+                new Question("What is your most treasured memory?",
+                        "I have a memory of the night my brother was born. It probably isn't real, but I still treasure it."),
+                new Question("What is your most terrible memory?",
+                        "They aren't exactly memories, but some things that I have done while drunk I really regret."),
+                new Question("If you knew that in one year you would die suddenly, would you change anything " +
+                        "about the way you are now living and why?",
+                        "Not really. I am fairly happy with my life."),
+                new Question("When did you last cry in front of another person? By yourself?",
+                        "I cried by myself when my grandmother died last May. I have no idea the last time I " +
+                        "cried in front of another person."),
+                new Question("What, if anything, is too serious to be joked about?",
+                        "I feel like there is definitely a line, but I can't think of what's across it."),
+                new Question("If you were to die this evening with no opportunity to communicate with anyone, " +
+                        "what would you most regret not having told someone? Why haven't you told them yet?",
+                        "I'd probably regret not having talked to my parents in a few weeks."),
+                new Question("Your house, containing everything you own, catches fire. After saving your loved ones and " +
+                        "pets, you have time to safely make a final dash to save any one item. What would it be and why?",
+                        "Obviously my computer. Basically my entire life is on that thing."),
+                new Question("What is the most important thing your close friends should know about you?",
+                        "I sometimes can be a bit of an asshole."),
+                new Question("What is one of your most embarrassing moments?",
+                        "The one time I made out with my ex-girlfriend.")
+        };
+        for (Question q : questions) {
+            q.setCategory("Random");
+            EntityUtils.put(ds, q);
         }
+
+        ds.put(new Entity("Category", "All"));
+        ds.put(new Entity("Category", "Random"));
+    }
+
+    public void initUsers() throws ServiceException {
+        DatastoreService ds = getDS();
+        User user1 = new User("ari@samesies.org", "samesies123", "Saint Paul, MN", "Ajawa",
+                "Ari Weiland", 20, "Male", "I am a junior Physics and Computer Science major at Macalester College.");
+        EntityUtils.put(ds, user1);
+        User user2 = new User("luke@samesies.org", "samesies456", "Saint Paul, MN", "KoboldForeman",
+                "Luke Gehman", 21, "Male", "I am a junior Biology major at Macalester College. I play a lot of Dota 2.");
+        EntityUtils.put(ds, user2);
+
+        Friend friend = new Friend(user1.getId(), user2.getId(), Friend.Status.ACCEPTED);
+        EntityUtils.put(ds, friend);
+    }
+
+    public void initModes() throws ServiceException {
+        DatastoreService ds = getDS();
+        ds.put(new Entity("Mode", "Random"));
+        ds.put(new Entity("Mode", "Personal"));
     }
 
     //----------------------------
@@ -413,7 +395,7 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.getCategories",
-            path = "categories",
+            path = "questions/categories",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<String> getCategories() throws ServiceException {
         DatastoreService ds = getDS();
@@ -428,7 +410,7 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.suggestQuestion",
-            path = "question/suggest/{question}",
+            path = "questions/suggest/{question}",
             httpMethod = ApiMethod.HttpMethod.POST)
     public void suggestQuestion(@Named("question") String question) throws ServiceException {
         Question q = new Question(question, null, "suggestion");
@@ -438,6 +420,21 @@ public class SamesiesApi {
     //----------------------------
     //       Episode Calls
     //----------------------------
+
+    @ApiMethod(name = "samesiesApi.getModes",
+            path = "episodes/modes",
+            httpMethod = ApiMethod.HttpMethod.GET)
+    public List<String> getModes() throws ServiceException {
+        DatastoreService ds = getDS();
+
+        Query query = new Query("Mode").setKeysOnly();
+        PreparedQuery pq = ds.prepare(query);
+        List<String> modes = new ArrayList<>();
+        for (Entity e : pq.asIterable()) {
+            modes.add(e.getKey().getName());
+        }
+        return modes;
+    }
 
     /**
      * Finds a new random episode.
@@ -476,7 +473,7 @@ public class SamesiesApi {
         } else {
             episode.setStatus(Episode.Status.IN_PROGRESS);
             episode.setUid2(myUid);
-            episode.setQids(getQids(ds));
+            episode.setQids(getQids(ds, mode));
         }
         EntityUtils.put(ds, episode);
         return episode;
@@ -490,7 +487,7 @@ public class SamesiesApi {
                                   @Named("matchOther") boolean matchOther) throws ServiceException {
         DatastoreService ds = getDS();
         Episode episode = new Episode(myUid, theirUid, new Settings(mode, matchMale, matchFemale, matchOther));
-        episode.setQids(getQids(ds));
+        episode.setQids(getQids(ds, mode));
         EntityUtils.put(ds, episode);
         return episode;
     }
@@ -570,6 +567,28 @@ public class SamesiesApi {
         return connections;
     }
 
+    @ApiMethod(name = "samesiesApi.getEpisodeQuestions",
+            path = "episodes/questions/{eid}",
+            httpMethod = ApiMethod.HttpMethod.GET)
+    public List<Question> getEpisodeQuestions(@Named("eid") long eid) throws ServiceException {
+        DatastoreService ds = getDS();
+        Episode episode = getEpisode(ds, eid);
+        List<Question> questions = new ArrayList<>();
+        if (episode.getSettings().getMode().equals("Personal")) {
+            User u1 = getUserById(ds, episode.getUid1(), User.Relation.ADMIN);
+            User u2 = getUserById(ds, episode.getUid2(), User.Relation.ADMIN);
+            for (int i=0; i<5; i++) {
+                questions.add(new Question(u1.getQuestions().get(i)));
+                questions.add(new Question(u2.getQuestions().get(i)));
+            }
+        } else {
+            for (long qid : episode.getQids()) {
+                questions.add(getQuestion(ds, qid));
+            }
+        }
+        return questions;
+    }
+
     //----------------------------
     //        Chat Calls
     //----------------------------
@@ -646,15 +665,6 @@ public class SamesiesApi {
         return DatastoreServiceFactory.getDatastoreService();
     }
 
-    private static boolean contains(DatastoreService ds, Entity entity) {
-        try {
-            ds.get(entity.getKey());
-        } catch (EntityNotFoundException e) {
-            return false;
-        }
-        return true;
-    }
-
     /**
      * This method decides whether a user is compatible with a matching-state episode
      * @param ds
@@ -716,27 +726,30 @@ public class SamesiesApi {
         }
     }
 
-    private static List<Long> getQids(DatastoreService ds) {
-        Query qQuery = new Query("Question").setFilter(new Query.FilterPredicate(
-                "category", Query.FilterOperator.EQUAL, "Random")).setKeysOnly();
-        PreparedQuery qpq = ds.prepare(qQuery);
-        int max = qpq.countEntities(FetchOptions.Builder.withDefaults());
-        int[] a = new int[max];
-        for (int i=0; i<max; ++i) {
-            a[i] = i;
-        }
-        int top = 0;
-        while (top < 10) {
-            int swap = (int) (Math.random() * (max - top) + top);
-            int tmp = a[swap];
-            a[swap] = a[top];
-            a[top] = tmp;
-            top++;
-        }
-        List<Entity> keys = qpq.asList(FetchOptions.Builder.withDefaults());
+    private static List<Long> getQids(DatastoreService ds, String mode) {
         List<Long> questions = new ArrayList<>();
-        for (int i=0; i<10; i++) {
-            questions.add(keys.get(a[i]).getKey().getId());
+        if (!mode.equals("Personal")) { // personal questions can be ignored at this stage
+            Query query = new Query("Question").setKeysOnly();
+            // TODO: when we have more categories, this code might get more complex
+            query.setFilter(new Query.FilterPredicate("category", Query.FilterOperator.EQUAL, mode));
+            PreparedQuery pq = ds.prepare(query);
+            int max = pq.countEntities(FetchOptions.Builder.withDefaults());
+            int[] a = new int[max];
+            for (int i=0; i<max; ++i) {
+                a[i] = i;
+            }
+            int top = 0;
+            while (top < 10) {
+                int swap = (int) (Math.random() * (max - top) + top);
+                int tmp = a[swap];
+                a[swap] = a[top];
+                a[top] = tmp;
+                top++;
+            }
+            List<Entity> keys = pq.asList(FetchOptions.Builder.withDefaults());
+            for (int i=0; i<10; i++) {
+                questions.add(keys.get(a[i]).getKey().getId());
+            }
         }
         return questions;
     }

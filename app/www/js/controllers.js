@@ -26,7 +26,10 @@
                 API.getCategories().then(function(resp) {
                     Data.categories = resp.result.items;
                 });
-                // TODO: load game modes here
+
+                API.getModes().then(function(resp) {
+                    Data.modes = resp.result.items;
+                });
 
             }, URL);
         };
@@ -329,7 +332,18 @@
         $scope.settings = Data.settings;
 
         $scope.saveSettings = function() {
-            if (!$scope.settings.matchMale && !$scope.settings.matchFemale && !$scope.settings.matchOther) {
+            var hasAllQuestions = Data.user.questions && Data.user.questions.length;
+            for (var i=0; i<5 && hasAllQuestions; i++) {
+                hasAllQuestions = Data.user.questions[i];
+            }
+            if ($scope.settings.mode === 'Personal' && !hasAllQuestions) {
+                $ionicPopup.alert({
+                    title: 'Cannot Match',
+                    template: 'You must list 5 personal questions on your profile in order to play the Personal mode.',
+                    okText: 'Okay',
+                    okType: 'button-royal'
+                });
+            } else if (!$scope.settings.matchMale && !$scope.settings.matchFemale && !$scope.settings.matchOther) {
                 $ionicPopup.alert({
                     title: 'Cannot Match',
                     template: 'You must specify at least one gender to match with.',
@@ -438,7 +452,7 @@
             if ($scope.episodeData.questions) {
                 go($scope.episodeData.state);
             } else {
-                API.getQuestions(ep.qids).then(function (resp) {
+                API.getEpisodeQuestions(ep.id).then(function (resp) {
                     $scope.episodeData.questions = resp.result.items;
                     $scope.$apply();
                     go($scope.episodeData.state);

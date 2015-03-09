@@ -4,94 +4,101 @@
 
     app.factory('API', function() {
 
+        var API = null;
+
         return {
-            api: null,
             init: function(api) {
-                this.api = api;
+                API = api;
             },
             login: function(user) {
-                return this.api.login(user);
+                return API.login(user);
             },
             createUser: function(user) {
-                return this.api.createUser(user);
+                return API.createUser(user);
             },
             getUser: function(id) {
-                return this.api.getUser({id: id});
+                return API.getUser({id: id});
             },
             getUsers: function(ids) {
-                return this.api.getUsers({ids: ids});
+                return API.getUsers({ids: ids});
             },
             updateUser: function(user) {
-                return this.api.updateUser(user);
+                return API.updateUser(user);
             },
             getFriends: function(id) {
-                return this.api.getFriends({id: id});
+                return API.getFriends({id: id});
             },
             findUser: function(email) {
-                return this.api.findUser({email: email});
+                return API.findUser({email: email});
             },
             addFriend: function(myId, theirId) {
-                return this.api.addFriend({myId: myId, theirId: theirId});
+                return API.addFriend({myId: myId, theirId: theirId});
             },
             removeFriend: function(id, myId) {
-                this.api.removeFriend({id: id, myId: myId}).then();
+                API.removeFriend({id: id, myId: myId}).then();
             },
             getCommunity: function(location) {
-                return this.api.getCommunity({location: location});
+                return API.getCommunity({location: location});
             },
             getQuestion: function(id) {
-                return this.api.getQuestion({id: id});
+                return API.getQuestion({id: id});
             },
             getQuestions: function(ids) {
-                return this.api.getQuestions({ids: ids});
+                return API.getQuestions({ids: ids});
             },
             getAllQuestions: function() {
-                return this.api.getAllQuestions();
+                return API.getAllQuestions();
             },
             getCategories: function() {
-                return this.api.getCategories();
+                return API.getCategories();
             },
             suggestQuestion: function(question) {
-                this.api.suggestQuestion({question: question}).then();
+                API.suggestQuestion({question: question}).then();
+            },
+            getModes: function() {
+                return API.getModes();
             },
             findEpisode: function(myId, settings) {
                 settings.myId = myId;
-                return this.api.findEpisode(settings);
+                return API.findEpisode(settings);
             },
             connectEpisode: function(myId, theirId, settings) {
                 settings.myId = myId;
                 settings.theirId = theirId;
-                return this.api.connectEpisode(settings);
+                return API.connectEpisode(settings);
             },
             acceptEpisode: function(id) {
-                this.api.acceptEpisode({id: id}).then();
+                API.acceptEpisode({id: id}).then();
             },
             getEpisode: function(id) {
-                return this.api.getEpisode({id: id});
+                return API.getEpisode({id: id});
             },
             answerEpisode: function(id, myId, answer) {
-                return this.api.answerEpisode({id: id, myId: myId, answer: answer});
+                return API.answerEpisode({id: id, myId: myId, answer: answer});
             },
             endEpisode: function(id) {
-                this.api.endEpisode({id: id}).then();
+                API.endEpisode({id: id}).then();
             },
             getConnections: function(id) {
-                return this.api.getConnections({id: id});
+                return API.getConnections({id: id});
+            },
+            getEpisodeQuestions: function(eid) {
+                return API.getEpisodeQuestions({eid: eid});
             },
             startChat: function(myId, theirId) {
-                return this.api.startChat({myId: myId, theirId: theirId});
+                return API.startChat({myId: myId, theirId: theirId});
             },
             getChat: function(id) {
-                return this.api.getChat({id: id});
+                return API.getChat({id: id});
             },
             sendMessage: function(chatId, myId, message, random) {
-                return this.api.sendMessage({chatId: chatId, myId: myId, message: message, random: random});
+                return API.sendMessage({chatId: chatId, myId: myId, message: message, random: random});
             },
             getMessages: function(chatId, after) {
-                return this.api.getMessages({chatId: chatId, after: after});
+                return API.getMessages({chatId: chatId, after: after});
             },
             sendFeedback: function(feedback) {
-                this.api.sendFeedback(feedback).then();
+                API.sendFeedback(feedback).then();
             }
         };
     });
