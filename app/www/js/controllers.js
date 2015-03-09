@@ -75,9 +75,49 @@
             $ionicHistory.goBack();
         };
 
+        $scope.refresh = function() {
+            if (Data.user) {
+                API.getFriends(Data.user.id).then(function(resp) {
+                    var friends = resp.result.items;
+                    if (friends && friends.length) {
+                        Data.friends = friends;
+                        $scope.$apply();
+                    }
+                    // nested so that it can pull from friends
+                    API.getConnections(Data.user.id).then(function(resp) {
+                        var connections = resp.result.items;
+                        if (connections && connections.length) {
+                            var uids = [];
+                            for (var i = 0; i < connections.length; i++) {
+                                var cxn = connections[i];
+                                connections[i].data = Utils.getData(cxn);
+                                uids.push(Utils.getPartnerId(cxn));
+                            }
+                            Data.connections = connections;
+                            $scope.$apply();
+                            API.getUsers(uids).then(function (resp) {
+                                var users = resp.result.items;
+                                for (var i = 0; i < users.length; i++) {
+                                    Data.connections[i].data.partner = users[i];
+                                    // getUsers data is stranger data, so check if they are in friends
+                                    var isFriend = false;
+                                    for (var j = 0; j < Data.friends.length && !isFriend; j++) {
+                                        if (Data.friends[j].user.id === uids[i]) {
+                                            isFriend = true;
+                                            Data.connections[i].data.partner = Data.friends[j].user;
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    });
+                });
+            }
+        }
+
     });
 
-    app.controller('LoginCtrl', function($scope, $ionicPopup, API, Data, Utils) {
+    app.controller('LoginCtrl', function($scope, $ionicPopup, API, Data) {
 
         $scope.$on('modal.shown', function() {
             $scope.loginData = {
@@ -92,41 +132,7 @@
             $scope.loginData = null;
             $scope.loginKey = [''];
             Data.user = user;
-            API.getFriends(user.id).then(function(resp) {
-                var friends = resp.result.items;
-                if (friends && friends.length) {
-                    Data.friends = friends;
-                    $scope.$apply();
-                }
-                // nested so that it can pull from friends
-                API.getConnections(user.id).then(function(resp) {
-                    var connections = resp.result.items;
-                    if (connections && connections.length) {
-                        var uids = [];
-                        for (var i = 0; i < connections.length; i++) {
-                            var cxn = connections[i];
-                            connections[i].data = Utils.getData(cxn);
-                            uids.push(Utils.getPartnerId(cxn));
-                        }
-                        Data.connections = connections;
-                        $scope.$apply();
-                        API.getUsers(uids).then(function (resp) {
-                            var users = resp.result.items;
-                            for (var i = 0; i < users.length; i++) {
-                                Data.connections[i].data.partner = users[i];
-                                // getUsers data is stranger data, so check if they are in friends
-                                var isFriend = false;
-                                for (var j = 0; j < Data.friends.length && !isFriend; j++) {
-                                    if (Data.friends[j].user.id === uids[i]) {
-                                        isFriend = true;
-                                        Data.connections[i].data.partner = Data.friends[j].user;
-                                    }
-                                }
-                            }
-                        });
-                    }
-                });
-            });
+            $scope.refresh();
             API.getCommunity(user.location).then(function(resp) {
                 Data.community = resp.result;
                 $scope.$apply();
@@ -236,6 +242,10 @@
     });
 
     app.controller('MenuCtrl', function($scope, $ionicModal, $ionicPopup, $ionicPopover, API, Data) {
+
+        $scope.$on('$ionicView.beforeEnter', function() {
+            $scope.refresh();
+        });
 
         $ionicModal.fromTemplateUrl('templates/login.html', {
             scope: $scope,
