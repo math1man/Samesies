@@ -13,6 +13,10 @@ public class Settings {
     public Settings() {
     }
 
+    public Settings(String mode) {
+        this.mode = mode;
+    }
+
     public Settings(String mode, Boolean matchMale, Boolean matchFemale, Boolean matchOther) {
         this.mode = mode;
         this.matchMale = matchMale;

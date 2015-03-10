@@ -8,8 +8,11 @@
             <span class="input-label">
                 Game Mode:
             </span>
-            <select ng-model="settings.mode" ng-options="mode for mode in data('modes')"></select>
+            <select ng-model="settings.mode" ng-options="mode.mode for mode in data('modes')"></select>
         </label>
+        <div class="item item-text-wrap">
+            {{settings.mode.description}}
+        </div>
         <ion-checkbox class="item item-checkbox-right checkbox-royal" ng-model="settings.matchMale">Match with men</ion-checkbox>
         <ion-checkbox class="item item-checkbox-right checkbox-royal" ng-model="settings.matchFemale">Match with women</ion-checkbox>
         <ion-checkbox class="item item-checkbox-right checkbox-royal" ng-model="settings.matchOther">Match with others</ion-checkbox>

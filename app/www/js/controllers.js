@@ -12,7 +12,7 @@
 
     var app = angular.module('samesies.controllers', []);
 
-    app.controller('IndexCtrl', function($scope, $state, $window, $ionicHistory, $ionicPopup, API, Data, Utils){
+    app.controller('IndexCtrl', function($scope, $state, $window, $ionicHistory, $ionicPopup, $ionicModal, API, Data, Utils){
 
         $window.init = function() {
             gapi.client.load('samesies', 'v1', function() {
@@ -29,9 +29,41 @@
 
                 API.getModes().then(function(resp) {
                     Data.modes = resp.result.items;
+                    if (Data.modes && Data.modes.length) {
+                        for (var i = 0; i < Data.modes.length; i++) {
+                            if (Data.modes[i].mode === 'Random') {
+                                Data.defaultMode = Data.modes[i];
+                            }
+                        }
+                        Data.settings.mode = Data.defaultMode;
+                    }
                 });
 
             }, URL);
+        };
+
+        $ionicModal.fromTemplateUrl('templates/game-settings.html', {
+            scope: $scope,
+            animation: 'slide-in-left'
+        }).then(function(modal) {
+            $scope.settingsPopup = modal;
+        });
+
+        $scope.showSettings = function() {
+            $scope.settingsPopup.show();
+        };
+
+        $scope.closeSettings = function() {
+            // make sure settings aren't messed up
+            if (Data.settings.mode.mode === 'Personal' && !Utils.hasAllQuestions(Data.user)) {
+                Data.settings.mode = Data.defaultMode;
+            }
+            if (!Data.settings.matchMale && !Data.settings.matchFemale && !Data.settings.matchOther) {
+                Data.settings.matchMale = true;
+                Data.settings.matchFemale = true;
+                Data.settings.matchOther = true;
+            }
+            $scope.settingsPopup.hide();
         };
 
         $scope.dispName = function(user) {
@@ -116,7 +148,11 @@
                     });
                 });
             }
-        }
+        };
+
+        $scope.$on('$destroy', function() {
+            $scope.settingsPopup.remove();
+        });
 
     });
 
@@ -244,8 +280,7 @@
 
     });
 
-    app.controller('MenuCtrl', function($scope, $ionicModal, $ionicPopup, $ionicPopover, API, Data) {
-
+    app.controller('MenuCtrl', function ($scope, $ionicModal, $ionicPopup, $ionicPopover, API, Data) {
         $scope.$on('$ionicView.beforeEnter', function() {
             $scope.refresh();
         });
@@ -266,21 +301,6 @@
 
         $scope.closeLogin = function() {
             $scope.loginPopup.hide();
-        };
-
-        $ionicModal.fromTemplateUrl('templates/game-settings.html', {
-            scope: $scope,
-            animation: 'slide-in-left'
-        }).then(function(modal) {
-            $scope.settingsPopup = modal;
-        });
-
-        $scope.showSettings = function() {
-            $scope.settingsPopup.show();
-        };
-
-        $scope.closeSettings = function() {
-            $scope.settingsPopup.hide();
         };
 
         $scope.logout = function() {
@@ -322,21 +342,18 @@
 
         $scope.$on('$destroy', function() {
             $scope.loginPopup.remove();
-            $scope.settingsPopup.remove();
         });
 
     });
 
-    app.controller('SettingsCtrl', function($scope, $ionicPopup, Data) {
+    app.controller('SettingsCtrl', function($scope, $ionicPopup, Data, Utils) {
 
-        $scope.settings = Data.settings;
+        $scope.$on('modal.shown', function() {
+            $scope.settings = Data.settings;
+        });
 
         $scope.saveSettings = function() {
-            var hasAllQuestions = Data.user.questions && Data.user.questions.length;
-            for (var i=0; i<5 && hasAllQuestions; i++) {
-                hasAllQuestions = Data.user.questions[i];
-            }
-            if ($scope.settings.mode === 'Personal' && !hasAllQuestions) {
+            if ($scope.settings.mode.mode === 'Personal' && !Utils.hasAllQuestions(Data.user)) {
                 $ionicPopup.alert({
                     title: 'Cannot Match',
                     template: 'You must list 5 personal questions on your profile in order to play the Personal mode.',
@@ -579,32 +596,17 @@
             });
         };
 
-        $ionicPopover.fromTemplateUrl('templates/help-communities.html', {
-            scope: $scope
-        }).then(function(popover) {
-            $scope.helpPopup = popover;
-        });
-
         $ionicPopover.fromTemplateUrl('templates/select-community.html', {
             scope: $scope
         }).then(function(popover) {
             $scope.selectPopup = popover;
         });
 
-        $scope.showHelp = function($event) {
-            $scope.helpPopup.show($event);
-        };
-
-        $scope.closeHelp = function() {
-            $scope.helpPopup.hide();
-        };
-
         $scope.showSelect = function($event) {
             $scope.selectPopup.show($event);
         };
 
         $scope.$on('$destroy', function() {
-            $scope.helpPopup.remove();
             $scope.selectPopup.remove();
         });
 
@@ -969,8 +971,7 @@
                 buttons: [
                     {
                         text: 'Cancel',
-                        type: 'button-stable',
-                        onTap: function() { return false; }
+                        type: 'button-stable'
                     }, {
                         text: 'Okay',
                         type: 'button-royal',
@@ -978,7 +979,7 @@
                     }
                 ]
             }).then(function(update) {
-                if (update != false) {
+                if (angular.isDefined(update)) {
                     Data.user.questions[num] = update;
                     isChanged = true;
                 }
@@ -997,8 +998,7 @@
                 buttons: [
                     {
                         text: 'Cancel',
-                        type: 'button-stable',
-                        onTap: function() { return null; }
+                        type: 'button-stable'
                     }, {
                         text: 'Okay',
                         type: 'button-royal',
@@ -1008,7 +1008,7 @@
                     }
                 ]
             }).then(function(image) {
-                if (image) {
+                if (angular.isDefined(image)) {
                     Data.user.avatar = image;
                     isChanged = true;
                 }

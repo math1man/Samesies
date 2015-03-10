@@ -84,8 +84,8 @@ public class SamesiesApi {
 
     public void initModes() throws ServiceException {
         DatastoreService ds = getDS();
-        ds.put(new Entity("Mode", "Random"));
-        ds.put(new Entity("Mode", "Personal"));
+        EntityUtils.put(ds, new Mode("Random", "Answer 10 random questions from our database."));
+        EntityUtils.put(ds, new Mode("Personal", "Answer each of your and your partner's 5 personal questions."));
     }
 
     //----------------------------
@@ -396,14 +396,14 @@ public class SamesiesApi {
     @ApiMethod(name = "samesiesApi.getModes",
             path = "episodes/modes",
             httpMethod = ApiMethod.HttpMethod.GET)
-    public List<String> getModes() throws ServiceException {
+    public List<Mode> getModes() throws ServiceException {
         DatastoreService ds = getDS();
 
-        Query query = new Query("Mode").setKeysOnly();
+        Query query = new Query("Mode");
         PreparedQuery pq = ds.prepare(query);
-        List<String> modes = new ArrayList<>();
+        List<Mode> modes = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
-            modes.add(e.getKey().getName());
+            modes.add(new Mode(e));
         }
         return modes;
     }
@@ -452,13 +452,11 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.connectEpisode",
-            path = "episode/connect/{myId}/{theirId}/{mode}/{matchMale}/{matchFemale}/{matchOther}",
+            path = "episode/connect/{myId}/{theirId}/{mode}",
             httpMethod = ApiMethod.HttpMethod.POST)
-    public Episode connectEpisode(@Named("myId") long myUid, @Named("theirId") long theirUid, @Named("mode") String mode,
-                                  @Named("matchMale") boolean matchMale, @Named("matchFemale") boolean matchFemale,
-                                  @Named("matchOther") boolean matchOther) throws ServiceException {
+    public Episode connectEpisode(@Named("myId") long myUid, @Named("theirId") long theirUid, @Named("mode") String mode) throws ServiceException {
         DatastoreService ds = getDS();
-        Episode episode = new Episode(myUid, theirUid, new Settings(mode, matchMale, matchFemale, matchOther));
+        Episode episode = new Episode(myUid, theirUid, new Settings(mode));
         episode.setQids(getQids(ds, mode));
         EntityUtils.put(ds, episode);
         return episode;

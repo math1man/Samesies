@@ -59,13 +59,23 @@
                 return API.getModes();
             },
             findEpisode: function(myId, settings) {
-                settings.myId = myId;
-                return API.findEpisode(settings);
+                return API.findEpisode({
+                    myId: myId,
+                    mode: settings.mode.mode,
+                    matchMale: settings.matchMale,
+                    matchFemale: settings.matchFemale,
+                    matchOther: settings.matchOther
+                });
             },
             connectEpisode: function(myId, theirId, settings) {
-                settings.myId = myId;
-                settings.theirId = theirId;
-                return API.connectEpisode(settings);
+                return API.connectEpisode({
+                    myId: myId,
+                    theirId: theirId,
+                    mode: settings.mode.mode,
+                    matchMale: settings.matchMale,
+                    matchFemale: settings.matchFemale,
+                    matchOther: settings.matchOther
+                });
             },
             acceptEpisode: function(id) {
                 API.acceptEpisode({id: id}).then();
@@ -113,6 +123,13 @@
                 } else {
                     return episode.uid1;
                 }
+            },
+            hasAllQuestions: function(user) {
+                var hasAllQuestions = user.questions && user.questions.length;
+                for (var i=0; i<5 && hasAllQuestions; i++) {
+                    hasAllQuestions = user.questions[i];
+                }
+                return hasAllQuestions;
             },
             getData: function(episode) {
                 if (episode.data) {
@@ -176,9 +193,10 @@
             location: this.communities[0],
             users: []
         };
-        this.modes = ['Random'];
+        this.modes = [];
+        this.defaultMode = null;
         this.settings = {
-            mode: 'Random',
+            mode: null,
             matchMale: true,
             matchFemale: true,
             matchOther: true
