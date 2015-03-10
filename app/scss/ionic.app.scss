@@ -66,9 +66,19 @@ h6 {
 }
 
 .label-text-wrap {
-  white-space:normal;
-  width: 65%;
+  white-space: normal;
+  width: 100%;
   max-width: none;
+}
+
+.label-text-wrap-80 {
+  white-space: normal;
+  width: 80%;
+  max-width: none;
+}
+
+.feedback-label {
+  padding: 12px 16px 16px 16px;
 }
 
 .hidden-grid, .hidden-grid .col {

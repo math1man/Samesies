@@ -1238,8 +1238,36 @@
 
     });
 
-    app.controller('FeedbackCtrl', function($scope, API) {
+    app.controller('FeedbackCtrl', function($scope, $ionicPopup, API) {
         $scope.feedback = {};
+        $scope.frequency = ['Never', 'Sometimes', 'Often', 'Very Often'];
+        $scope.yesNo = ['Yes', 'No'];
+        $scope.times = ['Never', 'A week', 'A month', 'A few months', 'A year'];
+
+        $scope.selector = function(title, list, field) {
+            var value = '';
+            if ($scope.feedback[field]) {
+                value = $scope.feedback[field];
+            }
+            $scope.tempData = {
+                list: list,
+                value: value
+            };
+            $ionicPopup.confirm({
+                scope: $scope,
+                title: title,
+                template: '<ion-radio ng-model="tempData.value" ng-value="item" ng-repeat="item in tempData.list">{{item}}</ion-radio>' +
+                        '<ion-radio ng-model="tempData.value" ng-value="">Prefer not to answer</ion-radio>',
+                okText: 'Okay',
+                okType: 'button-royal',
+                cancelText: 'Cancel',
+                cancelType: 'button-stable'
+            }).then(function(resp) {
+                if (resp) {
+                    $scope.feedback[field] = $scope.tempData.value;
+                }
+            });
+        };
 
         $scope.submit = function() {
             if ($scope.feedback) {

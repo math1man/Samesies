@@ -8,147 +8,94 @@
             make Samesies the best it can be.
         </div>
         <div class="item item-text-wrap">
+            Click on questions to answer them.
+        </div>
+        <div class="item item-text-wrap">
             Answer as much or as little of the survey as you want. Anything is helpful.
         </div>
         <div class="item item-divider">
             General Thoughts
         </div>
-        <label class="item item-input item-select">
-            <span class="input-label label-text-wrap">
+        <label class="item item-input">
+            <span class="input-label label-text-wrap-80">
                 On a scale of 0 to 10, how much do you enjoy playing Samesies?
             </span>
-            <select ng-model="feedback.enjoy">
-                <option selected></option>
-                <option>0</option>
-                <option>1</option>
-                <option>2</option>
-                <option>3</option>
-                <option>4</option>
-                <option>5</option>
-                <option>6</option>
-                <option>7</option>
-                <option>8</option>
-                <option>9</option>
-                <option>10</option>
-            </select>
+            <input type="number" placeholder="0-10" ng-model="feedback.enjoy" min="0" max="10">
         </label>
-        <div class="item item-text-wrap">
-            What, if anything, do you like about Samesies?
-        </div>
-        <label class="item item-input">
+        <label class="item item-input item-stacked-label feedback-label">
+            <span class="input-label label-text-wrap">What, if anything, do you like about Samesies?</span>
             <textarea rows="3" placeholder="What do you like?" ng-model="feedback.like"></textarea>
         </label>
-        <div class="item item-text-wrap">
-            What, if anything, do you dislike about Samesies?
-        </div>
-        <label class="item item-input">
+        <label class="item item-input item-stacked-label feedback-label">
+            <span class="input-label label-text-wrap">What, if anything, do you dislike about Samesies?</span>
             <textarea rows="3" placeholder="What do you dislike?" ng-model="feedback.dislike"></textarea>
         </label>
         <div class="item item-divider">
             How do you use Samesies?
         </div>
-        <label class="item item-input item-select">
-            <span class="input-label label-text-wrap">
-                How often do you play Samesies by random match?
-            </span>
-            <select ng-model="feedback.random">
-                <option selected></option>
-                <option>Never</option>
-                <option>Sometimes</option>
-                <option>Often</option>
-                <option>Very Often</option>
-            </select>
-        </label>
+        <div class="item item-text-wrap" ng-click="selector('Random Use', frequency, 'random')">
+            How often do you play Samesies by random match?
+            <p class="align-right">{{feedback.random}}</p>
+        </div>
         <label class="item item-input">
             <textarea rows="3" placeholder="Comments about random matching" ng-model="feedback.randomComments"></textarea>
         </label>
-        <label class="item item-input item-select">
-            <span class="input-label label-text-wrap">
-                How often do you play Samesies by browsing?
-            </span>
-            <select ng-model="feedback.browse">
-                <option selected></option>
-                <option>Never</option>
-                <option>Sometimes</option>
-                <option>Often</option>
-                <option>Very Often</option>
-            </select>
-        </label>
+        <div class="item item-text-wrap" ng-click="selector('Browse Use', frequency, 'browse')">
+            How often do you play Samesies by browsing?
+            <p class="align-right">{{feedback.browse}}</p>
+        </div>
         <label class="item item-input">
             <textarea rows="3" placeholder="Comments about browsing" ng-model="feedback.browseComments"></textarea>
         </label>
-        <label class="item item-input item-select">
-            <span class="input-label label-text-wrap">
-                How often do you play Samesies with friends?
-            </span>
-            <select ng-model="feedback.friends">
-                <option selected></option>
-                <option>Never</option>
-                <option>Sometimes</option>
-                <option>Often</option>
-                <option>Very Often</option>
-            </select>
-        </label>
+        <div class="item item-text-wrap" ng-click="selector('Friend Use', frequency, 'friends')">
+            How often do you play Samesies with friends?
+            <p class="align-right">{{feedback.friends}}</p>
+        </div>
         <label class="item item-input">
             <textarea rows="3" placeholder="Comments about playing with friends" ng-model="feedback.friendsComments"></textarea>
         </label>
         <div class="item item-divider">
             Other Questions
         </div>
-        <label class="item item-input item-select">
-            <span class="input-label label-text-wrap">
-                Would you recommend Samesies to a friend?
-            </span>
-            <select ng-model="feedback.recommend">
-                <option selected></option>
-                <option>Yes</option>
-                <option>No</option>
-            </select>
-        </label>
-        <label class="item item-input item-select">
-            <span class="input-label label-text-wrap">
-                <b>We do not expect to ever make Samesies cost money.</b><br/>
-                In an alternate reality, would you buy Samesies for 99 cents?
-            </span>
-            <select ng-model="feedback.buy">
-                <option selected></option>
-                <option>Yes</option>
-                <option>No</option>
-            </select>
-        </label>
-        <label class="item item-input item-select">
-            <span class="input-label label-text-wrap">
-                Do you think you would eventually get bored with Samesies?
-                If so, how long would that take?
-            </span>
-            <select ng-model="feedback.bored">
-                <option selected></option>
-                <option>Never</option>
-                <option>A week</option>
-                <option>A month</option>
-                <option>A few months</option>
-                <option>A year</option>
-            </select>
-        </label>
+        <div class="item item-text-wrap" ng-click="selector('Recommend', yesNo, 'recommend')">
+            Would you recommend Samesies to a friend?
+            <p class="align-right">{{feedback.recommend}}</p>
+        </div>
+        <div class="item item-text-wrap" ng-click="selector('Purchase', yesNo, 'buy')">
+            <b>We do not expect to ever make Samesies cost money.</b><br/>
+            In an alternate reality, would you buy Samesies for 99 cents?
+            <p class="align-right">{{feedback.buy}}</p>
+        </div>
+        <div class="item item-text-wrap" ng-click="selector('Bored', times, 'bored')">
+            <b>We do not expect to ever make Samesies cost money.</b>
+            In an alternate reality, would you buy Samesies for 99 cents?
+            <p class="align-right">{{feedback.bored}}</p>
+        </div>
+        <div class="item item-text-wrap">
+            What if anything might keep you interested longer?
+        </div>
         <div class="item item-divider">
             Comments and Suggestions
         </div>
-        <div class="item item-text-wrap">
-            Do you have any suggestions for changes or features for Samesies?
-        </div>
-        <label class="item item-input">
+        <!--<div class="item item-text-wrap">-->
+            <!--Do you have any suggestions for changes or features for Samesies?-->
+        <!--</div>-->
+        <label class="item item-input item-stacked-label feedback-label">
+            <span class="input-label label-text-wrap">Do you have any suggestions for changes or features for Samesies?</span>
             <textarea rows="3" placeholder="Suggestions" ng-model="feedback.suggestions"></textarea>
         </label>
-        <div class="item item-text-wrap">
-            Is there anything you would really like to see changed? If so, how?
-        </div>
-        <label class="item item-input">
+        <!--<div class="item item-text-wrap">-->
+            <!--Is there anything you would really like to see changed? If so, how?-->
+        <!--</div>-->
+        <label class="item item-input item-stacked-label feedback-label">
+            <span class="input-label label-text-wrap">Is there anything you would really like to see changed? If so, how?</span>
             <textarea rows="3" placeholder="Changes" ng-model="feedback.changes"></textarea>
         </label>
-        <div class="item item-text-wrap">
-            Do you have any other comments?
-        </div>
-        <label class="item item-input">
+        <!--<div class="item item-text-wrap">-->
+            <!--Do you have any other comments?-->
+        <!--</div>-->
+        <label class="item item-input item-stacked-label feedback-label">
+            <span class="input-label label-text-wrap">Do you have any other comments?</span>
             <textarea rows="3" placeholder="Other Comments" ng-model="feedback.comments"></textarea>
         </label>
         <div class="item item-divider">
