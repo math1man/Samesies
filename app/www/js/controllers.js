@@ -348,9 +348,23 @@
 
     app.controller('SettingsCtrl', function($scope, $ionicPopup, Data, Utils) {
 
+        var isShowModes = false;
+
+        $scope.isShowModes = function() {
+            return isShowModes;
+        };
+
         $scope.$on('modal.shown', function() {
             $scope.settings = Data.settings;
         });
+
+        $scope.showModes = function() {
+            isShowModes = true;
+        };
+
+        $scope.selectMode = function() {
+            isShowModes = false;
+        }
 
         $scope.saveSettings = function() {
             if ($scope.settings.mode.mode === 'Personal' && !Utils.hasAllQuestions(Data.user)) {

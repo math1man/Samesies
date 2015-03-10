@@ -4,12 +4,12 @@
         <h1 class="title">Game Settings</h1>
     </ion-header-bar>
     <ion-content>
-        <label class="item item-input item-select">
-            <span class="input-label">
-                Game Mode:
-            </span>
-            <select ng-model="settings.mode" ng-options="mode.mode for mode in data('modes')"></select>
-        </label>
+        <div class="item" ng-click="showModes()">
+            Game mode: {{settings.mode.mode}} (click to change)
+        </div>
+        <div class="item" ng-show="isShowModes()">
+            <ion-radio ng-model="settings.mode" ng-value="mode" ng-repeat="mode in data('modes')" ng-click="selectMode()">{{mode.mode}}</ion-radio>
+        </div>
         <div class="item item-text-wrap">
             {{settings.mode.description}}
         </div>

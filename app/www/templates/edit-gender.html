@@ -1,9 +1,4 @@
-<label class="item item-input item-select">
-    <span class="input-label">Gender</span>
-    <select ng-model="tempData.value">
-        <option></option>
-        <option>Male</option>
-        <option>Female</option>
-        <option>Other</option>
-    </select>
-</label>
+<ion-radio ng-model="tempData.value" ng-value="''">Prefer not to share</ion-radio>
+<ion-radio ng-model="tempData.value" ng-value="'Male'">Male</ion-radio>
+<ion-radio ng-model="tempData.value" ng-value="'Female'">Female</ion-radio>
+<ion-radio ng-model="tempData.value" ng-value="'Other'">Other</ion-radio>
