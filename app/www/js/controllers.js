@@ -1,13 +1,6 @@
 (function() {
 
     const URL = 'https://samesies-app.appspot.com/_ah/api';
-    // https://samesies-app.appspot.com/_ah/api
-    // http://localhost:8080/_ah/api
-    const DEBUG_USER = {
-        error: false,
-        email: "ari@samesies.org",
-        password: "samesies123"
-    };
     const PING_INTERVAL = 1000; // ms
 
     var app = angular.module('samesies.controllers', []);
@@ -256,11 +249,6 @@
                 okText: 'Okay',
                 okType: 'button-royal'
             });
-        };
-
-        $scope.quickLogin = function() {
-            $scope.loginData = DEBUG_USER;
-            $scope.doLogin();
         };
 
         var toggle = false;
