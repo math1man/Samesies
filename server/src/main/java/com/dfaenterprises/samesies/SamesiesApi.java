@@ -308,7 +308,7 @@ public class SamesiesApi {
     //----------------------------
 
     @ApiMethod(name = "samesiesApi.getCommunity",
-            path = "communities/{location}",
+            path = "community/{location}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public Community getCommunity(@Named("location") String location) throws ServiceException {
         // TODO: eventually need to be more clever about location stuff

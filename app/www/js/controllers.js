@@ -269,6 +269,7 @@
     });
 
     app.controller('MenuCtrl', function ($scope, $ionicModal, $ionicPopup, $ionicPopover, API, Data) {
+
         $scope.$on('$ionicView.beforeEnter', function() {
             $scope.refresh();
         });
@@ -283,17 +284,13 @@
             $scope.logout();
         });
 
-        $scope.showLogin = function() {
-            $scope.loginPopup.show();
-        };
-
         $scope.closeLogin = function() {
             $scope.loginPopup.hide();
         };
 
         $scope.logout = function() {
             Data.user = null;
-            $scope.showLogin();
+            $scope.loginPopup.show();
         };
 
         $scope.getFriendRequestCount = function() {
@@ -311,7 +308,7 @@
 
         $scope.getConnectionCount = function() {
             var count = 0;
-            if (Data.connections) {
+            if (Data.connections && Data.connections.length) {
                 for (var i = 0; i < Data.connections.length; i++) {
                     var item = Data.connections[i];
                     if (item.data) { // Connections pending your approval
@@ -352,7 +349,7 @@
 
         $scope.selectMode = function() {
             isShowModes = false;
-        }
+        };
 
         $scope.saveSettings = function() {
             if ($scope.settings.mode.mode === 'Personal' && !Utils.hasAllQuestions(Data.user)) {
@@ -373,7 +370,7 @@
                 Data.settings = $scope.settings;
                 $scope.closeSettings();
             }
-        }
+        };
 
     });
 
@@ -779,6 +776,7 @@
     });
 
     app.controller('QuestionsCtrl', function($scope, $ionicPopover, $ionicScrollDelegate) {
+
         $scope.category = ['All'];
         $scope.search = '';
 
@@ -831,6 +829,7 @@
     });
 
     app.controller('EditProfileCtrl', function($scope, $state, $ionicPopup, Data, API) {
+
         var isChanged = false;
 
         $scope.edit = function(property, field, type, required) {
