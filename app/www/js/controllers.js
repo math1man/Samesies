@@ -817,6 +817,7 @@
     });
 
     app.controller('SuggestCtrl', function($scope, API) {
+
         $scope.suggestedQuestion = [''];
 
         $scope.suggest = function() {
