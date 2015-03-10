@@ -391,7 +391,7 @@
 
     app.controller('EpisodeCtrl', function($scope, $state, $window, $ionicPopup, $ionicModal, API, Utils, Data) {
 
-        $ionicModal.fromTemplateUrl('templates/help-episode.html', {
+        $ionicModal.fromTemplateUrl('templates/help.html', {
             scope: $scope,
             animation: 'slide-in-left'
         }).then(function(modal) {
