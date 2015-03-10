@@ -9,7 +9,6 @@ public class Question implements Storable {
 
     private Long id;
     private String q;
-    private String a;
     private String category;
 
     public Question() {
@@ -18,7 +17,6 @@ public class Question implements Storable {
     public Question(Entity e) {
         this.id = e.getKey().getId();
         this.q = (String) e.getProperty("q");
-//        this.a = (String) e.getProperty("a");
         this.category = (String) e.getProperty("category");
     }
 
@@ -26,14 +24,8 @@ public class Question implements Storable {
         this.q = q;
     }
 
-    public Question(String q, String a) {
+    public Question(String q, String category) {
         this.q = q;
-        this.a = a;
-    }
-
-    public Question(String q, String a, String category) {
-        this.q = q;
-        this.a = a;
         this.category = category;
     }
 
@@ -53,14 +45,6 @@ public class Question implements Storable {
         this.q = q;
     }
 
-    public String getA() {
-        return a;
-    }
-
-    public void setA(String a) {
-        this.a = a;
-    }
-
     public String getCategory() {
         return category;
     }
@@ -70,9 +54,13 @@ public class Question implements Storable {
     }
 
     public Entity toEntity() {
-        Entity entity = new Entity("Question");
+        Entity entity;
+        if (id == null) {
+            entity = new Entity("Question");
+        } else {
+            entity = new Entity("Question", id);
+        }
         entity.setProperty("q", q);
-//        entity.setUnindexedProperty("a", a);
         entity.setProperty("category", category);
         return entity;
     }

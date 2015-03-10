@@ -170,6 +170,10 @@ public class Episode implements Storable {
         }
     }
 
+    public boolean isPersonal() {
+        return settings.getMode().equals("Personal");
+    }
+
     public Entity toEntity() {
         Entity e;
         if (id == null) {
