@@ -81,14 +81,6 @@ h6 {
   max-width: none;
 }
 
-.hidden-grid, .hidden-grid .col {
-  padding: 0;
-}
-
-.hidden-grid a, .hidden-grid div, .hidden-grid label {
-  border: 0;
-}
-
 // TODO: if necessary, make this a unique class 'selector'
 input[readonly]:not(.cloned-text-input) {
   background-color: inherit;
