@@ -8,9 +8,6 @@
             make Samesies the best it can be.
         </div>
         <div class="item item-text-wrap">
-            Click on questions to answer them.
-        </div>
-        <div class="item item-text-wrap">
             Answer as much or as little of the survey as you want. Anything is helpful.
         </div>
         <div class="item item-divider">
@@ -33,67 +30,58 @@
         <div class="item item-divider">
             How do you use Samesies?
         </div>
-        <div class="item item-text-wrap" ng-click="selector('Random Use', frequency, 'random')">
-            How often do you play Samesies by random match?
-            <p class="align-right">{{feedback.random}}</p>
-        </div>
+        <label class="item item-input item-stacked-label feedback-label" ng-click="selector('Random Use', frequency, 'random')">
+            <span class="input-label label-text-wrap">How often do you play Samesies by random match?</span>
+            <input type="text" placeholder="Click to answer" ng-model="feedback.random" readonly>
+        </label>
         <label class="item item-input">
             <textarea rows="3" placeholder="Comments about random matching" ng-model="feedback.randomComments"></textarea>
         </label>
-        <div class="item item-text-wrap" ng-click="selector('Browse Use', frequency, 'browse')">
-            How often do you play Samesies by browsing?
-            <p class="align-right">{{feedback.browse}}</p>
-        </div>
+        <label class="item item-input item-stacked-label feedback-label" ng-click="selector('Browse Use', frequency, 'browse')">
+            <span class="input-label label-text-wrap">How often do you play Samesies by browsing?</span>
+            <input type="text" placeholder="Click to answer" ng-model="feedback.browse" readonly>
+        </label>
         <label class="item item-input">
             <textarea rows="3" placeholder="Comments about browsing" ng-model="feedback.browseComments"></textarea>
         </label>
-        <div class="item item-text-wrap" ng-click="selector('Friend Use', frequency, 'friends')">
-            How often do you play Samesies with friends?
-            <p class="align-right">{{feedback.friends}}</p>
-        </div>
+        <label class="item item-input item-stacked-label feedback-label" ng-click="selector('Friend Use', frequency, 'friends')">
+            <span class="input-label label-text-wrap">How often do you play Samesies with friends?</span>
+            <input type="text" placeholder="Click to answer" ng-model="feedback.friends" readonly>
+        </label>
         <label class="item item-input">
             <textarea rows="3" placeholder="Comments about playing with friends" ng-model="feedback.friendsComments"></textarea>
         </label>
         <div class="item item-divider">
             Other Questions
         </div>
-        <div class="item item-text-wrap" ng-click="selector('Recommend', yesNo, 'recommend')">
-            Would you recommend Samesies to a friend?
-            <p class="align-right">{{feedback.recommend}}</p>
-        </div>
-        <div class="item item-text-wrap" ng-click="selector('Purchase', yesNo, 'buy')">
-            <b>We do not expect to ever make Samesies cost money.</b><br/>
-            In an alternate reality, would you buy Samesies for 99 cents?
-            <p class="align-right">{{feedback.buy}}</p>
-        </div>
-        <div class="item item-text-wrap" ng-click="selector('Bored', times, 'bored')">
-            <b>We do not expect to ever make Samesies cost money.</b>
-            In an alternate reality, would you buy Samesies for 99 cents?
-            <p class="align-right">{{feedback.bored}}</p>
-        </div>
-        <div class="item item-text-wrap">
-            What if anything might keep you interested longer?
-        </div>
+        <label class="item item-input item-stacked-label feedback-label" ng-click="selector('Recommend', yesNo, 'recommend')">
+            <span class="input-label label-text-wrap">Would you recommend Samesies to a friend?</span>
+            <input type="text" placeholder="Click to answer" ng-model="feedback.recommend" readonly>
+        </label>
+        <label class="item item-input item-stacked-label feedback-label" ng-click="selector('Purchase', yesNo, 'buy')">
+            <span class="input-label label-text-wrap"><b>We do not expect to ever make Samesies cost money.</b>
+            In an alternate reality, would you buy Samesies for 99 cents?</span>
+            <input type="text" placeholder="Click to answer" ng-model="feedback.buy" readonly>
+        </label>
+        <label class="item item-input item-stacked-label feedback-label" ng-click="selector('Bored', times, 'bored')">
+            <span class="input-label label-text-wrap">How long do you think it might take you to get bored of Samesies?</span>
+            <input type="text" placeholder="Click to answer" ng-model="feedback.bored" readonly>
+        </label>
+        <label class="item item-input item-stacked-label feedback-label">
+            <span class="input-label label-text-wrap">What, if anything, might keep you interested longer?</span>
+            <textarea rows="3" placeholder="What would hold your interest?" ng-model="feedback.interest"></textarea>
+        </label>
         <div class="item item-divider">
             Comments and Suggestions
         </div>
-        <!--<div class="item item-text-wrap">-->
-            <!--Do you have any suggestions for changes or features for Samesies?-->
-        <!--</div>-->
         <label class="item item-input item-stacked-label feedback-label">
             <span class="input-label label-text-wrap">Do you have any suggestions for changes or features for Samesies?</span>
             <textarea rows="3" placeholder="Suggestions" ng-model="feedback.suggestions"></textarea>
         </label>
-        <!--<div class="item item-text-wrap">-->
-            <!--Is there anything you would really like to see changed? If so, how?-->
-        <!--</div>-->
         <label class="item item-input item-stacked-label feedback-label">
             <span class="input-label label-text-wrap">Is there anything you would really like to see changed? If so, how?</span>
             <textarea rows="3" placeholder="Changes" ng-model="feedback.changes"></textarea>
         </label>
-        <!--<div class="item item-text-wrap">-->
-            <!--Do you have any other comments?-->
-        <!--</div>-->
         <label class="item item-input item-stacked-label feedback-label">
             <span class="input-label label-text-wrap">Do you have any other comments?</span>
             <textarea rows="3" placeholder="Other Comments" ng-model="feedback.comments"></textarea>

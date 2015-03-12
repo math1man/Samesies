@@ -20,6 +20,7 @@ public class Feedback implements Storable {
     private String recommend;
     private String buy;
     private String bored;
+    private String interest;
     private Long age;
     private String gender;
 
@@ -40,6 +41,7 @@ public class Feedback implements Storable {
         this.recommend = (String) entity.getProperty("recommend");
         this.buy = (String) entity.getProperty("buy");
         this.bored = (String) entity.getProperty("bored");
+        this.interest = (String) entity.getProperty("interest");
         this.age = (Long) entity.getProperty("age");
         this.gender = (String) entity.getProperty("gender");
     }
@@ -150,6 +152,14 @@ public class Feedback implements Storable {
         this.bored = bored;
     }
 
+    public String getInterest() {
+        return interest;
+    }
+
+    public void setInterest(String interest) {
+        this.interest = interest;
+    }
+
     public Long getAge() {
         return age;
     }
@@ -186,6 +196,7 @@ public class Feedback implements Storable {
         entity.setProperty("recommend", recommend);
         entity.setProperty("buy", buy);
         entity.setProperty("bored", bored);
+        entity.setUnindexedProperty("interest", interest);
         entity.setProperty("age", age);
         entity.setProperty("gender", gender);
         return entity;
