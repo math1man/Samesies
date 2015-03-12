@@ -65,20 +65,20 @@ h6 {
   border-radius: 100%;
 }
 
-.label-text-wrap {
-  white-space: normal;
-  width: 100%;
-  max-width: none;
-}
-
-.label-text-wrap-80 {
+.feedback-label-text-wrap {
   white-space: normal;
   width: 80%;
   max-width: none;
 }
 
-.feedback-label {
+.feedback-input {
   padding: 12px 16px 16px 16px;
+}
+
+.feedback-input .input-label {
+  white-space: normal;
+  width: 100%;
+  max-width: none;
 }
 
 .hidden-grid, .hidden-grid .col {
@@ -87,6 +87,12 @@ h6 {
 
 .hidden-grid a, .hidden-grid div, .hidden-grid label {
   border: 0;
+}
+
+// TODO: if necessary, make this a unique class 'selector'
+input[readonly]:not(.cloned-text-input) {
+  background-color: inherit;
+  cursor: inherit;
 }
 
 .chat.ng-enter {
