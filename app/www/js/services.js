@@ -113,7 +113,7 @@
         };
     });
 
-    app.factory('Utils', function($interval, Data) {
+    app.factory('Utils', function($interval, $parse, Data) {
         var promises = [];
 
         return {
@@ -130,6 +130,25 @@
                     hasAllQuestions = user.questions[i];
                 }
                 return hasAllQuestions;
+            },
+            containsById: function(list, item, expr) {
+                return this.indexOfById(list, item, expr) > -1;
+            },
+            indexOfById: function(list, item, expr) {
+                if (list && list.length) {
+                    for (var i = 0; i < list.length; i++) {
+                        var element;
+                        if (expr) {
+                            element = $parse(expr)(list[i]);
+                        } else {
+                            element = list[i];
+                        }
+                        if (element.id === item.id) {
+                            return i;
+                        }
+                    }
+                }
+                return -1;
             },
             getData: function(episode) {
                 if (episode.data) {

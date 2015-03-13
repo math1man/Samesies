@@ -121,21 +121,22 @@
                                 connections[i].data = Utils.getData(cxn);
                                 uids.push(Utils.getPartnerId(cxn));
                             }
-                            Data.connections = connections;
-                            $scope.$apply();
                             API.getUsers(uids).then(function (resp) {
                                 var users = resp.result.items;
                                 for (var i = 0; i < users.length; i++) {
-                                    Data.connections[i].data.partner = users[i];
+                                    var cxnIndex = Utils.indexOfById(Data.connections, connections[i]);
+                                    if (cxnIndex === -1) {
+                                        cxnIndex = Data.connections.length;
+                                        connections[i].data.partner = users[i];
+                                        Data.connections.push(connections[i]);
+                                    }
                                     // getUsers data is stranger data, so check if they are in friends
-                                    var isFriend = false;
-                                    for (var j = 0; j < Data.friends.length && !isFriend; j++) {
-                                        if (Data.friends[j].user.id === uids[i]) {
-                                            isFriend = true;
-                                            Data.connections[i].data.partner = Data.friends[j].user;
-                                        }
+                                    var index = Utils.indexOfById(Data.friends, users[i], 'user');
+                                    if (index > -1) {
+                                        Data.connections[cxnIndex].data.partner = Data.friends[index].user;
                                     }
                                 }
+                                $scope.$apply();
                             });
                         }
                     });
@@ -611,7 +612,7 @@
 
     });
 
-    app.controller('FriendsCtrl', function($scope, $state, $ionicPopover, Data, API) {
+    app.controller('FriendsCtrl', function($scope, $state, $ionicPopover, Data, API, Utils) {
 
         $ionicPopover.fromTemplateUrl('templates/find-friends.html', {
             scope: $scope,
@@ -640,12 +641,11 @@
         $scope.accept = function(friend) {
             API.addFriend(Data.user.id, friend.user.id).then(function(resp) {
                 var friend = resp.result;
-                var done = false;
-                for (var i=0; i<Data.friends.length && !done; i++) {
-                    if (Data.friends[i].id === friend.id) {
-                        Data.friends[i] = friend;
-                        done = true;
-                    }
+                var index = Utils.indexOfById(Data.friends, friend, 'user');
+                if (index > -1) {
+                    Data.friends[index] = friend;
+                } else {
+                    Data.friends.push(friend);
                 }
                 $scope.profile(friend.user);
             });
@@ -653,24 +653,11 @@
 
         $scope.reject = function(friend) {
             API.removeFriend(friend.id, Data.user.id);
-            var done = false;
-            for (var i=0; i<Data.friends.length && !done; i++) {
-                if (Data.friends[i].id === friend.id) {
-                    Data.friends.splice(i, 1);
-                    done = true;
-                }
+            var index = Utils.indexOfById(Data.friends, friend, 'user');
+            if (index > -1) {
+                Data.friends.splice(index, 1);
             }
         };
-
-        $scope.$on('$ionicView.beforeEnter', function() {
-            API.getFriends(Data.user.id).then(function(resp) {
-                var friends = resp.result.items;
-                if (friends) {
-                    Data.friends = friends;
-                    $scope.$apply();
-                }
-            });
-        });
 
         $scope.$on('$destroy', function() {
             $scope.findPopup.remove();
@@ -678,7 +665,7 @@
 
     });
 
-    app.controller('FindFriendCtrl', function($scope, API, Data) {
+    app.controller('FindFriendCtrl', function($scope, API, Data, Utils) {
         $scope.tempUser = null;
         $scope.email = [''];
 
@@ -693,17 +680,10 @@
             if ($scope.tempUser) {
                 API.addFriend(Data.user.id, $scope.tempUser.id).then(function(resp) {
                     var friend = resp.result;
-                    var isFriend = false;
-                    for (var i = 0; i < Data.friends.length && !isFriend; i++) {
-                        if (Data.friends[i].id === friend.id) {
-                            Data.friends[i] = friend;
-                            isFriend = true;
-                        }
-                    }
-                    if (!isFriend) {
+                    if (!Utils.containsById(Data.friends, friend.id)) {
                         Data.friends.push(friend);
+                        $scope.$apply();
                     }
-                    $scope.$apply();
                 });
             }
             $scope.closeFind();
@@ -737,42 +717,11 @@
         };
 
         var removeCxn = function(cxn) {
-            for (var i=0; i<Data.connections.length; i++) {
-                if (Data.connections[i].id === cxn.id) {
-                    Data.connections.splice(i, 1);
-                    return;
-                }
+            var index = Utils.indexOfById(Data.connections, cxn);
+            if (index > -1) {
+                Data.connections.splice(index, 1);
             }
         };
-
-        $scope.$on('$ionicView.beforeEnter', function() {
-            API.getConnections(Data.user.id).then(function(resp) {
-                var connections = resp.result.items;
-                if (connections && connections.length > 0) {
-                    var uids = [];
-                    for (var i = 0; i < connections.length; i++) {
-                        var cxn = connections[i];
-                        connections[i].data = Utils.getData(cxn);
-                        uids.push(Utils.getPartnerId(cxn));
-                    }
-                    API.getUsers(uids).then(function (resp) {
-                        var users = resp.result.items;
-                        for (var i = 0; i < users.length; i++) {
-                            connections[i].data.partner = users[i];
-                            var isFriend = false;
-                            for (var j=0; j<Data.friends.length && !isFriend; j++) {
-                                if (Data.friends[j].user.id === uids[i]) {
-                                    isFriend = true;
-                                    connections[i].data.partner = Data.friends[j].user;
-                                }
-                            }
-                        }
-                        Data.connections = connections;
-                        $scope.$apply();
-                    });
-                }
-            });
-        });
     });
 
     app.controller('QuestionsCtrl', function($scope, $ionicPopover, $ionicScrollDelegate) {
@@ -1205,12 +1154,7 @@
         };
 
         $scope.showAddFriend = function() {
-            for (var i = 0; i < Data.friends.length; i++) {
-                if (Data.friends[i].user.id === Data.tempUser.id) {
-                    return false;
-                }
-            }
-            return true;
+            return !Utils.containsById(Data.friends, Data.tempUser.id);
         };
 
         $scope.addFriend = function() {
