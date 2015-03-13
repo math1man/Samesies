@@ -31,6 +31,9 @@
             findUser: function(email) {
                 return API.findUser({email: email});
             },
+            flagUser: function(flaggedId, flaggerId, reason) {
+                API.flagUser({flaggedId: flaggedId, flaggerId: flaggerId, reason: reason}).then();
+            },
             addFriend: function(myId, theirId) {
                 return API.addFriend({myId: myId, theirId: theirId});
             },

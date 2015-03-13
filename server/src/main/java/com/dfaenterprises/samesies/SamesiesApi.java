@@ -142,6 +142,7 @@ public class SamesiesApi {
         } else {
             throw new ForbiddenException("Email already in use");
         }
+        // TODO: confirm email
     }
 
     @ApiMethod(name = "samesiesApi.getUser",
@@ -209,10 +210,10 @@ public class SamesiesApi {
     //----------------------------
 
     @ApiMethod(name = "samesiesApi.flagUser",
-            path = "user/flag/{id}",
+            path = "user/flag/{flaggedId}/{flaggerId}",
             httpMethod = ApiMethod.HttpMethod.POST)
     public void flagUser(@Named("flaggedId") long flaggedId, @Named("flaggerId") long flaggerId,
-                     @Named("reason") String reason) throws ServiceException {
+                     @Nullable @Named("reason") String reason) throws ServiceException {
         DatastoreService ds = getDS();
         Flag flag = new Flag(flaggedId, flaggerId, reason);
         EntityUtils.put(ds, flag);

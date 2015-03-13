@@ -610,6 +610,10 @@
             $scope.selectPopup.show($event);
         };
 
+        $scope.flag = function(user) {
+            // TODO: finish me
+        };
+
         $scope.$on('$destroy', function() {
             $scope.selectPopup.remove();
         });
