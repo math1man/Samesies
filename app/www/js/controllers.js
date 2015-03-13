@@ -587,7 +587,8 @@
 
     });
 
-    app.controller('CommunitiesCtrl', function($scope, $ionicPopover, API, Data) {
+    app.controller('CommunitiesCtrl', function($scope, $ionicPopover, $ionicPopup, API, Data) {
+
         $scope.selected = Data.community.location;
 
         $scope.loadCommunity = function(community) {
@@ -611,7 +612,26 @@
         };
 
         $scope.flag = function(user) {
-            // TODO: finish me
+            $scope.reason = [''];
+            $ionicPopup.show({
+                scope: $scope,
+                title: 'Why is this inappropriate?',
+                template: '<label class="item item-input"><input type="text" placeholder="Reason" ng-model="reason[0]"></label>',
+                buttons: [{
+                    text: 'Cancel',
+                    type: 'button-stable'
+                },{
+                    text: 'Submit',
+                    type: 'button-assertive', // TODO: maybe pick a different color?
+                    onTap: function() {
+                        return $scope.reason[0];
+                    }
+                }]
+            }).then(function(reason) {
+                if (angular.isDefined(reason)) {
+                    API.flagUser(user.id, Data.user.id, reason);
+                }
+            })
         };
 
         $scope.$on('$destroy', function() {

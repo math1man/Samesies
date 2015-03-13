@@ -356,7 +356,7 @@ public class SamesiesApi {
         DatastoreService ds = getDS();
         Query query = new Query("User").setFilter(Query.CompositeFilterOperator.and(
                 new Query.FilterPredicate("location", Query.FilterOperator.EQUAL, location),
-                new Query.FilterPredicate("isBanned", Query.FilterOperator.EQUAL, false)));
+                new Query.FilterPredicate("isBanned", Query.FilterOperator.NOT_EQUAL, true)));
         PreparedQuery pq = ds.prepare(query);
         List<User> users = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
