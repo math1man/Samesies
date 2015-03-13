@@ -9,13 +9,12 @@ import java.util.List;
 /**
  * @author Ari Weiland
  */
-public class Episode implements Storable {
+public class Episode extends Storable {
 
     public static enum Status {
         MATCHING, UNMATCHED, IN_PROGRESS, ABANDONED, COMPLETE
     }
 
-    private Long id;
     private Date startDate;
     private Boolean isPersistent;
     private Settings settings;
@@ -30,7 +29,7 @@ public class Episode implements Storable {
     }
 
     public Episode(Entity e) {
-        this.id = e.getKey().getId();
+        super(e);
         this.startDate = (Date) e.getProperty("startDate");
         this.isPersistent = (Boolean) e.getProperty("isPersistent");
         this.settings = new Settings(
@@ -72,14 +71,6 @@ public class Episode implements Storable {
         this.status = Status.MATCHING;
         this.uid1 = uid1;
         this.uid2 = uid2;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public Date getStartDate() {
@@ -175,12 +166,7 @@ public class Episode implements Storable {
     }
 
     public Entity toEntity() {
-        Entity e;
-        if (id == null) {
-            e = new Entity("Episode");
-        } else {
-            e = new Entity("Episode", id);
-        }
+        Entity e = getEntity("Episode");
         e.setProperty("startDate", startDate);
         e.setProperty("isPersistent", isPersistent);
         e.setProperty("mode", settings.getMode());

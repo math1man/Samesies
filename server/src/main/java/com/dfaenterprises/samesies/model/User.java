@@ -11,13 +11,12 @@ import java.util.List;
 /**
  * @author Ari Weiland
  */
-public class User implements Storable {
+public class User extends Storable {
 
     public static enum Relation {
         STRANGER, FRIEND, SELF, ADMIN
     }
 
-    private Long id;
     private String email;
     private String password;
     private String newPassword;
@@ -25,6 +24,7 @@ public class User implements Storable {
     private String location;
     private String alias;
     private Text avatar;
+    private Boolean isBanned;
     private String name;
     private Long age;
     private String gender;
@@ -40,26 +40,29 @@ public class User implements Storable {
         this(entity, Relation.ADMIN);
     }
 
-    public User(Entity entity, Relation relation) {
+    public User(Entity e, Relation relation) {
+        super(e);
         int ordinal = relation.ordinal();
+
         // public
-        this.id = entity.getKey().getId();
-        this.location = (String) entity.getProperty("location");
-        this.alias = (String) entity.getProperty("alias");
-        this.avatar = (Text) entity.getProperty("avatar");
+        this.location = (String) e.getProperty("location");
+        this.alias = (String) e.getProperty("alias");
+        this.avatar = (Text) e.getProperty("avatar");
+        this.isBanned = (Boolean) e.getProperty("isBanned");
         this.relation = relation;
+
         // private
         if (ordinal >= Relation.SELF.ordinal()) {
-            this.email = (String) entity.getProperty("email");
-            this.hashedPw = (String) entity.getProperty("hashedPw");
+            this.email = (String) e.getProperty("email");
+            this.hashedPw = (String) e.getProperty("hashedPw");
         }
         // protected
         if (ordinal >= Relation.FRIEND.ordinal()) {
-            this.name = (String) entity.getProperty("name");
-            this.age = (Long) entity.getProperty("age");
-            this.gender = (String) entity.getProperty("gender");
-            this.aboutMe = (String) entity.getProperty("aboutMe");
-            this.questions = EntityUtils.entityToList(entity.getProperty("questions"), 5, String.class);
+            this.name = (String) e.getProperty("name");
+            this.age = (Long) e.getProperty("age");
+            this.gender = (String) e.getProperty("gender");
+            this.aboutMe = (String) e.getProperty("aboutMe");
+            this.questions = EntityUtils.entityToList(e.getProperty("questions"), 5, String.class);
         }
     }
 
@@ -70,19 +73,12 @@ public class User implements Storable {
         this.location = location;
         this.alias = alias;
         this.avatar = getDefaultAvatar();
+        this.isBanned = false;
         this.name = name;
         this.age = Long.valueOf(age);
         this.gender = gender;
         this.aboutMe = aboutMe;
         this.questions = blankQuestions();
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getEmail() {
@@ -145,6 +141,14 @@ public class User implements Storable {
         }
     }
 
+    public boolean getIsBanned() {
+        return isBanned == null ? false : isBanned;
+    }
+
+    public void setIsBanned(Boolean isBanned) {
+        this.isBanned = isBanned;
+    }
+
     public String getName() {
         return name;
     }
@@ -198,27 +202,22 @@ public class User implements Storable {
     }
 
     public Entity toEntity() {
-        Entity entity;
-        if (id == null) {
-            entity = new Entity("User");
-        } else {
-            entity = new Entity("User", id);
+        Entity e = getEntity("User");
+        e.setProperty("email", email);
+        if (password != null) {
+            hashedPw = BCrypt.hashpw(password, BCrypt.gensalt());
         }
-        entity.setProperty("email", email);
-        if (password == null) {
-            entity.setUnindexedProperty("hashedPw", hashedPw);
-        } else {
-            entity.setUnindexedProperty("hashedPw", BCrypt.hashpw(password, BCrypt.gensalt()));
-        }
-        entity.setProperty("location", location);
-        entity.setProperty("alias", alias);
-        entity.setProperty("avatar", avatar);
-        entity.setProperty("name", name);
-        entity.setProperty("age", age);
-        entity.setProperty("gender", gender);
-        entity.setUnindexedProperty("aboutMe", aboutMe);
-        entity.setUnindexedProperty("questions", EntityUtils.listToEntity(questions));
-        return entity;
+        e.setUnindexedProperty("hashedPw", hashedPw);
+        e.setProperty("location", location);
+        e.setProperty("alias", alias);
+        e.setUnindexedProperty("avatar", avatar);
+        e.setProperty("name", name);
+        e.setProperty("age", age);
+        e.setProperty("gender", gender);
+        e.setUnindexedProperty("aboutMe", aboutMe);
+        e.setUnindexedProperty("questions", EntityUtils.listToEntity(questions));
+        e.setProperty("isBanned", isBanned);
+        return e;
     }
 
     public void setDefaultAlias() {

@@ -7,9 +7,8 @@ import java.util.Date;
 /**
  * @author Ari Weiland
  */
-public class Message implements Storable {
+public class Message extends Storable {
 
-    private Long id;
     private Long chatId;
     private Long senderId;
     private String message;
@@ -20,7 +19,7 @@ public class Message implements Storable {
     }
 
     public Message(Entity e) {
-        this.id = e.getKey().getId();
+        super(e);
         this.chatId = (Long) e.getProperty("chatId");
         this.senderId = (Long) e.getProperty("senderId");
         this.message = (String) e.getProperty("message");
@@ -38,16 +37,6 @@ public class Message implements Storable {
         this.message = message;
         this.sentDate = new Date();
         this.random = (random == null ? randomId() : random);
-    }
-
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public Long getChatId() {
@@ -92,18 +81,13 @@ public class Message implements Storable {
 
     @Override
     public Entity toEntity() {
-        Entity entity;
-        if (id == null) {
-            entity = new Entity("Message");
-        } else {
-            entity = new Entity("Message", id);
-        }
-        entity.setProperty("chatId", chatId);
-        entity.setProperty("senderId", senderId);
-        entity.setUnindexedProperty("message", message);
-        entity.setProperty("sentDate", sentDate);
-        entity.setUnindexedProperty("random", random);
-        return entity;
+        Entity e = getEntity("Message");
+        e.setProperty("chatId", chatId);
+        e.setProperty("senderId", senderId);
+        e.setUnindexedProperty("message", message);
+        e.setProperty("sentDate", sentDate);
+        e.setUnindexedProperty("random", random);
+        return e;
     }
 
     public static String randomId() {

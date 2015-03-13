@@ -5,9 +5,8 @@ import com.google.appengine.api.datastore.Entity;
 /**
  * @author Ari Weiland
  */
-public class Answer implements Storable {
+public class Answer extends Storable {
 
-    private Long id;
     private Long qid;
     private Long uid;
     private String answer;
@@ -16,7 +15,7 @@ public class Answer implements Storable {
     }
 
     public Answer(Entity e) {
-        this.id = e.getKey().getId();
+        super(e);
         this.qid = (Long) e.getProperty("qid");
         this.uid = (Long) e.getProperty("uid");
         this.answer = (String) e.getProperty("answer");
@@ -26,16 +25,6 @@ public class Answer implements Storable {
         this.qid = qid;
         this.uid = uid;
         this.answer = answer;
-    }
-
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public Long getQid() {
@@ -64,15 +53,10 @@ public class Answer implements Storable {
 
     @Override
     public Entity toEntity() {
-        Entity entity;
-        if (id == null) {
-            entity = new Entity("Answer");
-        } else {
-            entity = new Entity("Answer", id);
-        }
-        entity.setProperty("qid", qid);
-        entity.setProperty("uid", uid);
-        entity.setUnindexedProperty("answer", answer);
-        return entity;
+        Entity e = getEntity("Answer");
+        e.setProperty("qid", qid);
+        e.setProperty("uid", uid);
+        e.setUnindexedProperty("answer", answer);
+        return e;
     }
 }

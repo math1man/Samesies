@@ -7,9 +7,8 @@ import java.util.Date;
 /**
  * @author Ari Weiland
  */
-public class Chat implements Storable {
+public class Chat extends Storable {
 
-    private Long id;
     private Date startDate;
     private Long uid1;
     private Long uid2;
@@ -18,12 +17,12 @@ public class Chat implements Storable {
     public Chat() {
     }
 
-    public Chat(Entity entity) {
-        this.id = entity.getKey().getId();
-        this.startDate = (Date) entity.getProperty("startDate");
-        this.uid1 = (Long) entity.getProperty("uid1");
-        this.uid2 = (Long) entity.getProperty("uid2");
-        this.lastModified = (Date) entity.getProperty("lastModified");
+    public Chat(Entity e) {
+        super(e);
+        this.startDate = (Date) e.getProperty("startDate");
+        this.uid1 = (Long) e.getProperty("uid1");
+        this.uid2 = (Long) e.getProperty("uid2");
+        this.lastModified = (Date) e.getProperty("lastModified");
     }
 
     public Chat(Long uid1, Long uid2) {
@@ -31,14 +30,6 @@ public class Chat implements Storable {
         this.uid1 = uid1;
         this.uid2 = uid2;
         this.lastModified = startDate;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public Date getStartDate() {
@@ -75,16 +66,11 @@ public class Chat implements Storable {
 
     @Override
     public Entity toEntity() {
-        Entity entity;
-        if (id == null) {
-            entity = new Entity("Chat");
-        } else {
-            entity = new Entity("Chat", id);
-        }
-        entity.setProperty("startDate", startDate);
-        entity.setProperty("uid1", uid1);
-        entity.setProperty("uid2", uid2);
-        entity.setProperty("lastModified", lastModified);
-        return entity;
+        Entity e = getEntity("Chat");
+        e.setProperty("startDate", startDate);
+        e.setProperty("uid1", uid1);
+        e.setProperty("uid2", uid2);
+        e.setProperty("lastModified", lastModified);
+        return e;
     }
 }

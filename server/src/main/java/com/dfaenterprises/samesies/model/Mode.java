@@ -5,9 +5,8 @@ import com.google.appengine.api.datastore.Entity;
 /**
  * @author Ari Weiland
  */
-public class Mode implements Storable {
+public class Mode extends Storable {
 
-    private Long id;
     private String mode;
     private String description;
 
@@ -15,7 +14,7 @@ public class Mode implements Storable {
     }
 
     public Mode(Entity e) {
-        this.id = e.getKey().getId();
+        super(e);
         this.mode = (String) e.getProperty("mode");
         this.description = (String) e.getProperty("description");
     }
@@ -23,16 +22,6 @@ public class Mode implements Storable {
     public Mode(String mode, String description) {
         this.mode = mode;
         this.description = description;
-    }
-
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getMode() {
@@ -53,14 +42,9 @@ public class Mode implements Storable {
 
     @Override
     public Entity toEntity() {
-        Entity entity;
-        if (id == null) {
-            entity = new Entity("Mode");
-        } else {
-            entity = new Entity("Mode", id);
-        }
-        entity.setProperty("mode", mode);
-        entity.setUnindexedProperty("description", description);
-        return entity;
+        Entity e = getEntity("Mode");
+        e.setProperty("mode", mode);
+        e.setUnindexedProperty("description", description);
+        return e;
     }
 }

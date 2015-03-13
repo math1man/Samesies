@@ -5,9 +5,8 @@ import com.google.appengine.api.datastore.Entity;
 /**
  * @author Ari Weiland
  */
-public class Feedback implements Storable {
+public class Feedback extends Storable {
 
-    private Long id;
     private Long enjoy;
     private String like;
     private String dislike;
@@ -27,33 +26,23 @@ public class Feedback implements Storable {
     public Feedback() {
     }
 
-    public Feedback(Entity entity) {
-        this.id = entity.getKey().getId();
-        this.enjoy = (Long) entity.getProperty("enjoy");
-        this.like = (String) entity.getProperty("like");
-        this.dislike = (String) entity.getProperty("dislike");
-        this.random = (String) entity.getProperty("random");
-        this.randomComments = (String) entity.getProperty("randomComments");
-        this.browse = (String) entity.getProperty("browse");
-        this.browseComments = (String) entity.getProperty("browseComments");
-        this.friends = (String) entity.getProperty("friends");
-        this.friendsComments = (String) entity.getProperty("friendsComments");
-        this.recommend = (String) entity.getProperty("recommend");
-        this.buy = (String) entity.getProperty("buy");
-        this.bored = (String) entity.getProperty("bored");
-        this.interest = (String) entity.getProperty("interest");
-        this.age = (Long) entity.getProperty("age");
-        this.gender = (String) entity.getProperty("gender");
-    }
-
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(Long id) {
-        this.id = id;
+    public Feedback(Entity e) {
+        super(e);
+        this.enjoy = (Long) e.getProperty("enjoy");
+        this.like = (String) e.getProperty("like");
+        this.dislike = (String) e.getProperty("dislike");
+        this.random = (String) e.getProperty("random");
+        this.randomComments = (String) e.getProperty("randomComments");
+        this.browse = (String) e.getProperty("browse");
+        this.browseComments = (String) e.getProperty("browseComments");
+        this.friends = (String) e.getProperty("friends");
+        this.friendsComments = (String) e.getProperty("friendsComments");
+        this.recommend = (String) e.getProperty("recommend");
+        this.buy = (String) e.getProperty("buy");
+        this.bored = (String) e.getProperty("bored");
+        this.interest = (String) e.getProperty("interest");
+        this.age = (Long) e.getProperty("age");
+        this.gender = (String) e.getProperty("gender");
     }
 
     public Long getEnjoy() {
@@ -178,27 +167,22 @@ public class Feedback implements Storable {
 
     @Override
     public Entity toEntity() {
-        Entity entity;
-        if (id == null) {
-            entity = new Entity("Feedback");
-        } else {
-            entity = new Entity("Feedback", id);
-        }
-        entity.setProperty("enjoy", enjoy);
-        entity.setUnindexedProperty("like", like);
-        entity.setUnindexedProperty("dislike", dislike);
-        entity.setProperty("random", random);
-        entity.setUnindexedProperty("randomComments", randomComments);
-        entity.setProperty("browse", browse);
-        entity.setUnindexedProperty("browseComments", browseComments);
-        entity.setProperty("friends", friends);
-        entity.setUnindexedProperty("friendsComments", friendsComments);
-        entity.setProperty("recommend", recommend);
-        entity.setProperty("buy", buy);
-        entity.setProperty("bored", bored);
-        entity.setUnindexedProperty("interest", interest);
-        entity.setProperty("age", age);
-        entity.setProperty("gender", gender);
-        return entity;
+        Entity e = getEntity("Feedback");
+        e.setProperty("enjoy", enjoy);
+        e.setUnindexedProperty("like", like);
+        e.setUnindexedProperty("dislike", dislike);
+        e.setProperty("random", random);
+        e.setUnindexedProperty("randomComments", randomComments);
+        e.setProperty("browse", browse);
+        e.setUnindexedProperty("browseComments", browseComments);
+        e.setProperty("friends", friends);
+        e.setUnindexedProperty("friendsComments", friendsComments);
+        e.setProperty("recommend", recommend);
+        e.setProperty("buy", buy);
+        e.setProperty("bored", bored);
+        e.setUnindexedProperty("interest", interest);
+        e.setProperty("age", age);
+        e.setProperty("gender", gender);
+        return e;
     }
 }

@@ -106,6 +106,8 @@ public class SamesiesApi {
         User dsUser = getUserByEmail(ds, email, User.Relation.SELF);
         if (dsUser == null) {
             throw new NotFoundException("Invalid Email");
+        } else if (dsUser.getIsBanned()) {
+            throw new ForbiddenException("That email has been banned");
         } else if (password != null && BCrypt.checkpw(password, dsUser.getHashedPw())) {
             return dsUser;
         } else {
@@ -193,7 +195,40 @@ public class SamesiesApi {
     public User findUser(@Named("email") String email) throws ServiceException {
         DatastoreService ds = getDS();
 
-        return getUserByEmail(ds, email, User.Relation.STRANGER);
+        User user = getUserByEmail(ds, email, User.Relation.STRANGER);
+        if (user == null || user.getIsBanned()) { // ignore banned users
+            return null;
+        } else {
+            return user;
+        }
+    }
+
+    //----------------------------
+    //     Disciplinary Calls
+    //----------------------------
+
+    @ApiMethod(name = "samesiesApi.flag",
+            path = "user/flag/{id}",
+            httpMethod = ApiMethod.HttpMethod.POST)
+    public void flag(@Named("flaggedId") long flaggedId, @Named("flaggerId") long flaggerId,
+                     @Named("reason") String reason) throws ServiceException {
+        DatastoreService ds = getDS();
+        Flag flag = new Flag(flaggedId, flaggerId, reason);
+        EntityUtils.put(ds, flag);
+    }
+
+    @ApiMethod(name = "samesiesApi.ban",
+            path = "user/ban/{id}",
+            httpMethod = ApiMethod.HttpMethod.PUT)
+    public void ban(@Named("id") long uid, @Nullable @Named("isBanned") Boolean isBanned) throws ServiceException {
+        DatastoreService ds = getDS();
+        User user = getUserById(ds, uid, User.Relation.ADMIN);
+        if (isBanned == null) {
+            isBanned = true;
+        }
+        user.setIsBanned(isBanned);
+        EntityUtils.put(ds, user);
+        // TODO: send user an email
     }
 
     //----------------------------
@@ -217,12 +252,16 @@ public class SamesiesApi {
                 long uid1 = friend.getUid1();
                 long uid2 = friend.getUid2();
                 User.Relation relation = friend.getStatus().getRelation();
+                User user;
                 if (uid1 == uid) {
-                    friend.setUser(getUserById(ds, uid2, relation));
+                    user = getUserById(ds, uid2, relation);
                 } else {
-                    friend.setUser(getUserById(ds, uid1, relation));
+                    user = getUserById(ds, uid1, relation);
                 }
-                friends.add(friend);
+                if (!user.getIsBanned()) {
+                    friend.setUser(user);
+                    friends.add(friend);
+                }
             }
         }
         return friends;
@@ -313,8 +352,9 @@ public class SamesiesApi {
     public Community getCommunity(@Named("location") String location) throws ServiceException {
         // TODO: eventually need to be more clever about location stuff
         DatastoreService ds = getDS();
-        Query query = new Query("User").setFilter(new Query.FilterPredicate(
-                "location", Query.FilterOperator.EQUAL, location));
+        Query query = new Query("User").setFilter(Query.CompositeFilterOperator.and(
+                new Query.FilterPredicate("location", Query.FilterOperator.EQUAL, location),
+                new Query.FilterPredicate("isBanned", Query.FilterOperator.EQUAL, false)));
         PreparedQuery pq = ds.prepare(query);
         List<User> users = new ArrayList<>();
         for (Entity e : pq.asIterable()) {

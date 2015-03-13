@@ -5,7 +5,7 @@ import com.google.appengine.api.datastore.Entity;
 /**
  * @author Ari Weiland
  */
-public class Friend implements Storable {
+public class Friend extends Storable {
 
     public static enum Status {
         PENDING, ACCEPTED, DELETED_1, DELETED_2;
@@ -19,7 +19,6 @@ public class Friend implements Storable {
         }
     }
 
-    private Long id;
     private Long uid1;
     private Long uid2;
     private User user;
@@ -29,7 +28,7 @@ public class Friend implements Storable {
     }
 
     public Friend(Entity e) {
-        this.id = e.getKey().getId();
+        super(e);
         this.uid1 = (Long) e.getProperty("uid1");
         this.uid2 = (Long) e.getProperty("uid2");
         this.status = Status.valueOf((String) e.getProperty("status"));
@@ -43,16 +42,6 @@ public class Friend implements Storable {
         this.uid1 = uid1;
         this.uid2 = uid2;
         this.status = status;
-    }
-
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public Long getUid1() {
@@ -89,15 +78,10 @@ public class Friend implements Storable {
 
     @Override
     public Entity toEntity() {
-        Entity entity;
-        if (id == null) {
-            entity = new Entity("Friend");
-        } else {
-            entity = new Entity("Friend", id);
-        }
-        entity.setProperty("uid1", uid1);
-        entity.setProperty("uid2", uid2);
-        entity.setProperty("status", status.name());
-        return entity;
+        Entity e = getEntity("Friend");
+        e.setProperty("uid1", uid1);
+        e.setProperty("uid2", uid2);
+        e.setProperty("status", status.name());
+        return e;
     }
 }

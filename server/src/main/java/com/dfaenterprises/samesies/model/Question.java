@@ -5,9 +5,8 @@ import com.google.appengine.api.datastore.Entity;
 /**
  * @author Ari Weiland
  */
-public class Question implements Storable {
+public class Question extends Storable {
 
-    private Long id;
     private String q;
     private String category;
 
@@ -15,7 +14,7 @@ public class Question implements Storable {
     }
 
     public Question(Entity e) {
-        this.id = e.getKey().getId();
+        super(e);
         this.q = (String) e.getProperty("q");
         this.category = (String) e.getProperty("category");
     }
@@ -27,14 +26,6 @@ public class Question implements Storable {
     public Question(String q, String category) {
         this.q = q;
         this.category = category;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getQ() {
@@ -54,14 +45,9 @@ public class Question implements Storable {
     }
 
     public Entity toEntity() {
-        Entity entity;
-        if (id == null) {
-            entity = new Entity("Question");
-        } else {
-            entity = new Entity("Question", id);
-        }
-        entity.setProperty("q", q);
-        entity.setProperty("category", category);
-        return entity;
+        Entity e = getEntity("Question");
+        e.setProperty("q", q);
+        e.setProperty("category", category);
+        return e;
     }
 }
