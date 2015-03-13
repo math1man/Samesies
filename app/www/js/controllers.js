@@ -198,10 +198,14 @@
                     $scope.isLoading = false;
                     if (reason.status === 404) {
                         $scope.loginData.error = 'Email not found';
+                    } else if (reason.status === 403) {
+                        $scope.loginData.error = 'That email has been banned';
                     } else if (reason.status === 400) {
                         $scope.loginData.error = 'Incorrect password';
-                    } else {
+                    } else if (reason.status >= 500) {
                         $scope.loginData.error = 'Server error'
+                    } else {
+                        $scope.loginData.error = 'Unknown error'
                     }
                     $scope.$apply();
                 });

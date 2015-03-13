@@ -135,6 +135,7 @@ public class SamesiesApi {
             if (newUser.getAlias() == null) {
                 newUser.setDefaultAlias();
             }
+            newUser.setIsBanned(false);
             newUser.setBlankQuestions();
             EntityUtils.put(ds, newUser);
             return newUser;
@@ -207,20 +208,20 @@ public class SamesiesApi {
     //     Disciplinary Calls
     //----------------------------
 
-    @ApiMethod(name = "samesiesApi.flag",
+    @ApiMethod(name = "samesiesApi.flagUser",
             path = "user/flag/{id}",
             httpMethod = ApiMethod.HttpMethod.POST)
-    public void flag(@Named("flaggedId") long flaggedId, @Named("flaggerId") long flaggerId,
+    public void flagUser(@Named("flaggedId") long flaggedId, @Named("flaggerId") long flaggerId,
                      @Named("reason") String reason) throws ServiceException {
         DatastoreService ds = getDS();
         Flag flag = new Flag(flaggedId, flaggerId, reason);
         EntityUtils.put(ds, flag);
     }
 
-    @ApiMethod(name = "samesiesApi.ban",
+    @ApiMethod(name = "samesiesApi.banUser",
             path = "user/ban/{id}",
             httpMethod = ApiMethod.HttpMethod.PUT)
-    public void ban(@Named("id") long uid, @Nullable @Named("isBanned") Boolean isBanned) throws ServiceException {
+    public void banUser(@Named("id") long uid, @Nullable @Named("isBanned") Boolean isBanned) throws ServiceException {
         DatastoreService ds = getDS();
         User user = getUserById(ds, uid, User.Relation.ADMIN);
         if (isBanned == null) {
