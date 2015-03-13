@@ -622,7 +622,7 @@
                     type: 'button-stable'
                 },{
                     text: 'Submit',
-                    type: 'button-assertive', // TODO: maybe pick a different color?
+                    type: 'button-assertive',
                     onTap: function() {
                         return $scope.reason[0];
                     }
