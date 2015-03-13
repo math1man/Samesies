@@ -24,14 +24,14 @@ public class User extends Storable {
     private String location;
     private String alias;
     private Text avatar;
-    private Boolean isBanned;
     private String name;
     private Long age;
     private String gender;
     private String aboutMe;
     private List<String> questions;
 
-    private Relation relation;
+    private Boolean isActivated;
+    private Boolean isBanned;
 
     public User() {
     }
@@ -49,12 +49,12 @@ public class User extends Storable {
         this.alias = (String) e.getProperty("alias");
         this.avatar = (Text) e.getProperty("avatar");
         this.isBanned = (Boolean) e.getProperty("isBanned");
-        this.relation = relation;
 
         // private
         if (ordinal >= Relation.SELF.ordinal()) {
             this.email = (String) e.getProperty("email");
             this.hashedPw = (String) e.getProperty("hashedPw");
+            this.isActivated = (Boolean) e.getProperty("isActivated");
         }
         // protected
         if (ordinal >= Relation.FRIEND.ordinal()) {
@@ -141,14 +141,6 @@ public class User extends Storable {
         }
     }
 
-    public boolean getIsBanned() {
-        return isBanned == null ? false : isBanned;
-    }
-
-    public void setIsBanned(Boolean isBanned) {
-        this.isBanned = isBanned;
-    }
-
     public String getName() {
         return name;
     }
@@ -193,12 +185,39 @@ public class User extends Storable {
         this.questions = questions;
     }
 
-    public Relation getRelation() {
-        return relation;
+    public Boolean getIsActivated() {
+        return isActivated;
     }
 
-    public void setRelation(Relation relation) {
-        this.relation = relation;
+    public void setIsActivated(Boolean isActivated) {
+        this.isActivated = isActivated;
+    }
+
+    public Boolean getIsBanned() {
+        return isBanned;
+    }
+
+    public void setIsBanned(Boolean isBanned) {
+        this.isBanned = isBanned;
+    }
+
+    public void setDefaultAlias() {
+        if (email != null) {
+            setAlias(getAlias(email));
+        }
+    }
+
+    public void setBlankQuestions() {
+        questions = blankQuestions();
+    }
+
+    public void initNewUser() {
+        if (alias == null) {
+            setDefaultAlias();
+        }
+        setBlankQuestions();
+        this.isActivated = false;
+        this.isBanned = false;
     }
 
     public Entity toEntity() {
@@ -216,29 +235,20 @@ public class User extends Storable {
         e.setProperty("gender", gender);
         e.setUnindexedProperty("aboutMe", aboutMe);
         e.setUnindexedProperty("questions", EntityUtils.listToEntity(questions));
+        e.setProperty("isActivated", isActivated);
         e.setProperty("isBanned", isBanned);
         return e;
-    }
-
-    public void setDefaultAlias() {
-        if (email != null) {
-            setAlias(getAlias(email));
-        }
-    }
-
-    public void setBlankQuestions() {
-        questions = blankQuestions();
     }
 
     public static String getAlias(String email) {
         return email.substring(0, email.indexOf('@'));
     }
 
-    private static Text getDefaultAvatar() {
+    public static Text getDefaultAvatar() {
         return new Text("img/lone_icon.png");
     }
 
-    private static List<String> blankQuestions() {
+    public static List<String> blankQuestions() {
         return Arrays.asList("", "", "", "", "");
     }
 }

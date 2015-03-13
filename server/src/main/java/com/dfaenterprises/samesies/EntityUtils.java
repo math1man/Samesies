@@ -39,7 +39,9 @@ public class EntityUtils {
     public static void put(DatastoreService ds, Storable... ss) {
         List<Entity> es = new ArrayList<>();
         for (Storable s : ss) {
-            es.add(s.toEntity());
+            if (s != null) {
+                es.add(s.toEntity());
+            }
         }
         ds.put(es);
         for (int i=0; i<es.size(); i++) {

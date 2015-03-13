@@ -7,11 +7,18 @@ import com.google.api.server.spi.config.ApiMethod;
 import com.google.api.server.spi.config.Nullable;
 import com.google.api.server.spi.response.BadRequestException;
 import com.google.api.server.spi.response.ForbiddenException;
+import com.google.api.server.spi.response.InternalServerErrorException;
 import com.google.api.server.spi.response.NotFoundException;
 import com.google.appengine.api.datastore.*;
 import org.mindrot.jbcrypt.BCrypt;
 
 import javax.inject.Named;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 /**
@@ -28,64 +35,64 @@ public class SamesiesApi {
     public void initQuestions() throws ServiceException {
         DatastoreService ds = getDS();
 
-        String[] questions = {
-                "What do you like to do on a first date?",
-                "What is your go-to conversation starter?",
-                "If you had to take a date to dinner, where would you go?",
-                "If you could have a superpower, what would it be and why?",
-                "Given the choice of anyone in the world, whom would you want as a dinner guest?",
-                "Would you like to be famous? In what way?",
-                "Before making a telephone call, do you ever rehearse what you are going to say and why?",
-                "What would constitute a \"perfect\" day for you?",
-                "When did you last sing to yourself? To someone else?",
-                "If you were able to live to the age of 90 and retain either the mind or body of a " +
-                        "30-year-old for the last 60 years of your life, which would you want and why?",
-                "For what in your life do you feel most grateful?",
-                "If you could change anything about the way you were raised, what would it be?",
-                "If you could wake up tomorrow having gained any one quality or ability, what would it be?",
-                "If a crystal ball could tell you the truth about yourself, your life, the future " +
-                        "or any one thing, what would you want to know?",
-                "Is there something that you've dreamed of doing for a long time? Why haven't you done it?",
-                "What is the greatest accomplishment of your life?",
-                "What do you value most in a friendship?",
-                "What is your most treasured memory?",
-                "What is your most terrible memory?",
-                "If you knew that in one year you would die suddenly, would you change anything " +
-                        "about the way you are now living and why?",
-                "When did you last cry in front of another person? By yourself?",
-                "What, if anything, is too serious to be joked about?",
-                "If you were to die this evening with no opportunity to communicate with anyone, " +
-                        "what would you most regret not having told someone? Why haven't you told them yet?",
-                "Your house, containing everything you own, catches fire. After saving your loved ones and " +
-                        "pets, you have time to safely make a final dash to save any one item. What would it be and why?",
-                "What is the most important thing your close friends should know about you?",
-                "What is one of your most embarrassing moments?"
+        Question[] questions = {
+                new Question("What do you like to do on a first date?"),
+                new Question("What is your go-to conversation starter?"),
+                new Question("If you had to take a date to dinner, where would you go?"),
+                new Question("If you could have a superpower, what would it be and why?"),
+                new Question("Given the choice of anyone in the world, whom would you want as a dinner guest?"),
+                new Question("Would you like to be famous? In what way?"),
+                new Question("Before making a telephone call, do you ever rehearse what you are going to say and why?"),
+                new Question("What would constitute a \"perfect\" day for you?"),
+                new Question("When did you last sing to yourself? To someone else?"),
+                new Question("If you were able to live to the age of 90 and retain either the mind or body of a " +
+                        "30-year-old for the last 60 years of your life, which would you want and why?"),
+                new Question("For what in your life do you feel most grateful?"),
+                new Question("If you could change anything about the way you were raised, what would it be?"),
+                new Question("If you could wake up tomorrow having gained any one quality or ability, what would it be?"),
+                new Question("If a crystal ball could tell you the truth about yourself, your life, the future " +
+                        "or any one thing, what would you want to know?"),
+                new Question("Is there something that you've dreamed of doing for a long time? Why haven't you done it?"),
+                new Question("What is the greatest accomplishment of your life?"),
+                new Question("What do you value most in a friendship?"),
+                new Question("What is your most treasured memory?"),
+                new Question("What is your most terrible memory?"),
+                new Question("If you knew that in one year you would die suddenly, would you change anything " +
+                        "about the way you are now living and why?"),
+                new Question("When did you last cry in front of another person? By yourself?"),
+                new Question("What, if anything, is too serious to be joked about?"),
+                new Question("If you were to die this evening with no opportunity to communicate with anyone, " +
+                        "what would you most regret not having told someone? Why haven't you told them yet?"),
+                new Question("Your house, containing everything you own, catches fire. After saving your loved ones and " +
+                        "pets, you have time to safely make a final dash to save any one item. What would it be and why?"),
+                new Question("What is the most important thing your close friends should know about you?"),
+                new Question("What is one of your most embarrassing moments?")
         };
-        for (String q : questions) {
-            EntityUtils.put(ds, new Question(q, "Random"));
+        for (Question q : questions) {
+            q.setCategory("Random");
         }
+        EntityUtils.put(ds, questions);
 
-        ds.put(new Entity("Category", "All"));
-        ds.put(new Entity("Category", "Random"));
+        ds.put(Arrays.asList(new Entity("Category", "All"),
+                new Entity("Category", "Random")));
     }
 
     public void initUsers() throws ServiceException {
         DatastoreService ds = getDS();
         User user1 = new User("ari@samesies.org", "samesies123", "Saint Paul, MN", "Ajawa",
                 "Ari Weiland", 20, "Male", "I am a junior Physics and Computer Science major at Macalester College.");
-        EntityUtils.put(ds, user1);
         User user2 = new User("luke@samesies.org", "samesies456", "Saint Paul, MN", "KoboldForeman",
                 "Luke Gehman", 21, "Male", "I am a junior Biology major at Macalester College. I play a lot of Dota 2.");
-        EntityUtils.put(ds, user2);
+        EntityUtils.put(ds, user1, user2);
 
         Friend friend = new Friend(user1.getId(), user2.getId(), Friend.Status.ACCEPTED);
-        EntityUtils.put(ds, friend);
+        EntityUtils.put(ds, friend); // cannot group because need user ids
     }
 
     public void initModes() throws ServiceException {
         DatastoreService ds = getDS();
-        EntityUtils.put(ds, new Mode("Random", "Answer 10 random questions from our database."));
-        EntityUtils.put(ds, new Mode("Personal", "Answer each of your and your partner's 5 personal questions."));
+        EntityUtils.put(ds, new Mode("Random", "Answer 10 random questions from our database."),
+                new Mode("Personal", "Answer each of your and your partner's 5 personal questions."));
     }
 
     //----------------------------
@@ -105,13 +112,15 @@ public class SamesiesApi {
         }
         User dsUser = getUserByEmail(ds, email, User.Relation.SELF);
         if (dsUser == null) {
-            throw new NotFoundException("Invalid Email");
+            throw new NotFoundException("Email not found");
         } else if (dsUser.getIsBanned()) {
-            throw new ForbiddenException("That email has been banned");
+            throw new ForbiddenException("Account has been banned");
+        } else if (!dsUser.getIsActivated()) {
+            throw new ForbiddenException("Account has not been activated");
         } else if (password != null && BCrypt.checkpw(password, dsUser.getHashedPw())) {
             return dsUser;
         } else {
-            throw new BadRequestException("Invalid Password");
+            throw new BadRequestException("Incorrect Password");
         }
     }
 
@@ -131,18 +140,26 @@ public class SamesiesApi {
         if (newUser.getLocation() == null) {
             throw new BadRequestException("Invalid Location");
         }
-        if (getUserByEmail(ds, email, User.Relation.SELF) == null) {
-            if (newUser.getAlias() == null) {
-                newUser.setDefaultAlias();
-            }
-            newUser.setIsBanned(false);
-            newUser.setBlankQuestions();
+        if (getUserByEmail(ds, email, User.Relation.STRANGER) == null) {
+            newUser.initNewUser();
             EntityUtils.put(ds, newUser);
+            sendEmail(newUser, "Activate your Samesies Account",
+                    "Click the link below to activate your account:\n" +
+                    "https://samesies-app.appspot.com/_ah/api/samesies/v1/user/activate/" + newUser.getId());
             return newUser;
         } else {
             throw new ForbiddenException("Email already in use");
         }
-        // TODO: confirm email
+    }
+
+    @ApiMethod(name = "samesiesApi.activateUser",
+            path = "user/activate/{id}",
+            httpMethod = ApiMethod.HttpMethod.GET)
+    public void activateUser(@Named("id") long uid) throws ServiceException {
+        DatastoreService ds = getDS();
+        User user = getUserById(ds, uid, User.Relation.ADMIN);
+        user.setIsActivated(true);
+        EntityUtils.put(ds, user);
     }
 
     @ApiMethod(name = "samesiesApi.getUser",
@@ -183,11 +200,13 @@ public class SamesiesApi {
         } else if (newPassword != null) {
             // password is being changed
             if (BCrypt.checkpw(user.getPassword(), dsUser.getHashedPw())) {
-                user.setPassword(user.getNewPassword());
+                user.setPassword(newPassword);
             } else {
                 throw new BadRequestException("Invalid Password");
             }
         }
+        user.setIsActivated(dsUser.getIsActivated());
+        user.setIsBanned(dsUser.getIsBanned());
         EntityUtils.put(ds, user);
     }
 
@@ -206,7 +225,7 @@ public class SamesiesApi {
     }
 
     //----------------------------
-    //     Disciplinary Calls
+    //  Disciplinary User Calls
     //----------------------------
 
     @ApiMethod(name = "samesiesApi.flagUser",
@@ -230,7 +249,8 @@ public class SamesiesApi {
         }
         user.setIsBanned(isBanned);
         EntityUtils.put(ds, user);
-        // TODO: send user an email
+        sendEmail(user, "Samesies Account Banned",
+                "Your account has been banned from Samesies due to an inappropriate profile picture.");
     }
 
     //----------------------------
@@ -356,12 +376,13 @@ public class SamesiesApi {
         DatastoreService ds = getDS();
         Query query = new Query("User").setFilter(Query.CompositeFilterOperator.and(
                 new Query.FilterPredicate("location", Query.FilterOperator.EQUAL, location),
-                new Query.FilterPredicate("isBanned", Query.FilterOperator.NOT_EQUAL, true)));
+                new Query.FilterPredicate("isBanned", Query.FilterOperator.EQUAL, false)));
         PreparedQuery pq = ds.prepare(query);
         List<User> users = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
             users.add(new User(e, User.Relation.STRANGER));
         }
+        Collections.shuffle(users);
         return new Community(location, users);
     }
 
@@ -534,13 +555,14 @@ public class SamesiesApi {
             answers = new ArrayList<>();
         }
         // Add to the answer database
+        Answer a = null;
         if (!episode.isPersonal()) {
             int index = answers.size();
-            EntityUtils.put(ds, new Answer(episode.getQids().get(index), myUid, answer));
+            a = new Answer(episode.getQids().get(index), myUid, answer);
         }
         answers.add(answer);
         episode.setAnswers(is1, answers);
-        EntityUtils.put(ds, episode);
+        EntityUtils.put(ds, episode, a);
         return episode;
     }
 
@@ -807,6 +829,26 @@ public class SamesiesApi {
             return new long[]{id1, id2};
         } else {
             return new long[]{id2, id1};
+        }
+    }
+
+    private static void sendEmail(User user, String subject, String message) throws InternalServerErrorException {
+        Properties props = new Properties();
+        Session session = Session.getDefaultInstance(props, null);
+        try {
+            MimeMessage msg = new MimeMessage(session);
+            msg.setFrom(new InternetAddress("noreply@samesies-app.appspotmail.com", "Samesies Admin"));
+            if (user.getName() == null) {
+                msg.addRecipient(javax.mail.Message.RecipientType.TO, new InternetAddress(user.getEmail()));
+            } else {
+                msg.addRecipient(javax.mail.Message.RecipientType.TO, new InternetAddress(user.getEmail(), user.getName()));
+            }
+            msg.setSubject(subject);
+            msg.setText(message);
+            Transport.send(msg);
+
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            throw new InternalServerErrorException(e);
         }
     }
 }
