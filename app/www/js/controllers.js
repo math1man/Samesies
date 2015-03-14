@@ -208,7 +208,7 @@
             }
         };
 
-        $scope.loginKey = [''];
+        $scope.loginCheck = {};
 
         $scope.createAccount = function() {
             if (!$scope.loginData.email) {
@@ -219,8 +219,10 @@
                 $scope.loginData.error = "Passwords don't match";
             } else if (!$scope.loginData.location) {
                 $scope.loginData.error = "Invalid location";
-            } else if (!$scope.loginKey[0] || $scope.loginKey[0].toLowerCase() != 'macalester') {
+            } else if (!$scope.loginCheck.key || $scope.loginCheck.key.toLowerCase() != 'macalester') {
                 $scope.loginData.error = "Invalid login key";
+            } else if (!$scope.loginCheck.accept) {
+                $scope.loginData.error = "Accept Terms and Conditions";
             } else {
                 $scope.loginData.error = "";
             }
