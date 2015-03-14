@@ -1,6 +1,5 @@
 <ion-view view-title="Connections" ng-controller="ConnectionsCtrl">
 	<ion-content>
-		<!--TODO: implement removing connections (not just requests)-->
 		<div class="item item-divider">
 			Requests
 		</div>
@@ -18,27 +17,53 @@
 		<div class="item item-divider">
 			Your Turn
 		</div>
-		<div class="item item-avatar" ng-repeat="cxn in data('connections') | yourTurnConnections" ng-click="play(cxn)">
-			<img ng-src="{{cxn.data.partner.avatar}}">
-			{{dispName(cxn.data.partner)}}
-			<span class="item-note">Stage {{cxn.data.stage}}</span>
-			<p>Mode: {{cxn.settings.mode}}</p>
+		<div class="row hidden-grid" ng-repeat="cxn in data('connections') | yourTurnConnections">
+			<div class="col col-90">
+				<div class="item item-avatar" ng-click="play(cxn)">
+					<img ng-src="{{cxn.data.partner.avatar}}">
+					{{dispName(cxn.data.partner)}}
+					<span class="item-note">Stage {{cxn.data.stage}}</span>
+					<p>Mode: {{cxn.settings.mode}}</p>
+				</div>
+			</div>
+			<div class="col col-10">
+				<div class="item" ng-click="remove(cxn)">
+					<button class="button button-clear button-small button-icon small-icon ion-close-round"></button>
+				</div>
+			</div>
 		</div>
 		<div class="item item-divider">
 			Their Turn
 		</div>
-		<div class="item item-avatar" ng-repeat="cxn in data('connections') | pendingConnections">
-			<img ng-src="{{cxn.data.partner.avatar}}">
-			{{dispName(cxn.data.partner)}}
-			<span class="item-note">Pending</span>
-			<p>Mode: {{cxn.settings.mode}}</p>
+		<div class="row hidden-grid" ng-repeat="cxn in data('connections') | pendingConnections">
+			<div class="col col-90">
+				<div class="item item-avatar">
+					<img ng-src="{{cxn.data.partner.avatar}}">
+					{{dispName(cxn.data.partner)}}
+					<span class="item-note">Pending</span>
+					<p>Mode: {{cxn.settings.mode}}</p>
+				</div>
+			</div>
+			<div class="col col-10">
+				<div class="item" ng-click="remove(cxn)">
+					<button class="button button-clear button-small button-icon small-icon ion-close-round"></button>
+				</div>
+			</div>
 		</div>
-		<div class="item item-avatar" ng-repeat="cxn in data('connections') | waitingConnections | orderBy:'data.stage'"
-			 ng-click="play(cxn)">
-			<img ng-src="{{cxn.data.partner.avatar}}">
-			{{dispName(cxn.data.partner)}}
-			<span class="item-note">Stage {{cxn.data.stage}}</span>
-			<p>Mode: {{cxn.settings.mode}}</p>
+		<div class="row hidden-grid" ng-repeat="cxn in data('connections') | waitingConnections | orderBy:'data.stage'">
+			<div class="col col-90">
+				<div class="item item-avatar" ng-click="play(cxn)">
+					<img ng-src="{{cxn.data.partner.avatar}}">
+					{{dispName(cxn.data.partner)}}
+					<span class="item-note">Stage {{cxn.data.stage}}</span>
+					<p>Mode: {{cxn.settings.mode}}</p>
+				</div>
+			</div>
+			<div class="col col-10">
+				<div class="item" ng-click="remove(cxn)">
+					<button class="button button-clear button-small button-icon small-icon ion-close-round"></button>
+				</div>
+			</div>
 		</div>
 	</ion-content>
 </ion-view>

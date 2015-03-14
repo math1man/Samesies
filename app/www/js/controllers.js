@@ -774,7 +774,7 @@
 
     });
 
-    app.controller('ConnectionsCtrl', function($scope, $state, Data, API, Utils) {
+    app.controller('ConnectionsCtrl', function($scope, $state, $ionicPopup, Data, API, Utils) {
 
         $scope.accept = function(cxn) {
             cxn.status = "IN_PROGRESS";
@@ -783,7 +783,6 @@
         };
 
         $scope.reject = function(cxn) {
-            cxn.status = "UNMATCHED";
             API.endEpisode(cxn.id);
             removeCxn(cxn);
         };
@@ -792,6 +791,21 @@
             Data.episode = cxn;
             removeCxn(cxn);
             $state.go('play');
+        };
+
+        $scope.remove = function(cxn) {
+            $ionicPopup.confirm({
+                title: 'Abandon Connection',
+                template: 'Are you sure you want to abandon your connection with ' + $scope.dispName(cxn.data.partner) + '?',
+                okText: 'Abandon',
+                okType: 'button-assertive',
+                cancelText: 'Cancel',
+                cancelType: 'button-stable'
+            }).then(function(resp) {
+                if (resp) {
+                    $scope.reject(cxn);
+                }
+            })
         };
 
         var removeCxn = function(cxn) {

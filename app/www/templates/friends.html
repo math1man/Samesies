@@ -10,7 +10,6 @@
 			</label>
 		</ion-header-bar>
 		<ion-content>
-			<!--TODO: implement deleting friends (not just requests)-->
 			<div class="item item-divider">
 				Requests
 			</div>
@@ -33,15 +32,16 @@
 			</div>
 			<div class="row hidden-grid" ng-repeat="friend in data('friends') | friends | checkName:search">
 				<div class="col col-90">
-					<div class="item item-avatar"
-						 ng-click="profile(friend.user)">
+					<div class="item item-avatar" ng-click="profile(friend.user)">
 						<img ng-src="{{friend.user.avatar}}">
 						{{dispName(friend.user)}}
 						<p ng-show="friend.user.name">{{friend.user.alias}}</p>
 					</div>
 				</div>
-				<div class="col col-10" ng-click="remove(friend)">
-					<button class="button button-clear button-icon small-icon ion-close-round"></button>
+				<div class="col col-10">
+					<div class="item" ng-click="remove(friend)">
+						<button class="button button-clear button-small button-icon small-icon ion-close-round"></button>
+					</div>
 				</div>
 			</div>
 			<div class="item item-divider">
@@ -49,15 +49,16 @@
 			</div>
 			<div class="row hidden-grid" ng-repeat="friend in data('friends') | pendingFriends | checkName:search">
 				<div class="col col-90">
-					<div class="item item-avatar"
-						 ng-click="profile(friend.user)">
+					<div class="item item-avatar" ng-click="profile(friend.user)">
 						<img ng-src="{{friend.user.avatar}}">
 						{{dispName(friend.user)}}
 						<p ng-show="friend.user.name">{{friend.user.alias}}</p>
 					</div>
 				</div>
-				<div class="col col-10" ng-click="remove(friend)">
-					<button class="button button-clear button-icon small-icon ion-close-round"></button>
+				<div class="col col-10">
+					<div class="item" ng-click="remove(friend)">
+						<button class="button button-clear button-small button-icon small-icon ion-close-round"></button>
+					</div>
 				</div>
 			</div>
 		</ion-content>

@@ -7063,12 +7063,18 @@ h6 {
 .hidden-grid {
   padding: 1px; }
 
+.hidden-grid + .row {
+  margin: 0; }
+
 .hidden-grid .col {
   padding: 0; }
 
 .hidden-grid .item {
-  border: 0;
-  margin: 0; }
+  border-width: 1px 0 0 0;
+  margin: -1px 0 0 0; }
+
+.hidden-grid .button {
+  padding: 0; }
 
 .small-icon {
   font-size: small; }
