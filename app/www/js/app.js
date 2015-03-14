@@ -76,7 +76,7 @@
     app.directive('ssLoading', function () {
         return {
             restrict: 'E',
-            template: '<div class="item" ng-show="isLoading"><h1 class="align-center"><i class="icon ion-loading-c"></i></h1></div>'
+            template: '<div class="item"><h1 class="align-center"><i class="icon ion-loading-c"></i></h1></div>'
         }
     });
 

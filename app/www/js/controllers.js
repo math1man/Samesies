@@ -137,8 +137,12 @@
                                             Data.connections[cxnIndex].data.partner = Data.friends[index].user;
                                         }
                                     }
+                                    Data.isLoading = false;
                                     $scope.$apply();
                                 });
+                            } else {
+                                Data.isLoading = false;
+                                $scope.$apply();
                             }
                         });
                     }
@@ -167,6 +171,7 @@
             $scope.loginData = null;
             $scope.loginKey = [''];
             Data.user = user;
+            Data.isLoading = true;
             $scope.refresh();
             API.getCommunity(user.location).then(function(resp) {
                 Data.community = resp.result;
@@ -330,6 +335,7 @@
             Data.user = null;
             Data.friends = [];
             Data.connections = [];
+            Data.isLoading = false;
             $scope.loginPopup.show();
         };
 

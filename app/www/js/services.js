@@ -231,6 +231,7 @@
         this.connections = [];
         this.episode = null;
         this.tempUser = null;
+        this.isLoading = false;
     });
 
 })();
