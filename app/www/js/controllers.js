@@ -1257,7 +1257,7 @@
         $scope.addFriend = function() {
             API.addFriend(Data.user.id, Data.tempUser.id).then(function(resp) {
                 Data.friends.push(resp.result);
-                // **Low Priority** TODO: some sort of friend indication? for both parties?
+                // TODO: some sort of friend indication? for both parties?
             });
         };
 

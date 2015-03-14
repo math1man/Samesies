@@ -397,7 +397,7 @@ public class SamesiesApi {
             path = "community/{location}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public Community getCommunity(@Named("location") String location) throws ServiceException {
-        // **Low Priority** TODO: eventually need to be more clever about location stuff
+        // **Post-Beta** TODO: eventually need to be more clever about location stuff
         DatastoreService ds = getDS();
         Query query = new Query("User").setFilter(Query.CompositeFilterOperator.and(
                 new Query.FilterPredicate("location", Query.FilterOperator.EQUAL, location),
@@ -794,7 +794,7 @@ public class SamesiesApi {
         List<Long> questions = new ArrayList<>();
         if (!mode.equals("Personal")) { // personal questions can be ignored at this stage
             Query query = new Query("Question").setKeysOnly();
-            // **Low Priority** TODO: when we have more categories, this code might get more complex
+            // **Post-Beta** TODO: when we have more categories, this code might get more complex
             query.setFilter(new Query.FilterPredicate("category", Query.FilterOperator.EQUAL, mode));
             PreparedQuery pq = ds.prepare(query);
             int max = pq.countEntities(FetchOptions.Builder.withDefaults());
