@@ -675,7 +675,7 @@
 
     });
 
-    app.controller('FriendsCtrl', function($scope, $state, $ionicPopover, Data, API, Utils) {
+    app.controller('FriendsCtrl', function($scope, $state, $ionicPopover, $ionicPopup, Data, API, Utils) {
 
         $ionicPopover.fromTemplateUrl('templates/find-friends.html', {
             scope: $scope,
@@ -716,10 +716,25 @@
 
         $scope.reject = function(friend) {
             API.removeFriend(friend.id, Data.user.id);
-            var index = Utils.indexOfById(Data.friends, friend, 'user');
+            var index = Utils.indexOfById(Data.friends, friend.user, 'user');
             if (index > -1) {
                 Data.friends.splice(index, 1);
             }
+        };
+
+        $scope.remove = function(friend) {
+            $ionicPopup.confirm({
+                title: 'Remove Friend',
+                template: 'Are you sure you want to remove ' + friend.user.name + '?',
+                okText: 'Remove',
+                okType: 'button-assertive',
+                cancelText: 'Cancel',
+                cancelType: 'button-stable'
+            }).then(function(resp) {
+                if (resp) {
+                    $scope.reject(friend);
+                }
+            })
         };
 
         $scope.$on('$destroy', function() {
@@ -929,7 +944,6 @@
                         });
                     }, function(reason) {
                         if (reason.status === 400) {
-                            // TODO: recover password?
                             $ionicPopup.alert({
                                 title: 'Incorrect Password',
                                 template: 'The password you entered was incorrect. Password has not been changed.',
@@ -1223,7 +1237,7 @@
         $scope.addFriend = function() {
             API.addFriend(Data.user.id, Data.tempUser.id).then(function(resp) {
                 Data.friends.push(resp.result);
-                // TODO: some sort of friend indication? for both parties?
+                // **Low Priority** TODO: some sort of friend indication? for both parties?
             });
         };
 

@@ -31,19 +31,34 @@
 			<div class="item item-divider">
 				Friends
 			</div>
-			<div class="item item-avatar" ng-repeat="friend in data('friends') | friends | checkName:search"
-				 ng-click="profile(friend.user)">
-				<img ng-src="{{friend.user.avatar}}">
-				{{dispName(friend.user)}}
-				<p ng-show="friend.user.name">{{friend.user.alias}}</p>
+			<div class="row hidden-grid" ng-repeat="friend in data('friends') | friends | checkName:search">
+				<div class="col col-90">
+					<div class="item item-avatar"
+						 ng-click="profile(friend.user)">
+						<img ng-src="{{friend.user.avatar}}">
+						{{dispName(friend.user)}}
+						<p ng-show="friend.user.name">{{friend.user.alias}}</p>
+					</div>
+				</div>
+				<div class="col col-10" ng-click="remove(friend)">
+					<button class="button button-clear button-icon small-icon ion-close-round"></button>
+				</div>
 			</div>
 			<div class="item item-divider">
 				Awaiting Response
 			</div>
-			<div class="item item-avatar" ng-repeat="friend in data('friends') | pendingFriends | checkName:search">
-				<img ng-src="{{friend.user.avatar}}">
-				{{dispName(friend.user)}}
-				<p ng-show="friend.name">{{friend.user.alias}}</p>
+			<div class="row hidden-grid" ng-repeat="friend in data('friends') | pendingFriends | checkName:search">
+				<div class="col col-90">
+					<div class="item item-avatar"
+						 ng-click="profile(friend.user)">
+						<img ng-src="{{friend.user.avatar}}">
+						{{dispName(friend.user)}}
+						<p ng-show="friend.user.name">{{friend.user.alias}}</p>
+					</div>
+				</div>
+				<div class="col col-10" ng-click="remove(friend)">
+					<button class="button button-clear button-icon small-icon ion-close-round"></button>
+				</div>
 			</div>
 		</ion-content>
 	</ion-content>

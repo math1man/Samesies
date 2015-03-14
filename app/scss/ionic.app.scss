@@ -81,7 +81,24 @@ h6 {
   max-width: none;
 }
 
-// TODO: if necessary, make this a unique class 'selector'
+.hidden-grid {
+  padding: 1px;
+}
+
+.hidden-grid .col {
+  padding: 0;
+}
+
+.hidden-grid .item {
+  border: 0;
+  margin: 0;
+}
+
+.small-icon {
+  font-size: small;
+}
+
+//  **Low Priority** TODO: if necessary, make this a unique class 'selector'
 input[readonly]:not(.cloned-text-input) {
   background-color: inherit;
   cursor: inherit;

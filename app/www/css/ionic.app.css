@@ -7060,6 +7060,19 @@ h6 {
   width: 100%;
   max-width: none; }
 
+.hidden-grid {
+  padding: 1px; }
+
+.hidden-grid .col {
+  padding: 0; }
+
+.hidden-grid .item {
+  border: 0;
+  margin: 0; }
+
+.small-icon {
+  font-size: small; }
+
 input[readonly]:not(.cloned-text-input) {
   background-color: inherit;
   cursor: inherit; }
