@@ -1,5 +1,6 @@
 package com.dfaenterprises.samesies.model;
 
+import com.dfaenterprises.samesies.EntityUtils;
 import com.google.appengine.api.datastore.Entity;
 
 import java.util.Date;
@@ -36,7 +37,7 @@ public class Message extends Storable {
         this.senderId = senderId;
         this.message = message;
         this.sentDate = new Date();
-        this.random = (random == null ? randomId() : random);
+        this.random = (random == null ? EntityUtils.randomString(20) : random);
     }
 
     public Long getChatId() {
@@ -88,14 +89,5 @@ public class Message extends Storable {
         e.setProperty("sentDate", sentDate);
         e.setUnindexedProperty("random", random);
         return e;
-    }
-
-    public static String randomId() {
-        StringBuilder sb = new StringBuilder();
-        String possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        for (int i=0; i<20; i++) {
-            sb.append(possible.charAt((int) (Math.random() * possible.length())));
-        }
-        return sb.toString();
     }
 }

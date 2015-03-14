@@ -80,7 +80,7 @@
                 var handleTap = function () {
                     window.open(encodeURI($attrs.browseTo), '_system');
                 };
-                var tapGesture = $ionicGesture.on('tap', handleTap, $element);
+                var tapGesture = $ionicGesture.on('tap', handleTap, $element, {});
                 $scope.$on('$destroy', function () {
                     // Clean up - unbind drag gesture handler
                     $ionicGesture.off(tapGesture, 'tap', handleTap);

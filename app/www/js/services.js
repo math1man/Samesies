@@ -16,6 +16,9 @@
             createUser: function(user) {
                 return API.createUser(user);
             },
+            recoverUser: function(email) {
+                return API.recoverUser({email: email});
+            },
             getUser: function(id) {
                 return API.getUser({id: id});
             },

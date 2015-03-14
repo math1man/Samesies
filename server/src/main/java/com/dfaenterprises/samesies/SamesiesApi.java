@@ -145,7 +145,9 @@ public class SamesiesApi {
             EntityUtils.put(ds, newUser);
             sendEmail(newUser, "Activate your Samesies Account",
                     "Click the link below to activate your account:\n" +
-                    "https://samesies-app.appspot.com/_ah/api/samesies/v1/user/activate/" + newUser.getId());
+                    "https://samesies-app.appspot.com/_ah/api/samesies/v1/user/activate/" + newUser.getId() + "\n\n" +
+                    "Have fun,\n" +
+                    "The Samesies Team");
             return newUser;
         } else {
             throw new ForbiddenException("Email already in use");
@@ -160,6 +162,26 @@ public class SamesiesApi {
         User user = getUserById(ds, uid, User.Relation.ADMIN);
         user.setIsActivated(true);
         EntityUtils.put(ds, user);
+    }
+
+    @ApiMethod(name = "samesiesApi.recoverUser",
+            path = "user/recover/{email}",
+            httpMethod = ApiMethod.HttpMethod.PUT)
+    public void recoverUser(@Named("email") String email) throws ServiceException {
+        DatastoreService ds = getDS();
+        User user = getUserByEmail(ds, email, User.Relation.ADMIN);
+        if (user == null) {
+            throw new NotFoundException("Email not found");
+        } else {
+            String tempPass = EntityUtils.randomString(8);
+            user.setPassword(tempPass);
+            EntityUtils.put(ds, user);
+            sendEmail(user, "Samesies Password Reset",
+                    "Your password has been reset.  Your new temporary password is " + tempPass + ".  " +
+                    "We recommend you change this password immediately once you log in to Samesies.\n\n" +
+                    "All the best,\n" +
+                    "The Samesies Team");
+        }
     }
 
     @ApiMethod(name = "samesiesApi.getUser",
@@ -250,7 +272,10 @@ public class SamesiesApi {
         user.setIsBanned(isBanned);
         EntityUtils.put(ds, user);
         sendEmail(user, "Samesies Account Banned",
-                "Your account has been banned from Samesies due to an inappropriate profile picture.");
+                "We are sorry to inform you that your account has been banned from Samesies.  " +
+                "We received multiple complaints that your profile picture was inappropriate, " +
+                "so we have taken action.\n\n" +
+                "The Samesies Team");
     }
 
     //----------------------------

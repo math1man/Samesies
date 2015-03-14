@@ -112,34 +112,36 @@
                         $scope.$apply();
                     }
                     // nested so that it can pull from friends
-                    API.getConnections(Data.user.id).then(function(resp) {
-                        var connections = resp.result.items;
-                        if (connections && connections.length) {
-                            var uids = [];
-                            for (var i = 0; i < connections.length; i++) {
-                                var cxn = connections[i];
-                                connections[i].data = Utils.getData(cxn);
-                                uids.push(Utils.getPartnerId(cxn));
-                            }
-                            API.getUsers(uids).then(function (resp) {
-                                var users = resp.result.items;
-                                for (var i = 0; i < users.length; i++) {
-                                    var cxnIndex = Utils.indexOfById(Data.connections, connections[i]);
-                                    if (cxnIndex === -1) {
-                                        cxnIndex = Data.connections.length;
-                                        connections[i].data.partner = users[i];
-                                        Data.connections.push(connections[i]);
-                                    }
-                                    // getUsers data is stranger data, so check if they are in friends
-                                    var index = Utils.indexOfById(Data.friends, users[i], 'user');
-                                    if (index > -1) {
-                                        Data.connections[cxnIndex].data.partner = Data.friends[index].user;
-                                    }
+                    if (Data.user) { // need to add a second check in case they immediately log out
+                        API.getConnections(Data.user.id).then(function (resp) {
+                            var connections = resp.result.items;
+                            if (connections && connections.length) {
+                                var uids = [];
+                                for (var i = 0; i < connections.length; i++) {
+                                    var cxn = connections[i];
+                                    connections[i].data = Utils.getData(cxn);
+                                    uids.push(Utils.getPartnerId(cxn));
                                 }
-                                $scope.$apply();
-                            });
-                        }
-                    });
+                                API.getUsers(uids).then(function (resp) {
+                                    var users = resp.result.items;
+                                    for (var i = 0; i < users.length; i++) {
+                                        var cxnIndex = Utils.indexOfById(Data.connections, connections[i]);
+                                        if (cxnIndex === -1) {
+                                            cxnIndex = Data.connections.length;
+                                            connections[i].data.partner = users[i];
+                                            Data.connections.push(connections[i]);
+                                        }
+                                        // getUsers data is stranger data, so check if they are in friends
+                                        var index = Utils.indexOfById(Data.friends, users[i], 'user');
+                                        if (index > -1) {
+                                            Data.connections[cxnIndex].data.partner = Data.friends[index].user;
+                                        }
+                                    }
+                                    $scope.$apply();
+                                });
+                            }
+                        });
+                    }
                 });
             }
         };
@@ -245,13 +247,46 @@
         };
 
         $scope.recoverPassword = function() {
-            $ionicPopup.alert({
-                scope: $scope,
-                title: 'Recover Password',
-                template: 'Sorry, this feature has not been implemented yet.',
-                okText: 'Okay',
-                okType: 'button-royal'
-            });
+            if ($scope.loginData.email) {
+                $ionicPopup.confirm({
+                    title: 'Recover Password',
+                    template: 'Your password will be changed to a random sequence of eight characters, ' +
+                            'which will then be emailed to you. Are you sure you want to proceed?',
+                    okText: 'Okay',
+                    okType: 'button-royal',
+                    cancelText: 'Cancel',
+                    cancelType: 'button-stable'
+                }).then(function(resp) {
+                    if (resp) {
+                        API.recoverUser($scope.loginData.email).then(function () {
+                            // no error
+                            $ionicPopup.alert({
+                                title: 'Recover Password',
+                                template: 'Your password has been changed and emailed to ' + $scope.loginData.email + '.',
+                                okText: 'Okay',
+                                okType: 'button-royal'
+                            });
+                        }, function(reason) {
+                            if (reason.status === 404) {
+                                $ionicPopup.alert({
+                                    title: 'Recover Password',
+                                    template: 'The email you specified is not in our system.  Please try a different email.',
+                                    okText: 'Okay',
+                                    okType: 'button-royal'
+                                });
+                            }
+                        });
+                    }
+                });
+            } else {
+                $ionicPopup.alert({
+                    scope: $scope,
+                    title: 'Recover Password',
+                    template: 'Please enter your email above so that we can recover your account.',
+                    okText: 'Okay',
+                    okType: 'button-royal'
+                });
+            }
         };
 
         var toggle = false;
@@ -293,6 +328,8 @@
 
         $scope.logout = function() {
             Data.user = null;
+            Data.friends = [];
+            Data.connections = [];
             $scope.loginPopup.show();
         };
 

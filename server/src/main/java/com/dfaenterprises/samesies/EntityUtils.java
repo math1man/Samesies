@@ -48,4 +48,13 @@ public class EntityUtils {
             ss[i].setId(es.get(i).getKey().getId());
         }
     }
+
+    public static String randomString(int length) {
+        StringBuilder sb = new StringBuilder();
+        String possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        for (int i=0; i<length; i++) {
+            sb.append(possible.charAt((int) (Math.random() * possible.length())));
+        }
+        return sb.toString();
+    }
 }
