@@ -31,15 +31,16 @@
             <ion-checkbox ng-model="loginCheck.accept" class="item item-checkbox-right checkbox-royal">Accept Terms and Conditions</ion-checkbox>
             <div class="item item-text-wrap">
                 <!-- **Low Priority** TODO: change to ToC url when website is working-->
-                Terms and Conditions may be viewed on our website at <a href="" browse-to="http://samesies.org">samesies.org</a>
+                Terms and Conditions may be viewed on our website at <a href="" ss-browse-to="http://samesies.org">samesies.org</a>
             </div>
         </div>
         <div class="item assertive" ng-show="loginData.error">
             {{loginData.error}}
         </div>
-        <div class="item" ng-show="isLoading">
-            <h1 class="align-center"><i class="icon ion-loading-c"></i></h1>
-        </div>
+        <!--<div class="item" ng-show="isLoading">-->
+            <!--<h1 class="align-center"><i class="icon ion-loading-c"></i></h1>-->
+        <!--</div>-->
+        <ss-loading ng-show="isLoading"></ss-loading>
         <div ng-show="isToggled()">
             <div class="row padding-horizontal" ng-show="!isLoading">
                 <div class="col">

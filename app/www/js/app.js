@@ -73,12 +73,19 @@
 
     });
 
-    app.directive('browseTo', function ($ionicGesture) {
+    app.directive('ssLoading', function () {
+        return {
+            restrict: 'E',
+            template: '<div class="item" ng-show="isLoading"><h1 class="align-center"><i class="icon ion-loading-c"></i></h1></div>'
+        }
+    });
+
+    app.directive('ssBrowseTo', function ($ionicGesture) {
         return {
             restrict: 'A',
             link: function ($scope, $element, $attrs) {
                 var handleTap = function () {
-                    window.open(encodeURI($attrs.browseTo), '_system');
+                    window.open(encodeURI($attrs.ssBrowseTo), '_system');
                 };
                 var tapGesture = $ionicGesture.on('tap', handleTap, $element, {});
                 $scope.$on('$destroy', function () {
