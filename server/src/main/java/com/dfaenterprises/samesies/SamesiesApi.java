@@ -659,7 +659,8 @@ public class SamesiesApi {
     @ApiMethod(name = "samesiesApi.startChat",
             path = "chat/{eofid}/{isEpisode}/{myId}/{theirId}",
             httpMethod = ApiMethod.HttpMethod.POST)
-    public Chat startChat(@Named("eofid") long eofid, @Named("isEpisode") boolean isEpisode, @Named("myId") long myUid, @Named("theirId") long theirUid) throws ServiceException {
+    public Chat startChat(@Named("eofid") long eofid, @Named("isEpisode") boolean isEpisode,
+                          @Named("myId") long myUid, @Named("theirId") long theirUid) throws ServiceException {
         DatastoreService ds = getDS();
         Chat chat = getChatByEofid(ds, eofid);
         if (chat == null) {
@@ -674,6 +675,17 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.GET)
     public Chat getChat(@Named("id") long cid) throws ServiceException {
         return getChatById(getDS(), cid);
+    }
+
+    @ApiMethod(name = "samesiesApi.updateChat",
+            path = "chat/update/{id}/{eofid}/{isEpisode}",
+            httpMethod = ApiMethod.HttpMethod.PUT)
+    public void updateChat(@Named("id") long cid, @Named("eofid") long eofid, @Named("isEpisode") boolean isEpisode) throws ServiceException {
+        DatastoreService ds = getDS();
+        Chat chat = getChatById(ds, cid);
+        chat.setEofid(eofid);
+        chat.setIsEpisode(isEpisode);
+        EntityUtils.put(ds, chat);
     }
 
     @ApiMethod(name = "samesiesApi.closeChat",

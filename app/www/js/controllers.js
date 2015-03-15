@@ -5,7 +5,7 @@
 
     var app = angular.module('samesies.controllers', []);
 
-    app.controller('IndexCtrl', function($scope, $window, $state, $ionicHistory, $ionicPopup, $ionicModal, API, Data, Utils){
+    app.controller('IndexCtrl', function($scope, $window, $state, $ionicHistory, $ionicPopup, $ionicModal, API, Data, Utils) {
 
         $window.init = function() {
             if (!$state.is('menu')) {
@@ -325,6 +325,7 @@
 
         $scope.$on('$ionicView.beforeEnter', function() {
             $scope.refresh();
+            Data.tempUser = null;
         });
 
         $ionicModal.fromTemplateUrl('templates/login.html', {
@@ -546,22 +547,39 @@
                         cancelText: "Not really",
                         cancelType: 'button-stable'
                     }).then(function (answer) {
-                        // TODO: if they are a friend, we should go to the friend chat instead
-                        API.startChat(episode.id, true, Data.user.id, Data.tempUser.id).then(function (resp) {
-                            Data.chat = resp.result;
+                        var index = Utils.indexOfById(Data.friends, Data.tempUser, 'user');
+                        if (index > -1) {
                             if (answer) {
-                                $state.go('chat');
+                                var friend = Data.friends[index];
+                                API.startChat(friend.id, false, Data.user.id, friend.user.id).then(function (resp) {
+                                    Data.chat = resp.result;
+                                    $state.go('chat');
+                                }, function (reason) {
+                                    console.log(reason);
+                                });
+                            } else if ($scope.isPersistent()) {
+                                $scope.back();
                             } else {
-                                API.closeChat(Data.chat.id);
-                                if ($scope.isPersistent()) {
-                                    $scope.back();
-                                } else {
-                                    $scope.find();
-                                }
+                                $scope.find();
                             }
-                        }, function (reason) {
-                            console.log(reason);
-                        });
+                        } else {
+                            API.startChat(episode.id, true, Data.user.id, Data.tempUser.id).then(function (resp) {
+                                Data.chat = resp.result;
+                                if (answer) {
+                                    $state.go('chat');
+                                } else {
+                                    API.closeChat(Data.chat.id);
+                                    Data.chat = null;
+                                    if ($scope.isPersistent()) {
+                                        $scope.back();
+                                    } else {
+                                        $scope.find();
+                                    }
+                                }
+                            }, function (reason) {
+                                console.log(reason);
+                            });
+                        }
                     });
                 });
             } else {
@@ -637,7 +655,6 @@
                     API.endEpisode(episode.id);
                 }
             }
-            Data.episode = null;
         };
 
         $scope.$on('$ionicView.beforeLeave', function() {
@@ -655,6 +672,7 @@
 
         if (Data.episode) {
             episode = Data.episode;
+            Data.episode = null; // prevent possible shenanigans
             loadEpisode(episode);
         } else {
             $scope.find();
@@ -1186,6 +1204,11 @@
                 console.log(reason);
             });
         };
+
+        $scope.$on('$ionicView.beforeLeave', function() {
+            Data.tempUser = null;
+            Data.friend = null;
+        })
     });
 
     app.controller('ChatCtrl', function($scope, $ionicPopup, $ionicScrollDelegate, API, Data, Utils) {
@@ -1313,14 +1336,19 @@
 
         $scope.addFriend = function() {
             API.addFriend(Data.user.id, Data.tempUser.id).then(function(resp) {
-                Data.friends.push(resp.result);
+                var friend = resp.result;
+                Data.friends.push(friend);
                 // TODO: some sort of friend indication? for both parties?
-                // TODO: convert to a friend-chat if both accept
+                // convert to a friend-chat if both accept
+                if (friend.status === 'ACCEPTED') {
+                    API.updateChat(Data.chat.id, friend.id, false);
+                }
             });
         };
 
         $scope.$on('$ionicView.beforeLeave', function() {
             Utils.interruptAll();
+            Data.chat = null;
         });
 
     });

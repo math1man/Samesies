@@ -107,6 +107,9 @@
             getChat: function(id) {
                 return API.getChat({id: id});
             },
+            updateChat: function(id, eofid, isEpisode) {
+                API.updateChat({id: id, eofid: eofid, isEpisode: isEpisode}).then();
+            },
             closeChat: function(id) {
                 API.closeChat({id: id}).then();
             },
