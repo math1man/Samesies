@@ -37,18 +37,12 @@
             {{loginData.error}}
         </div>
         <ss-loading ng-show="isLoading"></ss-loading>
-        <div ng-show="isToggled()">
-            <div class="row padding-horizontal" ng-show="!isLoading">
-                <div class="col">
-                    <button class="button button-block button-stable" ng-click="toggle()">Cancel</button>
-                </div>
-                <div class="col">
-                    <button class="button button-block button-royal" ng-click="createAccount()">Create!</button>
-                </div>
+        <div class="row padding-horizontal" ng-show="!isLoading && isToggled()">
+            <div class="col">
+                <button class="button button-block button-stable" ng-click="toggle()">Cancel</button>
             </div>
-            <div class="item item-text-wrap">
-                Samesies is currently in a closed Beta testing cycle. In order to
-                create an account a user must have the correct login validation key.
+            <div class="col">
+                <button class="button button-block button-royal" ng-click="createAccount()">Create!</button>
             </div>
         </div>
         <div ng-show="!isToggled()">
