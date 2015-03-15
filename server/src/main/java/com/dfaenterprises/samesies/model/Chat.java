@@ -10,8 +10,11 @@ import java.util.Date;
 public class Chat extends Storable {
 
     private Date startDate;
+    private Long eofid; // episode or friend id
+    private Boolean isEpisode; // or friend origin
     private Long uid1;
     private Long uid2;
+    private Boolean isClosed;
     private Date lastModified;
 
     public Chat() {
@@ -20,15 +23,21 @@ public class Chat extends Storable {
     public Chat(Entity e) {
         super(e);
         this.startDate = (Date) e.getProperty("startDate");
+        this.eofid = (Long) e.getProperty("eofid");
+        this.isEpisode = (Boolean) e.getProperty("isEpisode");
         this.uid1 = (Long) e.getProperty("uid1");
         this.uid2 = (Long) e.getProperty("uid2");
+        this.isClosed = (Boolean) e.getProperty("isClosed");
         this.lastModified = (Date) e.getProperty("lastModified");
     }
 
-    public Chat(Long uid1, Long uid2) {
+    public Chat(Long eofid, Boolean isEpisode, Long uid1, Long uid2) {
         this.startDate = new Date();
+        this.eofid = eofid;
+        this.isEpisode = isEpisode;
         this.uid1 = uid1;
         this.uid2 = uid2;
+        this.isClosed = false;
         this.lastModified = startDate;
     }
 
@@ -38,6 +47,22 @@ public class Chat extends Storable {
 
     public void setStartDate(Date startDate) {
         this.startDate = startDate;
+    }
+
+    public Long getEofid() {
+        return eofid;
+    }
+
+    public void setEofid(Long eofid) {
+        this.eofid = eofid;
+    }
+
+    public Boolean getIsEpisode() {
+        return isEpisode;
+    }
+
+    public void setIsEpisode(Boolean isEpisode) {
+        this.isEpisode = isEpisode;
     }
 
     public Long getUid1() {
@@ -56,6 +81,14 @@ public class Chat extends Storable {
         this.uid2 = uid2;
     }
 
+    public Boolean getIsClosed() {
+        return isClosed;
+    }
+
+    public void setIsClosed(Boolean isClosed) {
+        this.isClosed = isClosed;
+    }
+
     public Date getLastModified() {
         return lastModified;
     }
@@ -68,8 +101,11 @@ public class Chat extends Storable {
     public Entity toEntity() {
         Entity e = getEntity("Chat");
         e.setProperty("startDate", startDate);
+        e.setProperty("eofid", eofid);
+        e.setProperty("isEpisode", isEpisode);
         e.setProperty("uid1", uid1);
         e.setProperty("uid2", uid2);
+        e.setProperty("isClosed", isClosed);
         e.setProperty("lastModified", lastModified);
         return e;
     }

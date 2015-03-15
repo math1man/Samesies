@@ -32,7 +32,7 @@
 			</div>
 			<div class="row hidden-grid" ng-repeat="friend in data('friends') | friends | checkName:search">
 				<div class="col col-90">
-					<div class="item item-avatar" ng-click="profile(friend.user)">
+					<div class="item item-avatar" ng-click="profile(friend)">
 						<img ng-src="{{friend.user.avatar}}">
 						{{dispName(friend.user)}}
 						<p ng-show="friend.user.name">{{friend.user.alias}}</p>
@@ -49,7 +49,7 @@
 			</div>
 			<div class="row hidden-grid" ng-repeat="friend in data('friends') | pendingFriends | checkName:search">
 				<div class="col col-90">
-					<div class="item item-avatar" ng-click="profile(friend.user)">
+					<div class="item item-avatar" ng-click="profile(friend)">
 						<img ng-src="{{friend.user.avatar}}">
 						{{dispName(friend.user)}}
 						<p ng-show="friend.user.name">{{friend.user.alias}}</p>

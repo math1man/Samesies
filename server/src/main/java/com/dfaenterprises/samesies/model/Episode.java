@@ -145,16 +145,16 @@ public class Episode extends Storable {
         this.answers2 = answers2;
     }
 
-    public List<String> getAnswers(boolean is1) {
-        if (is1) {
+    public List<String> getAnswers(long uid) {
+        if (uid == uid1) {
             return getAnswers1();
         } else {
             return getAnswers2();
         }
     }
 
-    public void setAnswers(boolean is1, List<String> answers) {
-        if (is1) {
+    public void setAnswers(long uid, List<String> answers) {
+        if (uid == uid1) {
             setAnswers1(answers);
         } else {
             setAnswers2(answers);

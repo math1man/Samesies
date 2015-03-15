@@ -273,9 +273,9 @@ public class SamesiesApi {
         EntityUtils.put(ds, user);
         sendEmail(user, "Samesies Account Banned",
                 "We are sorry to inform you that your account has been banned from Samesies.  " +
-                "We received multiple complaints that your profile picture was inappropriate, " +
-                "so we have taken action.\n\n" +
-                "The Samesies Team");
+                        "We received multiple complaints that your profile picture was inappropriate, " +
+                        "so we have taken action.\n\n" +
+                        "The Samesies Team");
     }
 
     //----------------------------
@@ -574,8 +574,7 @@ public class SamesiesApi {
                                  @Named("answer") String answer) throws ServiceException {
         DatastoreService ds = getDS();
         Episode episode = getEpisode(ds, eid);
-        boolean is1 = (myUid == episode.getUid1());
-        List<String> answers = episode.getAnswers(is1);
+        List<String> answers = episode.getAnswers(myUid);
         if (answers == null) {
             answers = new ArrayList<>();
         }
@@ -586,7 +585,7 @@ public class SamesiesApi {
             a = new Answer(episode.getQids().get(index), myUid, answer);
         }
         answers.add(answer);
-        episode.setAnswers(is1, answers);
+        episode.setAnswers(myUid, answers);
         EntityUtils.put(ds, episode, a);
         return episode;
     }
@@ -658,35 +657,42 @@ public class SamesiesApi {
     //----------------------------
 
     @ApiMethod(name = "samesiesApi.startChat",
-            path = "chat/{myId}/{theirId}",
+            path = "chat/{eofid}/{isEpisode}/{myId}/{theirId}",
             httpMethod = ApiMethod.HttpMethod.POST)
-    public Chat startChat(@Named("myId") long myUid, @Named("theirId") long theirUid) throws ServiceException {
+    public Chat startChat(@Named("eofid") long eofid, @Named("isEpisode") boolean isEpisode, @Named("myId") long myUid, @Named("theirId") long theirUid) throws ServiceException {
         DatastoreService ds = getDS();
-        long[] uids = orderIds(myUid, theirUid); // avoid parity issues to simplify search
-        Chat chat = getChat(ds, uids); // make sure a chat between these users doesn't already exist
+        Chat chat = getChatByEofid(ds, eofid);
         if (chat == null) {
-            chat = new Chat(uids[0], uids[1]);
+            chat = new Chat(eofid, isEpisode, myUid, theirUid);
             EntityUtils.put(ds, chat);
-            return chat;
-        } else {
-            return chat;
         }
+        return chat;
     }
 
     @ApiMethod(name = "samesiesApi.getChat",
             path = "chat/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public Chat getChat(@Named("id") long cid) throws ServiceException {
-        return getChat(getDS(), cid);
+        return getChatById(getDS(), cid);
+    }
+
+    @ApiMethod(name = "samesiesApi.closeChat",
+            path = "chat/close/{id}",
+            httpMethod = ApiMethod.HttpMethod.PUT)
+    public void closeChat(@Named("id") long cid) throws ServiceException {
+        DatastoreService ds = getDS();
+        Chat chat = getChatById(ds, cid);
+        chat.setIsClosed(true);
+        EntityUtils.put(ds, chat);
     }
 
     @ApiMethod(name = "samesiesApi.sendMessage",
-            path = "message/{chatId}/{myId}/{message}",
+            path = "chat/message/{chatId}/{myId}/{message}",
             httpMethod = ApiMethod.HttpMethod.POST)
     public Message sendMessage(@Named("chatId") long cid, @Named("myId") long myUid, @Named("message") String message,
                                @Named("random") @Nullable String random) throws ServiceException {
         DatastoreService ds = getDS();
-        Chat chat = getChat(ds, cid);
+        Chat chat = getChatById(ds, cid);
         Message m = new Message(cid, myUid, message, random);
         chat.setLastModified(m.getSentDate());
         EntityUtils.put(ds, chat, m);
@@ -694,7 +700,7 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.getMessages",
-            path = "message/{chatId}/{after}",
+            path = "chat/messages/{chatId}/{after}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Message> getMessages(@Named("chatId") long cid, @Named("after") Date after) throws ServiceException {
         DatastoreService ds = getDS();
@@ -826,7 +832,7 @@ public class SamesiesApi {
         }
     }
 
-    private static Chat getChat(DatastoreService ds, long cid) throws NotFoundException {
+    private static Chat getChatById(DatastoreService ds, long cid) throws NotFoundException {
         try {
             return new Chat(ds.get(KeyFactory.createKey("Chat", cid)));
         } catch (EntityNotFoundException e) {
@@ -834,26 +840,14 @@ public class SamesiesApi {
         }
     }
 
-    private static Chat getChat(DatastoreService ds, long[] uids) {
-        Query query = new Query("Chat").setFilter(Query.CompositeFilterOperator.and(
-                new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, uids[0]),
-                new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, uids[1])));
+    private static Chat getChatByEofid(DatastoreService ds, long eofid) {
+        Query query = new Query("Chat").setFilter(new Query.FilterPredicate("eofid", Query.FilterOperator.EQUAL, eofid));
         PreparedQuery pq = ds.prepare(query);
         Entity e = pq.asSingleEntity();
         if (e == null) {
             return null;
         } else {
             return new Chat(e);
-        }
-    }
-
-    private static long[] orderIds(long id1, long id2) throws BadRequestException {
-        if (id1 == id2) {
-            throw new BadRequestException("IDs must be different");
-        } else if (id1 < id2) {
-            return new long[]{id1, id2};
-        } else {
-            return new long[]{id2, id1};
         }
     }
 

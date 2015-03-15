@@ -101,11 +101,14 @@
             getEpisodeQuestions: function(eid) {
                 return API.getEpisodeQuestions({eid: eid});
             },
-            startChat: function(myId, theirId) {
-                return API.startChat({myId: myId, theirId: theirId});
+            startChat: function(eofid, isEpisode, myId, theirId) {
+                return API.startChat({eofid: eofid, isEpisode: isEpisode, myId: myId, theirId: theirId});
             },
             getChat: function(id) {
                 return API.getChat({id: id});
+            },
+            closeChat: function(id) {
+                API.closeChat({id: id}).then();
             },
             sendMessage: function(chatId, myId, message, random) {
                 return API.sendMessage({chatId: chatId, myId: myId, message: message, random: random});
@@ -211,26 +214,32 @@
     });
 
     app.service('Data', function() {
+        // global stataic data
         this.questions = [];
         this.categories = [];
+        this.modes = [];
+        this.defaultMode = null;
         this.communities = ['Macalester College'];
+        // global dynamic data
         this.community = {
             location: this.communities[0],
             users: []
         };
-        this.modes = [];
-        this.defaultMode = null;
         this.settings = {
             mode: null,
             matchMale: true,
             matchFemale: true,
             matchOther: true
         };
+        // user data
         this.user = null;
         this.friends = [];
         this.connections = [];
-        this.episode = null;
+        // control data
         this.tempUser = null;
+        this.episode = null;
+        this.friend = null;
+        this.chat = null;
         this.isLoading = false;
     });
 
