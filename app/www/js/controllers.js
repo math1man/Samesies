@@ -374,7 +374,7 @@
         };
 
         $scope.getChatCount = function() {
-            // TODO: how to...
+            // TODO: indicate new messages
             return 0;
         };
 
