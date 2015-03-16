@@ -3,7 +3,8 @@
 		<button class="button button-icon icon ion-person-add" ng-show="showAddFriend()" ng-click="addFriend()"></button>
 	</ion-nav-buttons>
 	<ion-content>
-		<div class="item item-text-wrap chat" ss-avatar="{{isMine(message)}}" ng-repeat="message in history track by $index | orderBy:'sentDate'">
+		<div class="item item-text-wrap chat" ss-avatar="{{isMine(message)}}"
+			 ng-repeat="message in history track by $index | orderBy:'sentDate'">
 			<img ng-src="{{getAvatar(message)}}">
 			{{message.message}}
 			<h6 ng-show="message.sentDate">{{dispDate(message)}}</h6>
