@@ -10,7 +10,7 @@
 				<h6 ng-show="message.sentDate">{{dispDate(message)}}</h6>
 			</div>
 			<div class="item item-avatar-right item-text-wrap align-right" ng-show="!isMine(message)">
-				<img ng-src="{{data('tempUser').avatar}}">
+				<img ng-src="{{data('chat').user.avatar}}">
 				{{message.message}}
 				<h6 ng-show="message.sentDate">{{dispDate(message)}}</h6>
 			</div>
@@ -19,7 +19,7 @@
 	<ion-footer-bar class="bar-stable">
 		<label class="item-input-wrapper">
 			<input id="chatInput" type="text" ng-model="buffer" ng-keypress="$event.keyCode === 13 && sendChat()"
-				   placeholder="Send to {{dispName(data('tempUser'))}}"/>
+				   placeholder="Send to {{dispName(data('chat').user)}}"/>
 		</label>
 		<button class="button button-small button-royal" ng-click="sendChat()">
 			Send

@@ -2,6 +2,81 @@
 
     var app = angular.module('samesies.filters', []);
 
+    app.filter('filterSelf', function (Data) {
+        return function (items) {
+            var filtered = [];
+            if (items) {
+                for (var i = 0; i < items.length; i++) {
+                    var item = items[i];
+                    if (item.id != Data.user.id) {
+                        filtered.push(item);
+                    }
+                }
+            }
+            return filtered;
+        };
+    });
+
+    app.filter('requestConnections', function () {
+        return function (items) {
+            var filtered = [];
+            if (items) {
+                for (var i = 0; i < items.length; i++) {
+                    var item = items[i];
+                    if (item.status === 'MATCHING' && !item.data.is1) {
+                        filtered.push(item);
+                    }
+                }
+            }
+            return filtered;
+        };
+    });
+
+    app.filter('yourTurnConnections', function () {
+        return function (items) {
+            var filtered = [];
+            if (items) {
+                for (var i = 0; i < items.length; i++) {
+                    var item = items[i];
+                    if (item.status === 'IN_PROGRESS' && item.data.state != 'waiting') {
+                        filtered.push(item);
+                    }
+                }
+            }
+            return filtered;
+        };
+    });
+
+    app.filter('pendingConnections', function () {
+        return function (items) {
+            var filtered = [];
+            if (items) {
+                for (var i = 0; i < items.length; i++) {
+                    var item = items[i];
+                    if (item.status === 'MATCHING' && item.data.is1) {
+                        filtered.push(item);
+                    }
+                }
+            }
+            return filtered;
+        };
+    });
+
+    app.filter('waitingConnections', function () {
+        return function (items) {
+            var filtered = [];
+            if (items) {
+                for (var i = 0; i < items.length; i++) {
+                    var item = items[i];
+                    if (item.status === 'IN_PROGRESS' && item.data.state === 'waiting') {
+                        filtered.push(item);
+                    }
+                }
+            }
+            return filtered;
+        };
+    });
+
     app.filter('checkName', function () {
         return function (items, string) {
             var filtered = [];
@@ -71,81 +146,6 @@
                     var item = items[i];
                     var regex = new RegExp(".*" + string + ".*", 'i');
                     if ((category === 'All' || category === item.category) && regex.test(item.q)) {
-                        filtered.push(item);
-                    }
-                }
-            }
-            return filtered;
-        };
-    });
-
-    app.filter('filterSelf', function (Data) {
-        return function (items) {
-            var filtered = [];
-            if (items) {
-                for (var i = 0; i < items.length; i++) {
-                    var item = items[i];
-                    if (item.id != Data.user.id) {
-                        filtered.push(item);
-                    }
-                }
-            }
-            return filtered;
-        };
-    });
-
-    app.filter('requestConnections', function () {
-        return function (items) {
-            var filtered = [];
-            if (items) {
-                for (var i = 0; i < items.length; i++) {
-                    var item = items[i];
-                    if (item.status === 'MATCHING' && !item.data.is1) {
-                        filtered.push(item);
-                    }
-                }
-            }
-            return filtered;
-        };
-    });
-
-    app.filter('yourTurnConnections', function () {
-        return function (items) {
-            var filtered = [];
-            if (items) {
-                for (var i = 0; i < items.length; i++) {
-                    var item = items[i];
-                    if (item.status === 'IN_PROGRESS' && item.data.state != 'waiting') {
-                        filtered.push(item);
-                    }
-                }
-            }
-            return filtered;
-        };
-    });
-
-    app.filter('pendingConnections', function () {
-        return function (items) {
-            var filtered = [];
-            if (items) {
-                for (var i = 0; i < items.length; i++) {
-                    var item = items[i];
-                    if (item.status === 'MATCHING' && item.data.is1) {
-                        filtered.push(item);
-                    }
-                }
-            }
-            return filtered;
-        };
-    });
-
-    app.filter('waitingConnections', function () {
-        return function (items) {
-            var filtered = [];
-            if (items) {
-                for (var i = 0; i < items.length; i++) {
-                    var item = items[i];
-                    if (item.status === 'IN_PROGRESS' && item.data.state === 'waiting') {
                         filtered.push(item);
                     }
                 }

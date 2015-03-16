@@ -3,6 +3,12 @@ package com.dfaenterprises.samesies.model;
 import com.google.appengine.api.datastore.Entity;
 
 /**
+ * Generic superclass for things that go in the database.
+ * Subclasses MUST implement both the no-args constructor and the Storable(Entity) contructor.
+ * Concrete subclasses also must call getEntity() at the start of their toEntity() method with
+ * the datastore name, and add parameters from there. Abstract subclasses should instead
+ * override getEntity(), adding parameters there.
+ *
  * @author Ari Weiland
  */
 public abstract class Storable {
@@ -16,10 +22,6 @@ public abstract class Storable {
         this.id = e.getKey().getId();
     }
 
-    public Storable(Long id) {
-        this.id = id;
-    }
-
     public Long getId() {
         return id;
     }
@@ -30,7 +32,7 @@ public abstract class Storable {
 
     public abstract Entity toEntity();
 
-    public final Entity getEntity(String name) {
+    protected Entity getEntity(String name) {
         if (id == null) {
             return new Entity(name);
         } else {

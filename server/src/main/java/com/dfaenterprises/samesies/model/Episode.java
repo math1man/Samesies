@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * @author Ari Weiland
  */
-public class Episode extends Storable {
+public class Episode extends Pairing {
 
     public static enum Status {
         MATCHING, UNMATCHED, IN_PROGRESS, ABANDONED, COMPLETE
@@ -19,8 +19,6 @@ public class Episode extends Storable {
     private Boolean isPersistent;
     private Settings settings;
     private Status status;
-    private Long uid1;
-    private Long uid2;
     private List<Long> qids;
     private List<String> answers1;
     private List<String> answers2;
@@ -38,8 +36,6 @@ public class Episode extends Storable {
                 (Boolean) e.getProperty("matchFemale"),
                 (Boolean) e.getProperty("matchOther"));
         this.status = Status.valueOf((String) e.getProperty("status"));
-        this.uid1 = (Long) e.getProperty("uid1");
-        this.uid2 = (Long) e.getProperty("uid2");
         this.qids = EntityUtils.entityToList(e.getProperty("qids"), 10, Long.class);
         this.answers1 = EntityUtils.entityToList(e.getProperty("answers1"), 10, String.class);
         this.answers2 = EntityUtils.entityToList(e.getProperty("answers2"), 10, String.class);
@@ -51,11 +47,11 @@ public class Episode extends Storable {
      * @param uid1
      */
     public Episode(Long uid1, Settings settings) {
+        super(uid1, null);
         this.startDate = new Date();
         this.isPersistent = false;
         this.settings = settings;
         this.status = Status.MATCHING;
-        this.uid1 = uid1;
     }
 
     /**
@@ -65,12 +61,11 @@ public class Episode extends Storable {
      * @param uid2
      */
     public Episode(Long uid1, Long uid2, Settings settings) {
+        super(uid1, uid2);
         this.startDate = new Date();
         this.isPersistent = true;
         this.settings = settings;
         this.status = Status.MATCHING;
-        this.uid1 = uid1;
-        this.uid2 = uid2;
     }
 
     public Date getStartDate() {
@@ -105,22 +100,6 @@ public class Episode extends Storable {
         this.status = status;
     }
 
-    public Long getUid1() {
-        return uid1;
-    }
-
-    public void setUid1(Long uid1) {
-        this.uid1 = uid1;
-    }
-
-    public Long getUid2() {
-        return uid2;
-    }
-
-    public void setUid2(Long uid2) {
-        this.uid2 = uid2;
-    }
-
     public List<Long> getQids() {
         return qids;
     }
@@ -146,7 +125,7 @@ public class Episode extends Storable {
     }
 
     public List<String> getAnswers(long uid) {
-        if (uid == uid1) {
+        if (isUid1(uid)) {
             return getAnswers1();
         } else {
             return getAnswers2();
@@ -154,7 +133,7 @@ public class Episode extends Storable {
     }
 
     public void setAnswers(long uid, List<String> answers) {
-        if (uid == uid1) {
+        if (isUid1(uid)) {
             setAnswers1(answers);
         } else {
             setAnswers2(answers);
@@ -174,8 +153,6 @@ public class Episode extends Storable {
         e.setUnindexedProperty("matchFemale", settings.getMatchFemale());
         e.setUnindexedProperty("matchOther", settings.getMatchOther());
         e.setProperty("status", status.name());
-        e.setProperty("uid1", uid1);
-        e.setProperty("uid2", uid2);
         e.setProperty("qids", EntityUtils.listToEntity(qids));
         e.setProperty("answers1", EntityUtils.listToEntity(answers1));
         e.setProperty("answers2", EntityUtils.listToEntity(answers2));

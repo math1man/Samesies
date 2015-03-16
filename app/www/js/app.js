@@ -31,6 +31,15 @@
                 url: "/communities",
                 templateUrl: "templates/communities.html"
             })
+            .state('chats', {
+                url: "/chats",
+                templateUrl: "templates/chats.html"
+            })
+            .state('chat', {
+                cache: false,
+                url: "/chat",
+                templateUrl: "templates/chat.html"
+            })
             .state('friends', {
                 url: "/friends",
                 templateUrl: "templates/friends.html"
@@ -51,11 +60,6 @@
                 cache: false,
                 url: "/profile",
                 templateUrl: "templates/profile.html"
-            })
-            .state('chat', {
-                cache: false,
-                url: "/chat",
-                templateUrl: "templates/chat.html"
             })
             .state('feedback', {
                 cache: false,

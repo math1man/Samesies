@@ -20,15 +20,20 @@
 				<i class="icon ion-ios7-people"></i>
 				Browse Communities
 			</a>
+			<a class="item item-icon-left" href="#/connections">
+				<i class="icon ion-loop"></i>
+				Pending Connections
+				<span class="badge badge-royal" ng-show="getCxnRequestCount()">{{getCxnRequestCount()}}</span>
+			</a>
+			<a class="item item-icon-left" href="#/chats">
+				<i class="icon ion-chatbubble-working"></i>
+				Messages
+				<span class="badge badge-royal" ng-show="getChatCount()">{{getChatCount()}}</span>
+			</a>
 			<a class="item item-icon-left" href="#/friends">
 				<i class="icon ion-person-add"></i>
 				View Friends
 				<span class="badge badge-royal" ng-show="getFriendRequestCount()">{{getFriendRequestCount()}}</span>
-			</a>
-			<a class="item item-icon-left" href="#/connections">
-				<i class="icon ion-loop"></i>
-				Play Pending Connections
-				<span class="badge badge-royal" ng-show="getConnectionCount()">{{getConnectionCount()}}</span>
 			</a>
 			<a class="item item-icon-left" href="#/questions">
 				<i class="icon ion-help"></i>

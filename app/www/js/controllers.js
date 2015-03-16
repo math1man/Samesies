@@ -87,7 +87,7 @@
             API.connectEpisode(Data.user.id, user.id, Data.settings).then(function(resp) {
                 var episode = resp.result;
                 episode.data = Utils.getData(episode);
-                episode.data.partner = user;
+                episode.user = user;
                 Data.connections.push(episode);
             });
             $ionicPopup.alert({
@@ -119,41 +119,45 @@
                     var friends = resp.result.items;
                     if (friends && friends.length) {
                         Data.friends = friends;
-                        $scope.$apply();
                     }
+                    if (Data.isLoading) {
+                        Data.isLoading--;
+                    }
+                    $scope.$apply();
                     // nested so that it can pull from friends
                     if (Data.user) { // need to add a second check in case they immediately log out
-                        API.getConnections(Data.user.id).then(function (resp) {
-                            var connections = resp.result.items;
-                            if (connections && connections.length) {
-                                var uids = [];
-                                for (var i = 0; i < connections.length; i++) {
-                                    var cxn = connections[i];
-                                    connections[i].data = Utils.getData(cxn);
-                                    uids.push(Utils.getPartnerId(cxn));
-                                }
-                                API.getUsers(uids).then(function (resp) {
-                                    var users = resp.result.items;
-                                    for (var i = 0; i < users.length; i++) {
-                                        var cxnIndex = Utils.indexOfById(Data.connections, connections[i]);
-                                        if (cxnIndex === -1) {
-                                            cxnIndex = Data.connections.length;
-                                            connections[i].data.partner = users[i];
-                                            Data.connections.push(connections[i]);
-                                        }
-                                        // getUsers data is stranger data, so check if they are in friends
-                                        var index = Utils.indexOfById(Data.friends, users[i], 'user');
-                                        if (index > -1) {
-                                            Data.connections[cxnIndex].data.partner = Data.friends[index].user;
-                                        }
+                        API.getChats(Data.user.id).then(function (resp) {
+                            var chats = resp.result.items;
+                            if (chats && chats.length) {
+                                for (var i = 0; i < chats.length; i++) {
+                                    var index = Utils.indexOfById(Data.friends, chats[i].user, 'user');
+                                    if (index > -1) {
+                                        chats[i].user = Data.friends[index].user;
                                     }
-                                    Data.isLoading = false;
-                                    $scope.$apply();
-                                });
-                            } else {
-                                Data.isLoading = false;
-                                $scope.$apply();
+                                }
+                                Data.chats = chats;
                             }
+                            if (Data.isLoading) {
+                                Data.isLoading--;
+                            }
+                            $scope.$apply();
+                        });
+                        API.getConnections(Data.user.id).then(function (resp) {
+                            var cxns = resp.result.items;
+                            if (cxns && cxns.length) {
+                                for (var i = 0; i < cxns.length; i++) {
+                                    cxns[i].data = Utils.getData(cxns[i]);
+                                    var index = Utils.indexOfById(Data.friends, cxns[i].user, 'user');
+                                    if (index > -1) {
+                                        cxns[i].user = Data.friends[index].user;
+                                    }
+                                }
+                                Data.connections = cxns;
+                            }
+                            if (Data.isLoading) {
+                                Data.isLoading--;
+                            }
+                            $scope.$apply();
                         });
                     }
                 });
@@ -181,7 +185,7 @@
             $scope.loginData = null;
             $scope.loginKey = [''];
             Data.user = user;
-            Data.isLoading = true;
+            Data.isLoading = 3;
             $scope.refresh();
             API.getCommunity(user.location).then(function(resp) {
                 Data.community = resp.result;
@@ -346,24 +350,11 @@
             Data.user = null;
             Data.friends = [];
             Data.connections = [];
-            Data.isLoading = false;
+            Data.isLoading = 0;
             $scope.loginPopup.show();
         };
 
-        $scope.getFriendRequestCount = function() {
-            var count = 0;
-            if (Data.user && Data.friends && Data.friends.length) {
-                for (var i = 0; i < Data.friends.length; i++) {
-                    var item = Data.friends[i];
-                    if (item.status === 'PENDING' && item.uid2 === Data.user.id) { // Connections pending your approval
-                        count++;
-                    }
-                }
-            }
-            return count;
-        };
-
-        $scope.getConnectionCount = function() {
+        $scope.getCxnRequestCount = function() {
             var count = 0;
             if (Data.connections && Data.connections.length) {
                 for (var i = 0; i < Data.connections.length; i++) {
@@ -376,6 +367,24 @@
                         if (item.status === 'IN_PROGRESS' && item.data.state != 'waiting') {
                             count++;
                         }
+                    }
+                }
+            }
+            return count;
+        };
+
+        $scope.getChatCount = function() {
+            // TODO: how to...
+            return 0;
+        };
+
+        $scope.getFriendRequestCount = function() {
+            var count = 0;
+            if (Data.user && Data.friends && Data.friends.length) {
+                for (var i = 0; i < Data.friends.length; i++) {
+                    var item = Data.friends[i];
+                    if (item.status === 'PENDING' && item.uid2 === Data.user.id) { // Connections pending your approval
+                        count++;
                     }
                 }
             }
@@ -492,8 +501,7 @@
                 }
                 $scope.episodeData = {
                     state: 'matching',
-                    stage: 0,
-                    partner: null
+                    stage: 0
                 };
                 API.findEpisode(Data.user.id, Data.settings).then(function (resp) {
                     episode = resp.result;
@@ -516,9 +524,9 @@
 
         var loadEpisode = function(ep) {
             $scope.episodeData = Utils.getData(ep);
-            if (!$scope.episodeData.partner) {
+            if (!ep.user) {
                 API.getUser(Utils.getPartnerId(ep)).then(function (resp) {
-                    $scope.episodeData.partner = resp.result;
+                    ep.user = resp.result;
                 });
             }
             if ($scope.episodeData.questions) {
@@ -553,6 +561,13 @@
                                 var friend = Data.friends[index];
                                 API.startChat(friend.id, false, Data.user.id, friend.user.id).then(function (resp) {
                                     Data.chat = resp.result;
+                                    Data.chat.user = friend.user;
+                                    var chatIndex = Utils.indexOfById(Data.chats, Data.chat);
+                                    if (chatIndex === -1) {
+                                        Data.chats.push(Data.chat);
+                                    } else {
+                                        Data.chats[chatIndex] = Data.chat;
+                                    }
                                     $state.go('chat');
                                 }, function (reason) {
                                     console.log(reason);
@@ -566,6 +581,8 @@
                             API.startChat(episode.id, true, Data.user.id, Data.tempUser.id).then(function (resp) {
                                 Data.chat = resp.result;
                                 if (answer) {
+                                    Data.chat.user = Data.tempUser;
+                                    Data.chats.push(Data.chat);
                                     $state.go('chat');
                                 } else {
                                     API.closeChat(Data.chat.id);
@@ -733,6 +750,184 @@
 
     });
 
+    app.controller('MessagesCtrl', function($scope, $state, API, Data, Utils) {
+
+        $scope.search = '';
+
+        $scope.goChat = function(chat) {
+            Data.chat = chat;
+            $state.go('chat');
+        };
+
+        $scope.remove = function(chat) {
+            if (chat.isEpisode) { // episode chats cannot be recovered
+                $ionicPopup.confirm({
+                    title: 'Close Chat',
+                    template: 'Are you sure you want to close your chat with ' + $scope.dispName(chat.user) + '?' +
+                            'You will not be able to return to it.',
+                    okText: 'Close Chat',
+                    okType: 'button-assertive',
+                    cancelText: 'Cancel',
+                    cancelType: 'button-stable'
+                }).then(function (resp) {
+                    if (resp) {
+                        close(chat);
+                    }
+                });
+            } else { // but friend chats can
+                close(chat);
+            }
+        };
+
+        var close = function(chat) {
+            API.closeChat(chat.id);
+            Data.chats.splice(Utils.indexOfById(Data.chats, chat), 1);
+        }
+
+    });
+
+    app.controller('ChatCtrl', function($scope, $ionicPopup, $ionicScrollDelegate, API, Data, Utils) {
+
+        $scope.buffer = '';
+        $scope.history = [];
+        API.getMessages(Data.chat.id, Data.chat.startDate).then(function (resp) {
+            if (resp.result.items && resp.result.items.length) {
+                $scope.history = resp.result.items;
+                $scope.$apply();
+                // the scroll delegate is actually the most annoying thing
+                //$ionicScrollDelegate.scrollBottom();
+            }
+            focusInput();
+            Utils.interval(function() {
+                checkChat();
+            }, PING_INTERVAL);
+        }, function(reason) {
+            console.log(reason);
+        });
+
+        var randomId = function() {
+            var output = "";
+            var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            for(var i=0; i<20; i++) {
+                output += possible.charAt(Math.floor(Math.random() * possible.length));
+            }
+            return output;
+        };
+
+        $scope.sendChat = function() {
+            if ($scope.buffer) {
+                var random = randomId();
+                addMessage({
+                    message: $scope.buffer,
+                    senderId: Data.user.id,
+                    random: random
+                });
+                // this one kind of works so it can stay
+                $ionicScrollDelegate.scrollBottom(true);
+                API.sendMessage(Data.chat.id, Data.user.id, $scope.buffer, random).then(function (resp) {
+                    addMessage(resp.result);
+                }, function(reason) {
+                    console.log(reason);
+                });
+                $scope.buffer = '';
+                focusInput();
+            }
+        };
+
+        var addMessage = function(message) {
+            var index = -1;
+            // goes back to front because more likely to find it at back
+            for (var i = $scope.history.length - 1; i >= 0 && index === -1; i--) {
+                if ($scope.history[i].random === message.random) {
+                    index = i;
+                }
+            }
+            if (index === -1) {
+                $scope.history.push(message);
+            } else {
+                $scope.history[index] = message;
+            }
+            var modified = message.sentDate;
+            if (modified && new Date(modified) > new Date(Data.chat.lastModified)) {
+                Data.chat.lastModified = modified;
+            }
+        };
+
+        var checkChat = function() {
+            if (Data.chat.isEpisode) {
+                API.getChat(Data.chat.id).then(function (resp) {
+                    if (resp.result.isClosed) {
+                        Utils.interruptAll();
+                        $ionicPopup.confirm({
+                            title: "Partner didn't want to chat",
+                            template: "Your partner wanted to keep playing Samesies. Do you want to play another game?",
+                            okText: "Play Again",
+                            okType: 'button-royal',
+                            cancelText: 'Not right now',
+                            cancelType: 'button-stable'
+                        }).then(function (resp) {
+                            if (resp) {
+                                $scope.back();
+                            } else {
+                                $scope.menu();
+                            }
+                        });
+                    }
+                });
+            }
+            API.getMessages(Data.chat.id, Data.chat.lastModified).then(function (resp) {
+                var messages = resp.result.items;
+                if (messages && messages.length > 0) {
+                    for (var i=0; i<messages.length; i++) {
+                        addMessage(messages[i]);
+                    }
+                    $scope.$apply();
+                    // this one also sucks
+                    //$ionicScrollDelegate.scrollBottom(true);
+                    focusInput();
+                }
+            });
+        };
+
+        var focusInput = function() {
+            document.getElementById("chatInput").focus();
+        };
+
+        $scope.isMine = function(message) {
+            return (message.senderId === Data.user.id);
+        };
+
+        $scope.dispDate = function(message) {
+            if (message.sentDate) {
+                return "Sent on " + new Date(message.sentDate).toLocaleString();
+            } else {
+                return "Sending...";
+            }
+        };
+
+        $scope.showAddFriend = function() {
+            return !Utils.containsById(Data.friends, Data.chat.user.id);
+        };
+
+        $scope.addFriend = function() {
+            API.addFriend(Data.user.id, Data.chat.user.id).then(function(resp) {
+                var friend = resp.result;
+                Data.friends.push(friend);
+                // TODO: some sort of friend indication? for both parties?
+                // convert to a friend-chat if both accept
+                if (friend.status === 'ACCEPTED') {
+                    API.updateChat(Data.chat.id, friend.id, false);
+                }
+            });
+        };
+
+        $scope.$on('$ionicView.beforeLeave', function() {
+            Utils.interruptAll();
+            Data.chat = null;
+        });
+
+    });
+
     app.controller('FriendsCtrl', function($scope, $state, $ionicPopover, $ionicPopup, Data, API, Utils) {
 
         $ionicPopover.fromTemplateUrl('templates/find-friends.html', {
@@ -855,7 +1050,7 @@
         $scope.remove = function(cxn) {
             $ionicPopup.confirm({
                 title: 'Abandon Connection',
-                template: 'Are you sure you want to abandon your connection with ' + $scope.dispName(cxn.data.partner) + '?',
+                template: 'Are you sure you want to abandon your connection with ' + $scope.dispName(cxn.user) + '?',
                 okText: 'Abandon',
                 okType: 'button-assertive',
                 cancelText: 'Cancel',
@@ -1199,158 +1394,13 @@
         $scope.message = function() {
             API.startChat(Data.friend.id, false, Data.user.id, Data.tempUser.id).then(function (resp) {
                 Data.chat = resp.result;
+                Data.chat.user = Data.tempUser;
+                Data.chats.push(Data.chat);
                 $state.go('chat');
             }, function (reason) {
                 console.log(reason);
             });
         };
-
-        $scope.$on('$ionicView.beforeLeave', function() {
-            Data.tempUser = null;
-            Data.friend = null;
-        })
-    });
-
-    app.controller('ChatCtrl', function($scope, $ionicPopup, $ionicScrollDelegate, API, Data, Utils) {
-
-        $scope.buffer = '';
-        $scope.history = [];
-        API.getMessages(Data.chat.id, Data.chat.startDate).then(function (resp) {
-            if (resp.result.items && resp.result.items.length) {
-                $scope.history = resp.result.items;
-                $scope.$apply();
-                // the scroll delegate is actually the most annoying thing
-                //$ionicScrollDelegate.scrollBottom();
-            }
-            focusInput();
-            Utils.interval(function() {
-                checkChat();
-            }, PING_INTERVAL);
-        }, function(reason) {
-            console.log(reason);
-        });
-
-        var randomId = function() {
-            var output = "";
-            var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            for(var i=0; i<20; i++) {
-                output += possible.charAt(Math.floor(Math.random() * possible.length));
-            }
-            return output;
-        };
-
-        $scope.sendChat = function() {
-            if ($scope.buffer) {
-                var random = randomId();
-                addMessage({
-                    message: $scope.buffer,
-                    senderId: Data.user.id,
-                    random: random
-                });
-                // this one kind of works so it can stay
-                $ionicScrollDelegate.scrollBottom(true);
-                API.sendMessage(Data.chat.id, Data.user.id, $scope.buffer, random).then(function (resp) {
-                    addMessage(resp.result);
-                }, function(reason) {
-                    console.log(reason);
-                });
-                $scope.buffer = '';
-                focusInput();
-            }
-        };
-
-        var addMessage = function(message) {
-            var index = -1;
-            // goes back to front because more likely to find it at back
-            for (var i = $scope.history.length - 1; i >= 0 && index === -1; i--) {
-                if ($scope.history[i].random === message.random) {
-                    index = i;
-                }
-            }
-            if (index === -1) {
-                $scope.history.push(message);
-            } else {
-                $scope.history[index] = message;
-            }
-            var modified = message.sentDate;
-            if (modified && new Date(modified) > new Date(Data.chat.lastModified)) {
-                Data.chat.lastModified = modified;
-            }
-        };
-
-        var checkChat = function() {
-            if (Data.chat.isEpisode) {
-                API.getChat(Data.chat.id).then(function (resp) {
-                    if (resp.result.isClosed) {
-                        Utils.interruptAll();
-                        $ionicPopup.confirm({
-                            title: "Partner didn't want to chat",
-                            template: "Your partner wanted to keep playing Samesies. Do you want to play another game?",
-                            okText: "Play Again",
-                            okType: 'button-royal',
-                            cancelText: 'Not right now',
-                            cancelType: 'button-stable'
-                        }).then(function (resp) {
-                            if (resp) {
-                                $scope.back();
-                            } else {
-                                $scope.menu();
-                            }
-                        });
-                    }
-                });
-            }
-            API.getMessages(Data.chat.id, Data.chat.lastModified).then(function (resp) {
-                var messages = resp.result.items;
-                if (messages && messages.length > 0) {
-                    for (var i=0; i<messages.length; i++) {
-                        addMessage(messages[i]);
-                    }
-                    $scope.$apply();
-                    // this one also sucks
-                    //$ionicScrollDelegate.scrollBottom(true);
-                    focusInput();
-                }
-            });
-        };
-
-        var focusInput = function() {
-            document.getElementById("chatInput").focus();
-        };
-
-        $scope.isMine = function(message) {
-            return (message.senderId === Data.user.id);
-        };
-
-        $scope.dispDate = function(message) {
-            if (message.sentDate) {
-                return "Sent on " + new Date(message.sentDate).toLocaleString();
-            } else {
-                return "Sending...";
-            }
-        };
-
-        $scope.showAddFriend = function() {
-            return !Utils.containsById(Data.friends, Data.tempUser.id);
-        };
-
-        $scope.addFriend = function() {
-            API.addFriend(Data.user.id, Data.tempUser.id).then(function(resp) {
-                var friend = resp.result;
-                Data.friends.push(friend);
-                // TODO: some sort of friend indication? for both parties?
-                // convert to a friend-chat if both accept
-                if (friend.status === 'ACCEPTED') {
-                    API.updateChat(Data.chat.id, friend.id, false);
-                }
-            });
-        };
-
-        $scope.$on('$ionicView.beforeLeave', function() {
-            Utils.interruptAll();
-            Data.chat = null;
-        });
-
     });
 
     app.controller('FeedbackCtrl', function($scope, $ionicPopup, API) {

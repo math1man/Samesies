@@ -6,8 +6,8 @@
 		<ss-loading ng-show="data('isLoading')"></ss-loading>
 		<div class="item item-avatar item-button-right" ng-repeat="cxn in data('connections') | requestConnections"
 			 ng-click="accept(cxn)">
-			<img ng-src="{{cxn.data.partner.avatar}}">
-			{{dispName(cxn.data.partner)}}
+			<img ng-src="{{cxn.user.avatar}}">
+			{{dispName(cxn.user)}}
 			<p>Mode: {{cxn.settings.mode}}</p>
 			<div class="buttons">
 				<button class="button button-round button-stable" ng-click="reject(cxn)">
@@ -22,8 +22,8 @@
 		<div class="row hidden-grid" ng-repeat="cxn in data('connections') | yourTurnConnections">
 			<div class="col col-90">
 				<div class="item item-avatar" ng-click="play(cxn)">
-					<img ng-src="{{cxn.data.partner.avatar}}">
-					{{dispName(cxn.data.partner)}}
+					<img ng-src="{{cxn.user.avatar}}">
+					{{dispName(cxn.user)}}
 					<span class="item-note">Stage {{cxn.data.stage}}</span>
 					<p>Mode: {{cxn.settings.mode}}</p>
 				</div>
@@ -41,8 +41,8 @@
 		<div class="row hidden-grid" ng-repeat="cxn in data('connections') | pendingConnections">
 			<div class="col col-90">
 				<div class="item item-avatar">
-					<img ng-src="{{cxn.data.partner.avatar}}">
-					{{dispName(cxn.data.partner)}}
+					<img ng-src="{{cxn.user.avatar}}">
+					{{dispName(cxn.user)}}
 					<span class="item-note">Pending</span>
 					<p>Mode: {{cxn.settings.mode}}</p>
 				</div>
@@ -56,8 +56,8 @@
 		<div class="row hidden-grid" ng-repeat="cxn in data('connections') | waitingConnections | orderBy:'data.stage'">
 			<div class="col col-90">
 				<div class="item item-avatar" ng-click="play(cxn)">
-					<img ng-src="{{cxn.data.partner.avatar}}">
-					{{dispName(cxn.data.partner)}}
+					<img ng-src="{{cxn.user.avatar}}">
+					{{dispName(cxn.user)}}
 					<span class="item-note">Stage {{cxn.data.stage}}</span>
 					<p>Mode: {{cxn.settings.mode}}</p>
 				</div>

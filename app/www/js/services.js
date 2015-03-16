@@ -107,6 +107,9 @@
             getChat: function(id) {
                 return API.getChat({id: id});
             },
+            getChats: function(myId) {
+                return API.getChats({myId: myId});
+            },
             updateChat: function(id, eofid, isEpisode) {
                 API.updateChat({id: id, eofid: eofid, isEpisode: isEpisode}).then();
             },
@@ -236,14 +239,15 @@
         };
         // user data
         this.user = null;
-        this.friends = [];
         this.connections = [];
+        this.chats = [];
+        this.friends = [];
         // control data
         this.tempUser = null;
         this.episode = null;
         this.friend = null;
         this.chat = null;
-        this.isLoading = false;
+        this.isLoading = 0;
     });
 
 })();

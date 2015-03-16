@@ -296,15 +296,9 @@ public class SamesiesApi {
         for (Entity e : pq.asIterable()) {
             Friend friend = new Friend(e);
             if (!friend.getStatus().isDeleted()) {
-                long uid1 = friend.getUid1();
-                long uid2 = friend.getUid2();
+                long theirUid = friend.getOtherUid(uid);
                 User.Relation relation = friend.getStatus().getRelation();
-                User user;
-                if (uid1 == uid) {
-                    user = getUserById(ds, uid2, relation);
-                } else {
-                    user = getUserById(ds, uid1, relation);
-                }
+                User user = getUserById(ds, theirUid, relation);
                 if (!user.getIsBanned()) {
                     friend.setUser(user);
                     friends.add(friend);
@@ -378,7 +372,7 @@ public class SamesiesApi {
         DatastoreService ds = getDS();
         try {
             Friend friend = new Friend(ds.get(KeyFactory.createKey("Friend", fid)));
-            if (myId == friend.getUid1()) {
+            if (friend.isUid1(myId)) {
                 friend.setStatus(Friend.Status.DELETED_1);
             } else {
                 friend.setStatus(Friend.Status.DELETED_2);
@@ -624,7 +618,11 @@ public class SamesiesApi {
         for (Entity e : pq.asIterable()) {
             Episode episode = new Episode(e);
             if (episode.getStatus() == Episode.Status.MATCHING || episode.getStatus() == Episode.Status.IN_PROGRESS) {
-                connections.add(new Episode(e));
+                User user = getUserById(ds, episode.getOtherUid(uid), User.Relation.STRANGER);
+                if (!user.getIsBanned()) {
+                    episode.setUser(user);
+                    connections.add(episode);
+                }
             }
         }
         return connections;
@@ -665,8 +663,10 @@ public class SamesiesApi {
         Chat chat = getChatByEofid(ds, eofid);
         if (chat == null) {
             chat = new Chat(eofid, isEpisode, myUid, theirUid);
-            EntityUtils.put(ds, chat);
+        } else {
+            chat.setIsClosed(false);
         }
+        EntityUtils.put(ds, chat);
         return chat;
     }
 
@@ -675,6 +675,29 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.GET)
     public Chat getChat(@Named("id") long cid) throws ServiceException {
         return getChatById(getDS(), cid);
+    }
+
+    @ApiMethod(name = "samesiesApi.getChats",
+            path = "chats/{myId}",
+            httpMethod = ApiMethod.HttpMethod.GET)
+    public List<Chat> getChats(@Named("myId") long myUid) throws ServiceException {
+        DatastoreService ds = getDS();
+        Query query = new Query("Chat").setFilter(Query.CompositeFilterOperator.and(
+                Query.CompositeFilterOperator.or(
+                        new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, myUid),
+                        new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, myUid)),
+                new Query.FilterPredicate("isClosed", Query.FilterOperator.EQUAL, false)));
+        PreparedQuery pq = ds.prepare(query);
+        List<Chat> chats = new ArrayList<>();
+        for (Entity e : pq.asIterable()) {
+            Chat chat = new Chat(e);
+            User user = getUserById(ds, chat.getOtherUid(myUid), User.Relation.STRANGER);
+            if (!user.getIsBanned()) {
+                chat.setUser(user);
+                chats.add(chat);
+            }
+        }
+        return chats;
     }
 
     @ApiMethod(name = "samesiesApi.updateChat",
