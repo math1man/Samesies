@@ -660,7 +660,7 @@ public class SamesiesApi {
     public Chat startChat(@Named("eofid") long eofid, @Named("isEpisode") boolean isEpisode,
                           @Named("myId") long myUid, @Named("theirId") long theirUid) throws ServiceException {
         DatastoreService ds = getDS();
-        Chat chat = getChatByEofid(ds, eofid);
+        Chat chat = getChat(ds, eofid, isEpisode);
         if (chat == null) {
             chat = new Chat(eofid, isEpisode, myUid, theirUid);
         } else {
@@ -674,7 +674,7 @@ public class SamesiesApi {
             path = "chat/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public Chat getChat(@Named("id") long cid) throws ServiceException {
-        return getChatById(getDS(), cid);
+        return getChat(getDS(), cid);
     }
 
     @ApiMethod(name = "samesiesApi.getChats",
@@ -705,7 +705,7 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void updateChat(@Named("id") long cid, @Named("eofid") long eofid, @Named("isEpisode") boolean isEpisode) throws ServiceException {
         DatastoreService ds = getDS();
-        Chat chat = getChatById(ds, cid);
+        Chat chat = getChat(ds, cid);
         chat.setEofid(eofid);
         chat.setIsEpisode(isEpisode);
         EntityUtils.put(ds, chat);
@@ -716,7 +716,7 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void closeChat(@Named("id") long cid) throws ServiceException {
         DatastoreService ds = getDS();
-        Chat chat = getChatById(ds, cid);
+        Chat chat = getChat(ds, cid);
         chat.setIsClosed(true);
         EntityUtils.put(ds, chat);
     }
@@ -727,7 +727,7 @@ public class SamesiesApi {
     public Message sendMessage(@Named("chatId") long cid, @Named("myId") long myUid, @Named("message") String message,
                                @Named("random") @Nullable String random) throws ServiceException {
         DatastoreService ds = getDS();
-        Chat chat = getChatById(ds, cid);
+        Chat chat = getChat(ds, cid);
         Message m = new Message(cid, myUid, message, random);
         chat.setLastModified(m.getSentDate());
         EntityUtils.put(ds, chat, m);
@@ -871,7 +871,7 @@ public class SamesiesApi {
         }
     }
 
-    private static Chat getChatById(DatastoreService ds, long cid) throws NotFoundException {
+    private static Chat getChat(DatastoreService ds, long cid) throws NotFoundException {
         try {
             return new Chat(ds.get(KeyFactory.createKey("Chat", cid)));
         } catch (EntityNotFoundException e) {
@@ -879,8 +879,11 @@ public class SamesiesApi {
         }
     }
 
-    private static Chat getChatByEofid(DatastoreService ds, long eofid) {
-        Query query = new Query("Chat").setFilter(new Query.FilterPredicate("eofid", Query.FilterOperator.EQUAL, eofid));
+    private static Chat getChat(DatastoreService ds, long eofid, boolean isEpisode) {
+        Query query = new Query("Chat").setFilter(Query.CompositeFilterOperator.and(
+                new Query.FilterPredicate("eofid", Query.FilterOperator.EQUAL, eofid),
+                new Query.FilterPredicate("isEpisode", Query.FilterOperator.EQUAL, isEpisode)));
+        // need to check isEpisode on the UNLIKELY chance that an episode and friend have same ID
         PreparedQuery pq = ds.prepare(query);
         Entity e = pq.asSingleEntity();
         if (e == null) {

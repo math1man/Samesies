@@ -3,17 +3,10 @@
 		<button class="button button-icon icon ion-person-add" ng-show="showAddFriend()" ng-click="addFriend()"></button>
 	</ion-nav-buttons>
 	<ion-content>
-		<div class="chat" ng-repeat="message in history track by $index | orderBy:'sentDate'">
-			<div class="item item-avatar-left item-text-wrap" ng-show="isMine(message)">
-				<img ng-src="{{data('user').avatar}}">
-				{{message.message}}
-				<h6 ng-show="message.sentDate">{{dispDate(message)}}</h6>
-			</div>
-			<div class="item item-avatar-right item-text-wrap align-right" ng-show="!isMine(message)">
-				<img ng-src="{{data('chat').user.avatar}}">
-				{{message.message}}
-				<h6 ng-show="message.sentDate">{{dispDate(message)}}</h6>
-			</div>
+		<div class="item item-text-wrap chat" ss-avatar="{{isMine(message)}}" ng-repeat="message in history track by $index | orderBy:'sentDate'">
+			<img ng-src="{{getAvatar(message)}}">
+			{{message.message}}
+			<h6 ng-show="message.sentDate">{{dispDate(message)}}</h6>
 		</div>
 	</ion-content>
 	<ion-footer-bar class="bar-stable">

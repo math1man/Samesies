@@ -795,12 +795,7 @@
                 if (resp.result.items && resp.result.items.length) {
                     $scope.history = resp.result.items;
                     $scope.$apply();
-                    // the scroll delegate is actually the most annoying thing
-                    $timeout(function() {
-                        $ionicScrollDelegate.resize();
-                        $ionicScrollDelegate.scrollBottom(true);
-                        focusInput();
-                    }, 50);
+                    scrollBottom();
                 } else {
                     focusInput();
                 }
@@ -811,6 +806,14 @@
                 console.log(reason);
             });
         }
+
+        var scrollBottom = function() {
+            $timeout(function() {
+                $ionicScrollDelegate.resize();
+                $ionicScrollDelegate.scrollBottom(true);
+                focusInput();
+            }, 50);
+        };
 
         var randomId = function() {
             var output = "";
@@ -829,12 +832,7 @@
                     senderId: Data.user.id,
                     random: random
                 });
-                // this one kind of works so it can stay
-                $timeout(function() {
-                    $ionicScrollDelegate.resize();
-                    $ionicScrollDelegate.scrollBottom(true);
-                    focusInput();
-                }, 50);
+                scrollBottom();
                 API.sendMessage(Data.chat.id, Data.user.id, $scope.buffer, random).then(function (resp) {
                     addMessage(resp.result);
                 }, function(reason) {
@@ -896,12 +894,7 @@
                         $scope.history = $scope.history.slice(size - 100, size);
                     }
                     $scope.$apply();
-                    // TODO: ask Paul C about why these suck ass
-                    $timeout(function() {
-                        $ionicScrollDelegate.resize();
-                        $ionicScrollDelegate.scrollBottom(true);
-                        focusInput();
-                    }, 50);
+                    scrollBottom();
                 }
             });
         };
@@ -912,6 +905,14 @@
 
         $scope.isMine = function(message) {
             return (message.senderId === Data.user.id);
+        };
+
+        $scope.getAvatar = function(message) {
+            if ($scope.isMine(message)) {
+                return Data.user.avatar;
+            } else {
+                return Data.chat.user.avatar;
+            }
         };
 
         $scope.dispDate = function(message) {
