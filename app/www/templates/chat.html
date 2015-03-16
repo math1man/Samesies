@@ -2,7 +2,7 @@
 	<ion-nav-buttons side="right">
 		<button class="button button-icon icon ion-person-add" ng-show="showAddFriend()" ng-click="addFriend()"></button>
 	</ion-nav-buttons>
-	<ion-content delegate-handle="mainScroll">
+	<ion-content>
 		<div class="chat" ng-repeat="message in history track by $index | orderBy:'sentDate'">
 			<div class="item item-avatar-left item-text-wrap" ng-show="isMine(message)">
 				<img ng-src="{{data('user').avatar}}">

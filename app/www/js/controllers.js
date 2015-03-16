@@ -786,24 +786,31 @@
 
     });
 
-    app.controller('ChatCtrl', function($scope, $ionicPopup, $ionicScrollDelegate, API, Data, Utils) {
+    app.controller('ChatCtrl', function($scope, $timeout, $ionicPopup, $ionicScrollDelegate, API, Data, Utils) {
 
         $scope.buffer = '';
         $scope.history = [];
-        API.getMessages(Data.chat.id, Data.chat.startDate).then(function (resp) {
-            if (resp.result.items && resp.result.items.length) {
-                $scope.history = resp.result.items;
-                $scope.$apply();
-                // the scroll delegate is actually the most annoying thing
-                //$ionicScrollDelegate.scrollBottom();
-            }
-            focusInput();
-            Utils.interval(function() {
-                checkChat();
-            }, PING_INTERVAL);
-        }, function(reason) {
-            console.log(reason);
-        });
+        if (Data.chat) {
+            API.getMessages(Data.chat.id, Data.chat.startDate).then(function (resp) {
+                if (resp.result.items && resp.result.items.length) {
+                    $scope.history = resp.result.items;
+                    $scope.$apply();
+                    // the scroll delegate is actually the most annoying thing
+                    $timeout(function() {
+                        $ionicScrollDelegate.resize();
+                        $ionicScrollDelegate.scrollBottom(true);
+                        focusInput();
+                    }, 50);
+                } else {
+                    focusInput();
+                }
+                Utils.interval(function () {
+                    checkChat();
+                }, PING_INTERVAL);
+            }, function (reason) {
+                console.log(reason);
+            });
+        }
 
         var randomId = function() {
             var output = "";
@@ -823,14 +830,17 @@
                     random: random
                 });
                 // this one kind of works so it can stay
-                $ionicScrollDelegate.scrollBottom(true);
+                $timeout(function() {
+                    $ionicScrollDelegate.resize();
+                    $ionicScrollDelegate.scrollBottom(true);
+                    focusInput();
+                }, 50);
                 API.sendMessage(Data.chat.id, Data.user.id, $scope.buffer, random).then(function (resp) {
                     addMessage(resp.result);
                 }, function(reason) {
                     console.log(reason);
                 });
                 $scope.buffer = '';
-                focusInput();
             }
         };
 
@@ -881,10 +891,17 @@
                     for (var i=0; i<messages.length; i++) {
                         addMessage(messages[i]);
                     }
+                    var size = $scope.history.length;
+                    if (size > 110) {
+                        $scope.history = $scope.history.slice(size - 100, size);
+                    }
                     $scope.$apply();
-                    // this one also sucks
-                    //$ionicScrollDelegate.scrollBottom(true);
-                    focusInput();
+                    // TODO: ask Paul C about why these suck ass
+                    $timeout(function() {
+                        $ionicScrollDelegate.resize();
+                        $ionicScrollDelegate.scrollBottom(true);
+                        focusInput();
+                    }, 50);
                 }
             });
         };
@@ -906,7 +923,7 @@
         };
 
         $scope.showAddFriend = function() {
-            return !Utils.containsById(Data.friends, Data.chat.user.id);
+            return !Utils.containsById(Data.friends, Data.chat.user, 'user');
         };
 
         $scope.addFriend = function() {

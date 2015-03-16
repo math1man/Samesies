@@ -748,6 +748,10 @@ public class SamesiesApi {
         for (Entity e : pq.asIterable()) {
             messages.add(new Message(e));
         }
+        int size = messages.size();
+        if (size > 100) {
+            messages = messages.subList(size - 100, size);
+        }
         return messages;
     }
 
