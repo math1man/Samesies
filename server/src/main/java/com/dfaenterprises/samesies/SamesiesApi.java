@@ -647,6 +647,7 @@ public class SamesiesApi {
             chat = new Chat(eofid, isEpisode, myUid, theirUid);
         } else {
             chat.setIsClosed(false);
+            chat.setIsUpToDate(myUid, true);
         }
         EntityUtils.put(ds, chat);
         return chat;
@@ -711,7 +712,7 @@ public class SamesiesApi {
         DatastoreService ds = getDS();
         Chat chat = getChat(ds, cid);
         Message m = new Message(cid, myUid, message, random);
-        chat.setLastModified(m.getSentDate());
+        chat.update(myUid, m.getSentDate());
         EntityUtils.put(ds, chat, m);
         return m;
     }
@@ -719,8 +720,14 @@ public class SamesiesApi {
     @ApiMethod(name = "samesiesApi.getMessages",
             path = "chat/messages/{chatId}/{after}",
             httpMethod = ApiMethod.HttpMethod.GET)
-    public List<Message> getMessages(@Named("chatId") long cid, @Named("after") Date after) throws ServiceException {
+    public List<Message> getMessages(@Named("chatId") long cid, @Named("after") Date after, @Nullable @Named("myId") Long myUid) throws ServiceException {
+        // **Low-Priority** TODO: eventually remove the @Nullable to the myUid parameter. For now we need it for backwards compatibility
         DatastoreService ds = getDS();
+        if (myUid != null) {
+            Chat chat = getChat(ds, cid);
+            chat.setIsUpToDate(myUid, true);
+            EntityUtils.put(ds, chat);
+        }
         Query query = new Query("Message").setFilter(Query.CompositeFilterOperator.and(
                 new Query.FilterPredicate("chatId", Query.FilterOperator.EQUAL, cid),
                 new Query.FilterPredicate("sentDate", Query.FilterOperator.GREATER_THAN, after)))

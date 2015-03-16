@@ -325,7 +325,7 @@
 
     });
 
-    app.controller('MenuCtrl', function ($scope, $ionicModal, $ionicPopup, $ionicPopover, API, Data) {
+    app.controller('MenuCtrl', function ($scope, $ionicModal, $ionicPopup, $ionicPopover, API, Data, Utils) {
 
         $scope.$on('$ionicView.beforeEnter', function() {
             $scope.refresh();
@@ -348,8 +348,9 @@
 
         $scope.logout = function() {
             Data.user = null;
-            Data.friends = [];
             Data.connections = [];
+            Data.chats = [];
+            Data.friends = [];
             Data.isLoading = 0;
             $scope.loginPopup.show();
         };
@@ -374,8 +375,15 @@
         };
 
         $scope.getChatCount = function() {
-            // TODO: indicate new messages
-            return 0;
+            var count = 0;
+            if (Data.chats && Data.chats.length) {
+                for (var i = 0; i < Data.chats.length; i++) {
+                    if (Utils.isUpdated(Data.chats[i])) {
+                        count++;
+                    }
+                }
+            }
+            return count;
         };
 
         $scope.getFriendRequestCount = function() {
@@ -750,6 +758,11 @@
         $scope.search = '';
 
         $scope.goChat = function(chat) {
+            if (chat.uid1 === Data.user.id) {
+                chat.isUpToDate1 = true;
+            } else {
+                chat.isUpToDate2 = true;
+            }
             Data.chat = chat;
             $state.go('chat');
         };
@@ -774,6 +787,10 @@
             }
         };
 
+        $scope.showBadge = function(chat) {
+            return Utils.isUpdated(chat);
+        };
+
         var close = function(chat) {
             API.closeChat(chat.id);
             Utils.removeById(Data.chats, chat);
@@ -790,7 +807,7 @@
             if (!Data.chat.isEpisode) {
                 friendPending = 2;
             }
-            API.getMessages(Data.chat.id, Data.chat.startDate).then(function (resp) {
+            API.getMessages(Data.chat.id, Data.chat.startDate, Data.user.id).then(function (resp) {
                 if (resp.result.items && resp.result.items.length) {
                     $scope.history = resp.result.items;
                     $scope.$apply();
@@ -895,7 +912,7 @@
                     });
                 }
             }
-            API.getMessages(Data.chat.id, Data.chat.lastModified).then(function (resp) {
+            API.getMessages(Data.chat.id, Data.chat.lastModified, Data.user.id).then(function (resp) {
                 var messages = resp.result.items;
                 if (messages && messages.length > 0) {
                     for (var i=0; i<messages.length; i++) {

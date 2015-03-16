@@ -9,12 +9,12 @@
         <ion-content>
             <ss-loading ng-show="data('isLoading')"></ss-loading>
             <div class="row hidden-grid" ng-repeat="chat in data('chats') | checkName:search | orderBy:'lastModified':true">
-                <!--TODO: indicate new messages?-->
                 <div class="col col-90">
                     <div class="item item-avatar" ng-click="goChat(chat)">
                         <img ng-src="{{chat.user.avatar}}">
                         {{dispName(chat.user)}}
                         <p ng-show="chat.user.name">{{chat.user.alias}}</p>
+                        <span class="badge badge-royal" ng-show="showBadge(chat)">!</span>
                     </div>
                 </div>
                 <div class="col col-10">

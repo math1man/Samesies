@@ -122,8 +122,8 @@
             sendMessage: function(chatId, myId, message, random) {
                 return API.sendMessage({chatId: chatId, myId: myId, message: message, random: random});
             },
-            getMessages: function(chatId, after) {
-                return API.getMessages({chatId: chatId, after: after});
+            getMessages: function(chatId, after, myId) {
+                return API.getMessages({chatId: chatId, after: after, myId: myId});
             },
             sendFeedback: function(feedback) {
                 API.sendFeedback(feedback).then();
@@ -148,39 +148,6 @@
                     hasAllQuestions = user.questions[i];
                 }
                 return hasAllQuestions;
-            },
-            addById: function(list, item, expr) {
-                var index = this.indexOfById(list, item, expr);
-                if (index === -1) {
-                    list.push(item);
-                } else {
-                    list[index] = item;
-                }
-            },
-            removeById: function(list, item, expr) {
-                var index = this.indexOfById(list, item, expr);
-                if (index > -1) {
-                    list.splice(index, 1);
-                }
-            },
-            containsById: function(list, item, expr) {
-                return this.indexOfById(list, item, expr) > -1;
-            },
-            indexOfById: function(list, item, expr) {
-                if (list && list.length) {
-                    for (var i = 0; i < list.length; i++) {
-                        var element;
-                        if (expr) {
-                            element = $parse(expr)(list[i]);
-                        } else {
-                            element = list[i];
-                        }
-                        if (element.id === item.id) {
-                            return i;
-                        }
-                    }
-                }
-                return -1;
             },
             getData: function(episode) {
                 if (episode.data) {
@@ -222,6 +189,48 @@
                         theirAnswer: theirAnswer
                     }
                 }
+            },
+            isUpdated: function(chat) {
+                if (chat) {
+                    if (chat.uid1 === Data.user.id) {
+                        return !chat.isUpToDate1;
+                    } else {
+                        return !chat.isUpToDate2;
+                    }
+                }
+            },
+            addById: function(list, item, expr) {
+                var index = this.indexOfById(list, item, expr);
+                if (index === -1) {
+                    list.push(item);
+                } else {
+                    list[index] = item;
+                }
+            },
+            removeById: function(list, item, expr) {
+                var index = this.indexOfById(list, item, expr);
+                if (index > -1) {
+                    list.splice(index, 1);
+                }
+            },
+            containsById: function(list, item, expr) {
+                return this.indexOfById(list, item, expr) > -1;
+            },
+            indexOfById: function(list, item, expr) {
+                if (list && list.length) {
+                    for (var i = 0; i < list.length; i++) {
+                        var element;
+                        if (expr) {
+                            element = $parse(expr)(list[i]);
+                        } else {
+                            element = list[i];
+                        }
+                        if (element.id === item.id) {
+                            return i;
+                        }
+                    }
+                }
+                return -1;
             },
             interval: function(fn, delay) {
                 var temp = $interval(fn, delay);

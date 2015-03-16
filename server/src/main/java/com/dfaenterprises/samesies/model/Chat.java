@@ -28,6 +28,8 @@ public class Chat extends Pairing {
     private Boolean isEpisode; // or friend origin
     private Boolean isClosed;  // chats are closed if a user closes them
     private Date lastModified; // closed chats will not show up in getChats, but calling startChat will reopen them
+    private Boolean isUpToDate1;
+    private Boolean isUpToDate2;
 
     public Chat() {
     }
@@ -39,6 +41,8 @@ public class Chat extends Pairing {
         this.isEpisode = (Boolean) e.getProperty("isEpisode");
         this.isClosed = (Boolean) e.getProperty("isClosed");
         this.lastModified = (Date) e.getProperty("lastModified");
+        this.isUpToDate1 = (Boolean) e.getProperty("isUpToDate1");
+        this.isUpToDate2 = (Boolean) e.getProperty("isUpToDate2");
     }
 
     public Chat(Long eofid, Boolean isEpisode, Long uid1, Long uid2) {
@@ -48,6 +52,8 @@ public class Chat extends Pairing {
         this.isEpisode = isEpisode;
         this.isClosed = false;
         this.lastModified = startDate;
+        this.isUpToDate1 = true;
+        this.isUpToDate2 = false;
     }
 
     public Date getStartDate() {
@@ -90,6 +96,49 @@ public class Chat extends Pairing {
         this.lastModified = lastModified;
     }
 
+    public Boolean getIsUpToDate1() {
+        return isUpToDate1;
+    }
+
+    public void setIsUpToDate1(Boolean isUpToDate1) {
+        this.isUpToDate1 = isUpToDate1;
+    }
+
+    public Boolean getIsUpToDate2() {
+        return isUpToDate2;
+    }
+
+    public void setIsUpToDate2(Boolean isUpToDate2) {
+        this.isUpToDate2 = isUpToDate2;
+    }
+
+    public Boolean getIsUpToDate(long id) {
+        if (isUid1(id)) {
+            return getIsUpToDate1();
+        } else {
+            return getIsUpToDate2();
+        }
+    }
+
+    public void setIsUpToDate(long id, Boolean isUpToDate) {
+        if (isUid1(id)) {
+            setIsUpToDate1(isUpToDate);
+        } else {
+            setIsUpToDate2(isUpToDate);
+        }
+    }
+
+    public void update(long id, Date modified) {
+        setLastModified(modified);
+        if (isUid1(id)) {
+            setIsUpToDate1(true);
+            setIsUpToDate2(false);
+        } else {
+            setIsUpToDate1(false);
+            setIsUpToDate2(true);
+        }
+    }
+
     @Override
     public Entity toEntity() {
         Entity e = getEntity("Chat");
@@ -98,6 +147,8 @@ public class Chat extends Pairing {
         e.setProperty("isEpisode", isEpisode);
         e.setProperty("isClosed", isClosed);
         e.setProperty("lastModified", lastModified);
+        e.setUnindexedProperty("isUpToDate1", isUpToDate1);
+        e.setUnindexedProperty("isUpToDate2", isUpToDate2);
         return e;
     }
 }
