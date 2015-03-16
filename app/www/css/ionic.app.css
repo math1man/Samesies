@@ -7079,6 +7079,12 @@ h6 {
 .small-icon {
   font-size: small; }
 
+.icon .icon-badge {
+  position: absolute;
+  top: 3px;
+  right: 0px;
+  font-size: 8px; }
+
 input[readonly]:not(.cloned-text-input) {
   background-color: inherit;
   cursor: inherit; }

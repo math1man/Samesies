@@ -28,14 +28,17 @@
             updateUser: function(user) {
                 return API.updateUser(user);
             },
-            getFriends: function(id) {
-                return API.getFriends({id: id});
-            },
             findUser: function(email) {
                 return API.findUser({email: email});
             },
             flagUser: function(flaggedId, flaggerId, reason) {
                 API.flagUser({flaggedId: flaggedId, flaggerId: flaggerId, reason: reason}).then();
+            },
+            getFriends: function(id) {
+                return API.getFriends({id: id});
+            },
+            checkFriend: function(myId, theirId) {
+                return API.checkFriend({myId: myId, theirId: theirId});
             },
             addFriend: function(myId, theirId) {
                 return API.addFriend({myId: myId, theirId: theirId});
@@ -145,6 +148,20 @@
                     hasAllQuestions = user.questions[i];
                 }
                 return hasAllQuestions;
+            },
+            addById: function(list, item, expr) {
+                var index = this.indexOfById(list, item, expr);
+                if (index === -1) {
+                    list.push(item);
+                } else {
+                    list[index] = item;
+                }
+            },
+            removeById: function(list, item, expr) {
+                var index = this.indexOfById(list, item, expr);
+                if (index > -1) {
+                    list.splice(index, 1);
+                }
             },
             containsById: function(list, item, expr) {
                 return this.indexOfById(list, item, expr) > -1;

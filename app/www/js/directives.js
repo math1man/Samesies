@@ -25,19 +25,4 @@
         }
     });
 
-    app.directive('ssAvatar', function () {
-        return {
-            restrict: 'A',
-            link: function ($scope, $element, $attrs) {
-                if ($attrs.ssAvatar === "true") {
-                    angular.element($element).addClass("item-avatar-left");
-                    console.log("left")
-                } else {
-                    angular.element($element).addClass("item-avatar-right align-right");
-                    console.log("right")
-                }
-            }
-        }
-    });
-
 })();

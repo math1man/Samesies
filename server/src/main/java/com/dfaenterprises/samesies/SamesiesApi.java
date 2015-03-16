@@ -308,6 +308,13 @@ public class SamesiesApi {
         return friends;
     }
 
+    @ApiMethod(name = "samesiesApi.checkFriend",
+            path = "friends/check/{myId}/{theirId}",
+            httpMethod = ApiMethod.HttpMethod.GET)
+    public Friend checkFriend(@Named("myId") long myId, @Named("theirId") long theirId) throws ServiceException {
+        return getFriend(getDS(), myId, theirId);
+    }
+
     @ApiMethod(name = "samesiesApi.addFriend",
             path = "friends/add/{myId}/{theirId}",
             httpMethod = ApiMethod.HttpMethod.POST)
@@ -318,43 +325,26 @@ public class SamesiesApi {
             throw new ForbiddenException("Cannot add oneself as a friend");
         }
 
-        Friend friend;
-        Query query = new Query("Friend").setFilter(Query.CompositeFilterOperator.and(
-                new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, myId),
-                new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, theirId)));
-        PreparedQuery pq = ds.prepare(query);
-        Entity e = pq.asSingleEntity();
-        if (e == null) {
-            // Try the other order
-            query = new Query("Friend").setFilter(Query.CompositeFilterOperator.and(
-                    new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, theirId),
-                    new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, myId)));
-            pq = ds.prepare(query);
-            e = pq.asSingleEntity();
-            if (e == null) {
-                // create new friend
-                friend = new Friend(myId, theirId);
-            } else {
-                // friend exists in reverse order
-                friend = new Friend(e);
-                if (friend.getStatus() == Friend.Status.PENDING) {
-                    // if both have added each other, accept
-                    friend.setStatus(Friend.Status.ACCEPTED);
-                } else if (friend.getStatus() == Friend.Status.DELETED_2) {
-                    // if you had deleted them, set it back to pending
-                    friend.setUid1(myId);
-                    friend.setUid2(theirId);
-                    friend.setStatus(Friend.Status.PENDING);
-                }
-                // if already accepted or deleted by them, leave it
-            }
-        } else {
-            friend = new Friend(e);
+        Friend friend = getFriend(ds, myId, theirId);
+        if (friend == null) {
+            friend = new Friend(myId, theirId);
+        } else if (friend.isUid1(myId)) {
             if (friend.getStatus() == Friend.Status.DELETED_1) {
                 // if you had deleted them, set it back to pending
                 friend.setStatus(Friend.Status.PENDING);
             }
             // if already pending, accepted, or deleted by them, leave it
+        } else {
+            if (friend.getStatus() == Friend.Status.PENDING) {
+                // if both have added each other, accept
+                friend.setStatus(Friend.Status.ACCEPTED);
+            } else if (friend.getStatus() == Friend.Status.DELETED_2) {
+                // if you had deleted them, set it back to pending
+                friend.setUid1(myId);
+                friend.setUid2(theirId);
+                friend.setStatus(Friend.Status.PENDING);
+            }
+            // if already accepted or deleted by them, leave it
         }
         if (friend.getStatus().isDeleted()) {
             return null;
@@ -490,14 +480,6 @@ public class SamesiesApi {
         return modes;
     }
 
-    /**
-     * Finds a new random episode.
-     * If a currently matching episode matches with the user, matches the episode and returns it.
-     * If none match, creates a new matching episode and returns that episode.
-     * @param myUid
-     * @return
-     * @throws ServiceException
-     */
     @ApiMethod(name = "samesiesApi.findEpisode",
             path = "episode/find/{myId}/{mode}/{matchMale}/{matchFemale}/{matchOther}",
             httpMethod = ApiMethod.HttpMethod.POST)
@@ -825,6 +807,28 @@ public class SamesiesApi {
         } else {
             return new User(e, relation);
         }
+    }
+
+    private static Friend getFriend(DatastoreService ds, long myId, long theirId) {
+        if (myId == theirId) {
+            return null;
+        }
+        Query query = new Query("Friend").setFilter(Query.CompositeFilterOperator.and(
+                new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, myId),
+                new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, theirId)));
+        PreparedQuery pq = ds.prepare(query);
+        Entity e = pq.asSingleEntity();
+        if (e == null) {
+            query = new Query("Friend").setFilter(Query.CompositeFilterOperator.and(
+                    new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, theirId),
+                    new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, myId)));
+            pq = ds.prepare(query);
+            e = pq.asSingleEntity();
+            if (e == null) {
+                return null;
+            }
+        }
+        return new Friend(e);
     }
 
     private static Question getQuestion(DatastoreService ds, long qid) throws NotFoundException {

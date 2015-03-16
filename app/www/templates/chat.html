@@ -1,10 +1,12 @@
 <ion-view view-title="{{dispName(data('tempUser'))}}" ng-controller="ChatCtrl">
 	<ion-nav-buttons side="right">
-		<button class="button button-icon icon ion-person-add" ng-show="showAddFriend()" ng-click="addFriend()"></button>
+		<button class="button button-icon icon ion-person-add" ng-show="showAddFriend()" ng-click="addFriend()">
+			<span class="badge badge-assertive icon-badge" ng-show="showOtherAdded()">+</span>
+		</button>
 	</ion-nav-buttons>
 	<ion-content>
-		<div class="item item-text-wrap chat" ss-avatar="{{isMine(message)}}"
-			 ng-repeat="message in history track by $index | orderBy:'sentDate'">
+		<div class="item item-text-wrap chat" ng-repeat="message in history track by $index | orderBy:'sentDate'"
+			 ng-class="{'item-avatar-left': isMine(message), 'item-avatar-right align-right': !isMine(message)}">
 			<img ng-src="{{getAvatar(message)}}">
 			{{message.message}}
 			<h6 ng-show="message.sentDate">{{dispDate(message)}}</h6>

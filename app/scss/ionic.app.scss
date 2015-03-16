@@ -106,6 +106,14 @@ h6 {
   font-size: small;
 }
 
+.icon .icon-badge {
+  position: absolute;
+  top: 3px;
+  right: 0px;
+  font-size: 8px;
+//  visibility: hidden;
+}
+
 input[readonly]:not(.cloned-text-input) {
   background-color: inherit;
   cursor: inherit;

@@ -562,12 +562,7 @@
                                 API.startChat(friend.id, false, Data.user.id, friend.user.id).then(function (resp) {
                                     Data.chat = resp.result;
                                     Data.chat.user = friend.user;
-                                    var chatIndex = Utils.indexOfById(Data.chats, Data.chat);
-                                    if (chatIndex === -1) {
-                                        Data.chats.push(Data.chat);
-                                    } else {
-                                        Data.chats[chatIndex] = Data.chat;
-                                    }
+                                    Utils.addById(Data.chats, Data.chat);
                                     $state.go('chat');
                                 }, function (reason) {
                                     console.log(reason);
@@ -781,7 +776,7 @@
 
         var close = function(chat) {
             API.closeChat(chat.id);
-            Data.chats.splice(Utils.indexOfById(Data.chats, chat), 1);
+            Utils.removeById(Data.chats, chat);
         }
 
     });
@@ -790,7 +785,11 @@
 
         $scope.buffer = '';
         $scope.history = [];
+        var friendPending = 0; // 0: they haven't clicked, 1: they clicked, 2: accepted
         if (Data.chat) {
+            if (!Data.chat.isEpisode) {
+                friendPending = 2;
+            }
             API.getMessages(Data.chat.id, Data.chat.startDate).then(function (resp) {
                 if (resp.result.items && resp.result.items.length) {
                     $scope.history = resp.result.items;
@@ -882,6 +881,19 @@
                         });
                     }
                 });
+                if (!friendPending) { // if its pending, it will stay that way until user accepts
+                    API.checkFriend(Data.user.id, Data.chat.user.id).then(function (resp) {
+                        var friend = resp.result;
+                        if (friend) {
+                            Utils.addById(Data.friends, friend);
+                            if (friend.status === 'ACCEPTED') {
+                                friendPending = 2;
+                            } else if (friend.uid2 === Data.user.id) {
+                                friendPending = 1;
+                            }
+                        }
+                    });
+                }
             }
             API.getMessages(Data.chat.id, Data.chat.lastModified).then(function (resp) {
                 var messages = resp.result.items;
@@ -924,17 +936,22 @@
         };
 
         $scope.showAddFriend = function() {
-            return !Utils.containsById(Data.friends, Data.chat.user, 'user');
+            return friendPending < 2;
+        };
+
+        $scope.showOtherAdded = function() {
+            return friendPending === 1;
         };
 
         $scope.addFriend = function() {
             API.addFriend(Data.user.id, Data.chat.user.id).then(function(resp) {
                 var friend = resp.result;
-                Data.friends.push(friend);
-                // TODO: some sort of friend indication? for both parties?
-                // convert to a friend-chat if both accept
-                if (friend.status === 'ACCEPTED') {
-                    API.updateChat(Data.chat.id, friend.id, false);
+                if (friend) {
+                    Utils.addById(Data.friends, friend);
+                    if (friend.status === 'ACCEPTED') {
+                        API.updateChat(Data.chat.id, friend.id, false);
+                        friendPending = 2;
+                    }
                 }
             });
         };
@@ -976,22 +993,16 @@
         $scope.accept = function(friend) {
             API.addFriend(Data.user.id, friend.user.id).then(function(resp) {
                 var friend = resp.result;
-                var index = Utils.indexOfById(Data.friends, friend, 'user');
-                if (index > -1) {
-                    Data.friends[index] = friend;
-                } else {
-                    Data.friends.push(friend);
+                if (friend) {
+                    Utils.addById(Data.friends, friend);
+                    $scope.profile(friend.user);
                 }
-                $scope.profile(friend.user);
             });
         };
 
         $scope.reject = function(friend) {
             API.removeFriend(friend.id, Data.user.id);
-            var index = Utils.indexOfById(Data.friends, friend.user, 'user');
-            if (index > -1) {
-                Data.friends.splice(index, 1);
-            }
+            Utils.removeById(Data.friends, friend);
         };
 
         $scope.remove = function(friend) {
@@ -1030,7 +1041,7 @@
             if ($scope.tempUser) {
                 API.addFriend(Data.user.id, $scope.tempUser.id).then(function(resp) {
                     var friend = resp.result;
-                    if (!Utils.containsById(Data.friends, friend.id)) {
+                    if (friend && !Utils.containsById(Data.friends, friend)) {
                         Data.friends.push(friend);
                         $scope.$apply();
                     }
@@ -1081,10 +1092,7 @@
         };
 
         var removeCxn = function(cxn) {
-            var index = Utils.indexOfById(Data.connections, cxn);
-            if (index > -1) {
-                Data.connections.splice(index, 1);
-            }
+            Utils.removeById(Data.connections, cxn);
         };
     });
 
