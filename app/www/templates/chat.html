@@ -1,4 +1,4 @@
-<ion-view view-title="{{dispName(data('tempUser'))}}" ng-controller="ChatCtrl">
+<ion-view view-title="{{dispName(data('chat').user)}}" ng-controller="ChatCtrl">
 	<ion-nav-buttons side="right">
 		<button class="button button-icon icon ion-person-add" ng-show="showAddFriend()" ng-click="addFriend()">
 			<span class="badge badge-assertive icon-badge" ng-show="showOtherAdded()">+</span>
