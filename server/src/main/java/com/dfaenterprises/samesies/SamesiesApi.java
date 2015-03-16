@@ -721,7 +721,9 @@ public class SamesiesApi {
             path = "chat/messages/{chatId}/{after}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Message> getMessages(@Named("chatId") long cid, @Named("after") Date after, @Nullable @Named("myId") Long myUid) throws ServiceException {
-        // **Low-Priority** TODO: eventually remove the @Nullable to the myUid parameter. For now we need it for backwards compatibility
+        // TODO: eventually remove the @Nullable to the myUid parameter
+        // For now we need it for backwards compatibility
+        // once this change can be made, we can go to v0.3.0
         DatastoreService ds = getDS();
         if (myUid != null) {
             Chat chat = getChat(ds, cid);
