@@ -851,7 +851,7 @@ public class SamesiesApi {
         List<Long> questions = new ArrayList<>();
         if (!mode.equals("Personal")) { // personal questions can be ignored at this stage
             Query query = new Query("Question").setKeysOnly();
-            // **Post-Beta** TODO: when we have more categories, this code might get more complex
+            // **Reminder** TODO: when we have more categories, this code might get more complex
             query.setFilter(new Query.FilterPredicate("category", Query.FilterOperator.EQUAL, mode));
             PreparedQuery pq = ds.prepare(query);
             int max = pq.countEntities(FetchOptions.Builder.withDefaults());
