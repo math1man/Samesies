@@ -486,6 +486,7 @@ public class SamesiesApi {
     public Episode findEpisode(@Named("myId") long myUid, @Named("mode") String mode, @Named("matchMale") boolean matchMale,
                                @Named("matchFemale") boolean matchFemale, @Named("matchOther") boolean matchOther) throws ServiceException {
         DatastoreService ds = getDS();
+        // TODO: needs to match by community/location also...
 
         Settings settings = new Settings(mode, matchMale, matchFemale, matchOther);
 
