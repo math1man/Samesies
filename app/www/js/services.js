@@ -80,10 +80,7 @@
                 return API.connectEpisode({
                     myId: myId,
                     theirId: theirId,
-                    mode: settings.mode.mode,
-                    matchMale: settings.matchMale,
-                    matchFemale: settings.matchFemale,
-                    matchOther: settings.matchOther
+                    mode: settings.mode.mode
                 });
             },
             acceptEpisode: function(id) {

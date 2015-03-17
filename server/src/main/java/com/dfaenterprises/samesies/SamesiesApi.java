@@ -510,6 +510,7 @@ public class SamesiesApi {
             episode.setStatus(Episode.Status.IN_PROGRESS);
             episode.setUid2(myUid);
             episode.setQids(getQids(ds, mode));
+            episode.modify();
         }
         EntityUtils.put(ds, episode);
         return episode;
@@ -533,6 +534,7 @@ public class SamesiesApi {
         DatastoreService ds = getDS();
         Episode episode = getEpisode(ds, eid);
         episode.setStatus(Episode.Status.IN_PROGRESS);
+        episode.modify();
         EntityUtils.put(ds, episode);
     }
 
@@ -562,6 +564,7 @@ public class SamesiesApi {
         }
         answers.add(answer);
         episode.setAnswers(myUid, answers);
+        episode.modify();
         EntityUtils.put(ds, episode, a);
         return episode;
     }
@@ -579,6 +582,7 @@ public class SamesiesApi {
         } else {
             episode.setStatus(Episode.Status.ABANDONED);
         }
+        episode.modify();
         EntityUtils.put(ds, episode);
     }
 
@@ -594,6 +598,7 @@ public class SamesiesApi {
                         new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, uid)),
                 new Query.FilterPredicate("isPersistent", Query.FilterOperator.EQUAL, true)))
                 .addSort("startDate", Query.SortDirection.ASCENDING);
+        // TODO: sort by lastModified instead
         PreparedQuery pq = ds.prepare(query);
 
         List<Episode> connections = new ArrayList<>();
@@ -773,8 +778,13 @@ public class SamesiesApi {
      * @param settings2
      * @return
      */
-    private static boolean isMatch(DatastoreService ds, Long uid1, Settings settings1, Long uid2, Settings settings2) throws NotFoundException {
-        if (uid1.equals(uid2)) { // cannot match with yourself (somehow)
+    private static boolean isMatch(DatastoreService ds, long uid1, Settings settings1, long uid2, Settings settings2) throws NotFoundException {
+        if (uid1 == uid2) { // cannot match with yourself (somehow)
+            return false;
+        }
+        // make sure their last pairing wasn't each other
+        Episode mostRecent = getMostRecentEpisode(ds, uid1);
+        if (mostRecent != null && mostRecent.getOtherUid(uid1).equals(uid2)) {
             return false;
         }
         // finally check that genders are acceptable to each other
@@ -880,6 +890,20 @@ public class SamesiesApi {
             return new Episode(ds.get(KeyFactory.createKey("Episode", eid)));
         } catch (EntityNotFoundException e) {
             throw new NotFoundException("Episode not found", e);
+        }
+    }
+
+    private static Episode getMostRecentEpisode(DatastoreService ds, long uid) {
+        Query query = new Query("Episode").setFilter(Query.CompositeFilterOperator.or(
+                        new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, uid),
+                        new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, uid)))
+                .addSort("startDate", Query.SortDirection.DESCENDING);
+        PreparedQuery pq = ds.prepare(query);
+        Iterator<Entity> iter = pq.asIterator(FetchOptions.Builder.withLimit(1));
+        if (iter.hasNext()) {
+            return new Episode(iter.next());
+        } else {
+            return null;
         }
     }
 

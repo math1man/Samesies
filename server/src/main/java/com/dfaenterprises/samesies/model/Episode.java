@@ -22,6 +22,7 @@ public class Episode extends Pairing {
     private List<Long> qids;
     private List<String> answers1;
     private List<String> answers2;
+    private Date lastModified;
 
     public Episode() {
     }
@@ -39,6 +40,7 @@ public class Episode extends Pairing {
         this.qids = EntityUtils.entityToList(e.getProperty("qids"), 10, Long.class);
         this.answers1 = EntityUtils.entityToList(e.getProperty("answers1"), 10, String.class);
         this.answers2 = EntityUtils.entityToList(e.getProperty("answers2"), 10, String.class);
+        this.lastModified = (Date) e.getProperty("lastModified");
     }
 
     /**
@@ -52,6 +54,7 @@ public class Episode extends Pairing {
         this.isPersistent = false;
         this.settings = settings;
         this.status = Status.MATCHING;
+        this.lastModified = startDate;
     }
 
     /**
@@ -66,6 +69,7 @@ public class Episode extends Pairing {
         this.isPersistent = true;
         this.settings = settings;
         this.status = Status.MATCHING;
+        this.lastModified = startDate;
     }
 
     public Date getStartDate() {
@@ -124,6 +128,14 @@ public class Episode extends Pairing {
         this.answers2 = answers2;
     }
 
+    public Date getLastModified() {
+        return lastModified;
+    }
+
+    public void setLastModified(Date lastModified) {
+        this.lastModified = lastModified;
+    }
+
     public List<String> getAnswers(long uid) {
         if (isUid1(uid)) {
             return getAnswers1();
@@ -140,6 +152,10 @@ public class Episode extends Pairing {
         }
     }
 
+    public void modify() {
+        lastModified = new Date();
+    }
+
     public boolean isPersonal() {
         return settings.getMode().equals("Personal");
     }
@@ -153,9 +169,10 @@ public class Episode extends Pairing {
         e.setUnindexedProperty("matchFemale", settings.getMatchFemale());
         e.setUnindexedProperty("matchOther", settings.getMatchOther());
         e.setProperty("status", status.name());
-        e.setProperty("qids", EntityUtils.listToEntity(qids));
-        e.setProperty("answers1", EntityUtils.listToEntity(answers1));
-        e.setProperty("answers2", EntityUtils.listToEntity(answers2));
+        e.setUnindexedProperty("qids", EntityUtils.listToEntity(qids));
+        e.setUnindexedProperty("answers1", EntityUtils.listToEntity(answers1));
+        e.setUnindexedProperty("answers2", EntityUtils.listToEntity(answers2));
+        e.setProperty("lastModified", lastModified);
         return e;
     }
 }
