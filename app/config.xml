@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<widget id="com.dfaenterprises.samesies" version="0.3.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="com.dfaenterprises.samesies" version="0.2.9" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
   <name>Samesies</name>
   <description>
-        A new way to meet people.
+    A new way to meet people.
   </description>
   <author email="samesies.app@gmail.com" href="">
-      Ari Weiland and Paul Rice
+    Ari Weiland and Paul Rice
   </author>
   <content src="index.html"/>
   <access origin="*"/>
@@ -17,5 +17,8 @@
   <preference name="SplashScreenDelay" value="4000"/>
   <feature name="StatusBar">
     <param name="ios-package" value="CDVStatusBar" onload="true"/>
+  </feature>
+  <feature name="Keyboard">
+    <param name="ios-package" value="IonicKeyboard" onload="true" />
   </feature>
 </widget>

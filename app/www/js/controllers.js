@@ -800,6 +800,8 @@
 
     app.controller('ChatCtrl', function($scope, $timeout, $ionicPopup, $ionicScrollDelegate, API, Data, Utils) {
 
+        // TODO: the focusInput/scrollBottom interactions are really awkward, so we aren't using focusInput atm
+
         $scope.buffer = '';
         $scope.history = [];
         var friendPending = 0; // 0: they haven't clicked, 1: they clicked, 2: accepted
@@ -811,9 +813,7 @@
                 if (resp.result.items && resp.result.items.length) {
                     $scope.history = resp.result.items;
                     $scope.$apply();
-                    scrollBottom();
-                } else {
-                    focusInput();
+                    scrollBottom(true);
                 }
                 Utils.interval(function () {
                     checkChat();
@@ -823,11 +823,10 @@
             });
         }
 
-        var scrollBottom = function() {
+        var scrollBottom = function(animate) {
             $timeout(function() {
                 $ionicScrollDelegate.resize();
-                $ionicScrollDelegate.scrollBottom(true);
-                focusInput();
+                $ionicScrollDelegate.scrollBottom(animate);
             }, 50);
         };
 
@@ -848,11 +847,9 @@
                     senderId: Data.user.id,
                     random: random
                 });
-                scrollBottom();
+                scrollBottom(true);
                 API.sendMessage(Data.chat.id, Data.user.id, $scope.buffer, random).then(function (resp) {
                     addMessage(resp.result);
-                }, function(reason) {
-                    console.log(reason);
                 });
                 $scope.buffer = '';
             }
@@ -923,7 +920,7 @@
                         $scope.history = $scope.history.slice(size - 100, size);
                     }
                     $scope.$apply();
-                    scrollBottom();
+                    scrollBottom(true);
                 }
             });
         };
