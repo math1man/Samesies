@@ -47,8 +47,7 @@
                 API.removeFriend({id: id, myId: myId}).then();
             },
             getCommunity: function(name) {
-                // **Low-Priority** TODO: eventually rename this parameter to name
-                return API.getCommunity({location: name});
+                return API.getCommunity({name: name});
             },
             getQuestion: function(id) {
                 return API.getQuestion({id: id});
