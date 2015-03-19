@@ -39,10 +39,10 @@ public class Episode extends Pairing {
                 (Boolean) e.getProperty("matchOther"),
                 (GeoPt)   e.getProperty("location"),
                 (String)  e.getProperty("community"));
-        this.status = Status.valueOf((String) e.getProperty("status"));
-        this.qids = EntityUtils.entityToList(e.getProperty("qids"), 10, Long.class);
-        this.answers1 = EntityUtils.entityToList(e.getProperty("answers1"), 10, String.class);
-        this.answers2 = EntityUtils.entityToList(e.getProperty("answers2"), 10, String.class);
+        this.status = EntityUtils.getEnumProp(e, "status", Status.class);
+        this.qids = EntityUtils.getListProp(e, "qids", 10, Long.class);
+        this.answers1 = EntityUtils.getListProp(e, "answers1", 10, String.class);
+        this.answers2 = EntityUtils.getListProp(e, "answers2", 10, String.class);
         this.lastModified = (Date) e.getProperty("lastModified");
     }
 
@@ -174,9 +174,9 @@ public class Episode extends Pairing {
         e.setUnindexedProperty("location", settings.getLocation());
         e.setUnindexedProperty("community", settings.getCommunity());
         e.setProperty("status", status.name());
-        e.setUnindexedProperty("qids", EntityUtils.listToEntity(qids));
-        e.setUnindexedProperty("answers1", EntityUtils.listToEntity(answers1));
-        e.setUnindexedProperty("answers2", EntityUtils.listToEntity(answers2));
+        EntityUtils.setListProp(e, "qids", qids);
+        EntityUtils.setListProp(e, "answers1", answers1);
+        EntityUtils.setListProp(e, "answers2", answers2);
         e.setProperty("lastModified", lastModified);
         return e;
     }

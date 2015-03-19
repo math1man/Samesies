@@ -65,7 +65,7 @@ public class User extends Storable {
             this.age = (Long) e.getProperty("age");
             this.gender = (String) e.getProperty("gender");
             this.aboutMe = (String) e.getProperty("aboutMe");
-            this.questions = EntityUtils.entityToList(e.getProperty("questions"), 5, String.class);
+            this.questions = EntityUtils.getListProp(e, "questions", 5, String.class);
         }
     }
 
@@ -261,7 +261,7 @@ public class User extends Storable {
         e.setProperty("age", age);
         e.setProperty("gender", gender);
         e.setUnindexedProperty("aboutMe", aboutMe);
-        e.setUnindexedProperty("questions", EntityUtils.listToEntity(questions));
+        EntityUtils.setListProp(e, "questions", questions);
         e.setProperty("isActivated", isActivated);
         e.setProperty("isBanned", isBanned);
         return e;

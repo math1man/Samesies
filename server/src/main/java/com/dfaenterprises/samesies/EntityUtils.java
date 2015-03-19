@@ -13,27 +13,40 @@ import java.util.List;
  */
 public class EntityUtils {
 
-    public static <T> EmbeddedEntity listToEntity(List<T> ts) {
-        EmbeddedEntity e = new EmbeddedEntity();
-        if (ts != null) {
-            for (int i=0; i<ts.size(); i++) {
-                e.setProperty("" + i, ts.get(i));
+    public static void setListProp(Entity e, String property, List<?> list) {
+        EmbeddedEntity ee = new EmbeddedEntity();
+        if (list != null) {
+            for (int i=0; i<list.size(); i++) {
+                ee.setProperty("" + i, list.get(i));
             }
         }
-        return e;
+        e.setProperty(property, ee);
     }
 
-    public static <T> List<T> entityToList(Object obj, int maxLength, Class<T> clazz) {
+    public static <T> List<T> getListProp(Entity e, String property, int maxLength, Class<T> clazz) {
         List<T> list = new ArrayList<>();
+        Object obj = e.getProperty(property);
         if (obj != null) {
-            EmbeddedEntity e = (EmbeddedEntity) obj;
+            EmbeddedEntity ee = (EmbeddedEntity) obj;
             for (int i=0; i<maxLength; i++) {
-                if (e.hasProperty("" + i)) {
-                    list.add(clazz.cast(e.getProperty("" + i)));
+                if (ee.hasProperty("" + i)) {
+                    list.add(clazz.cast(ee.getProperty("" + i)));
                 }
             }
         }
         return list;
+    }
+
+    public static void setEnumProp(Entity e, String property, Enum<?> object, boolean isIndexed) {
+        if (isIndexed) {
+            e.setProperty(property, object.name());
+        } else {
+            e.setUnindexedProperty(property, object.name());
+        }
+    }
+
+    public static <T extends Enum<T>> T getEnumProp(Entity e, String property, Class<T> clazz) {
+        return Enum.valueOf(clazz, (String) e.getProperty(property));
     }
 
     public static void put(DatastoreService ds, Storable... ss) {
