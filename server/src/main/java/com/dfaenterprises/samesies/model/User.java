@@ -21,6 +21,8 @@ public class User extends Storable {
     private String password;
     private String newPassword;
     private String hashedPw;
+    private String community;
+    // **Low-Priority** TODO: remove location eventually, needed for compatibility
     private String location;
     private String alias;
     private Text avatar;
@@ -45,7 +47,8 @@ public class User extends Storable {
         int ordinal = relation.ordinal();
 
         // public
-        this.location = (String) e.getProperty("location");
+        this.community = (String) e.getProperty("community");
+        this.location = community;
         this.alias = (String) e.getProperty("alias");
         this.avatar = (Text) e.getProperty("avatar");
         this.isBanned = (Boolean) e.getProperty("isBanned");
@@ -66,11 +69,12 @@ public class User extends Storable {
         }
     }
 
-    public User(String email, String password, String location, String alias,
+    public User(String email, String password, String community, String alias,
                 String name, Integer age, String gender, String aboutMe) {
         this.email = email;
         this.password = password;
-        this.location = location;
+        this.community = community;
+        this.location = community;
         this.alias = alias;
         this.avatar = getDefaultAvatar();
         this.name = name;
@@ -112,6 +116,14 @@ public class User extends Storable {
 
     public void setHashedPw(String hashedPw) {
         this.hashedPw = hashedPw;
+    }
+
+    public String getCommunity() {
+        return community;
+    }
+
+    public void setCommunity(String community) {
+        this.community = community;
     }
 
     public String getLocation() {
@@ -228,7 +240,7 @@ public class User extends Storable {
             hashedPw = BCrypt.hashpw(password, BCrypt.gensalt());
         }
         e.setUnindexedProperty("hashedPw", hashedPw);
-        e.setProperty("location", location);
+        e.setProperty("community", community);
         e.setProperty("alias", alias);
         e.setUnindexedProperty("avatar", avatar);
         e.setProperty("name", name);

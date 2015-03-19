@@ -175,7 +175,7 @@
         $scope.$on('modal.shown', function() {
             $scope.loginData = {
                 error: false,
-                location: 'Macalester College',
+                community: 'Macalester College',
                 avatar: 'img/lone_icon.png'
             };
             $scope.isLoading = false;
@@ -187,7 +187,7 @@
             Data.user = user;
             Data.isLoading = 3;
             $scope.refresh();
-            API.getCommunity(user.location).then(function(resp) {
+            API.getCommunity(user.community).then(function(resp) {
                 Data.community = resp.result;
                 $scope.$apply();
             });
@@ -238,8 +238,8 @@
                 $scope.loginData.error = "Password too short";
             } else if ($scope.loginData.password != $scope.loginData.confirmPassword) {
                 $scope.loginData.error = "Passwords don't match";
-            } else if (!$scope.loginData.location) {
-                $scope.loginData.error = "Invalid location";
+            } else if (!$scope.loginData.community) {
+                $scope.loginData.error = "Invalid community";
             } else if (!$scope.loginCheck.key || $scope.loginCheck.key.toLowerCase() != 'macalester') {
                 $scope.loginData.error = "Invalid login key";
             } else if (!$scope.loginCheck.accept) {
@@ -511,7 +511,8 @@
                     state: 'matching',
                     stage: 0
                 };
-                API.findEpisode(Data.user.id, Data.settings).then(function (resp) {
+                // TODO: location/community
+                API.findCommunityEpisode(Data.user.id, Data.settings, Data.user.community).then(function (resp) {
                     episode = resp.result;
                     if (episode.status === "MATCHING") {
                         Utils.interval(function () {
@@ -702,7 +703,7 @@
 
     app.controller('CommunitiesCtrl', function($scope, $ionicPopover, $ionicPopup, API, Data) {
 
-        $scope.selected = Data.community.location;
+        $scope.selected = Data.community.name;
 
         $scope.loadCommunity = function(community) {
             if ($scope.selectPopup) {

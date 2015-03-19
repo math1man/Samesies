@@ -7,15 +7,26 @@ import java.util.List;
  */
 public class Community {
 
+    private String name;
+    // **Low-Priority** TODO: remove location eventually, needed for compatibility
     private String location;
     private List<User> users;
 
     public Community() {
     }
 
-    public Community(String location, List<User> users) {
-        this.location = location;
+    public Community(String name, List<User> users) {
+        this.name = name;
+        this.location = name;
         this.users = users;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getLocation() {

@@ -46,8 +46,9 @@
             removeFriend: function(id, myId) {
                 API.removeFriend({id: id, myId: myId}).then();
             },
-            getCommunity: function(location) {
-                return API.getCommunity({location: location});
+            getCommunity: function(name) {
+                // **Low-Priority** TODO: eventually rename this parameter to name
+                return API.getCommunity({location: name});
             },
             getQuestion: function(id) {
                 return API.getQuestion({id: id});
@@ -74,6 +75,27 @@
                     matchMale: settings.matchMale,
                     matchFemale: settings.matchFemale,
                     matchOther: settings.matchOther
+                });
+            },
+            findLocationEpisode: function(myId, settings, latitude, longitude) {
+                return API.findEpisode({
+                    myId: myId,
+                    mode: settings.mode.mode,
+                    matchMale: settings.matchMale,
+                    matchFemale: settings.matchFemale,
+                    matchOther: settings.matchOther,
+                    latitude: latitude,
+                    longitude: longitude
+                });
+            },
+            findCommunityEpisode: function(myId, settings, community) {
+                return API.findEpisode({
+                    myId: myId,
+                    mode: settings.mode.mode,
+                    matchMale: settings.matchMale,
+                    matchFemale: settings.matchFemale,
+                    matchOther: settings.matchOther,
+                    community: community
                 });
             },
             connectEpisode: function(myId, theirId, settings) {
@@ -251,11 +273,11 @@
         this.communities = ['Macalester College'];
         // global dynamic data
         this.community = {
-            location: this.communities[0],
+            name: this.communities[0],
             users: []
         };
         this.settings = {
-            mode: null,
+            mode: 'Random',
             matchMale: true,
             matchFemale: true,
             matchOther: true

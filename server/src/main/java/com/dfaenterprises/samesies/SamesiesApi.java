@@ -137,8 +137,8 @@ public class SamesiesApi {
         if (newUser.getPassword() == null) {
             throw new BadRequestException("Invalid Password");
         }
-        if (newUser.getLocation() == null) {
-            throw new BadRequestException("Invalid Location");
+        if (newUser.getCommunity() == null) {
+            throw new BadRequestException("Invalid Community");
         }
         if (getUserByEmail(ds, email, User.Relation.STRANGER) == null) {
             newUser.initNewUser();
@@ -380,11 +380,12 @@ public class SamesiesApi {
     @ApiMethod(name = "samesiesApi.getCommunity",
             path = "community/{location}",
             httpMethod = ApiMethod.HttpMethod.GET)
-    public Community getCommunity(@Named("location") String location) throws ServiceException {
+    public Community getCommunity(@Named("location") String name) throws ServiceException {
+        // **Low-Priority** TODO: eventually maybe rename the parameter to name, but needs to be location for compatibility
         // **Post-Beta** TODO: eventually need to be more clever about location stuff
         DatastoreService ds = getDS();
         Query query = new Query("User").setFilter(Query.CompositeFilterOperator.and(
-                new Query.FilterPredicate("location", Query.FilterOperator.EQUAL, location),
+                new Query.FilterPredicate("community", Query.FilterOperator.EQUAL, name),
                 new Query.FilterPredicate("isBanned", Query.FilterOperator.EQUAL, false)));
         PreparedQuery pq = ds.prepare(query);
         List<User> users = new ArrayList<>();
@@ -392,7 +393,7 @@ public class SamesiesApi {
             users.add(new User(e, User.Relation.STRANGER));
         }
         Collections.shuffle(users);
-        return new Community(location, users);
+        return new Community(name, users);
     }
 
     //----------------------------
