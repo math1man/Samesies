@@ -175,8 +175,7 @@
         $scope.$on('modal.shown', function() {
             $scope.loginData = {
                 error: false,
-                community: 'Macalester College',
-                avatar: 'img/lone_icon.png'
+                community: 'Macalester College'
             };
             $scope.isLoading = false;
         });

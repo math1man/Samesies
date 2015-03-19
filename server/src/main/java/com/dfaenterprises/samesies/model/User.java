@@ -143,12 +143,15 @@ public class User extends Storable {
     }
 
     public String getAvatar() {
+        if (avatar == null) {
+            setDefaultAvatar();
+        }
         return avatar.getValue();
     }
 
     public void setAvatar(String avatar) {
         if (avatar == null) {
-            this.avatar = getDefaultAvatar();
+            setDefaultAvatar();
         } else {
             this.avatar = new Text(avatar);
         }
@@ -220,6 +223,10 @@ public class User extends Storable {
         }
     }
 
+    public void setDefaultAvatar() {
+        this.avatar = getDefaultAvatar();
+    }
+
     public void setBlankQuestions() {
         questions = blankQuestions();
     }
@@ -227,6 +234,9 @@ public class User extends Storable {
     public void initNewUser() {
         if (alias == null) {
             setDefaultAlias();
+        }
+        if (avatar == null) {
+            setDefaultAvatar();
         }
         setBlankQuestions();
         this.isActivated = false;
@@ -240,6 +250,10 @@ public class User extends Storable {
             hashedPw = BCrypt.hashpw(password, BCrypt.gensalt());
         }
         e.setUnindexedProperty("hashedPw", hashedPw);
+        String community = this.community;
+        if (community == null) {
+            community = this.location;
+        }
         e.setProperty("community", community);
         e.setProperty("alias", alias);
         e.setUnindexedProperty("avatar", avatar);

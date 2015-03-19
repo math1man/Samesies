@@ -137,7 +137,7 @@ public class SamesiesApi {
         if (newUser.getPassword() == null) {
             throw new BadRequestException("Invalid Password");
         }
-        if (newUser.getCommunity() == null) {
+        if (newUser.getCommunity() == null && newUser.getLocation() == null) {
             throw new BadRequestException("Invalid Community");
         }
         if (getUserByEmail(ds, email, User.Relation.STRANGER) == null) {
