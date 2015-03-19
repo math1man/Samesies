@@ -2,6 +2,7 @@ package com.dfaenterprises.samesies.model;
 
 import com.dfaenterprises.samesies.EntityUtils;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.GeoPt;
 
 import java.util.Date;
 import java.util.List;
@@ -32,10 +33,12 @@ public class Episode extends Pairing {
         this.startDate = (Date) e.getProperty("startDate");
         this.isPersistent = (Boolean) e.getProperty("isPersistent");
         this.settings = new Settings(
-                (String) e.getProperty("mode"),
+                (String)  e.getProperty("mode"),
                 (Boolean) e.getProperty("matchMale"),
                 (Boolean) e.getProperty("matchFemale"),
-                (Boolean) e.getProperty("matchOther"));
+                (Boolean) e.getProperty("matchOther"),
+                (GeoPt)   e.getProperty("location"),
+                (String)  e.getProperty("community"));
         this.status = Status.valueOf((String) e.getProperty("status"));
         this.qids = EntityUtils.entityToList(e.getProperty("qids"), 10, Long.class);
         this.answers1 = EntityUtils.entityToList(e.getProperty("answers1"), 10, String.class);
@@ -168,6 +171,8 @@ public class Episode extends Pairing {
         e.setUnindexedProperty("matchMale", settings.getMatchMale());
         e.setUnindexedProperty("matchFemale", settings.getMatchFemale());
         e.setUnindexedProperty("matchOther", settings.getMatchOther());
+        e.setUnindexedProperty("location", settings.getLocation());
+        e.setUnindexedProperty("community", settings.getCommunity());
         e.setProperty("status", status.name());
         e.setUnindexedProperty("qids", EntityUtils.listToEntity(qids));
         e.setUnindexedProperty("answers1", EntityUtils.listToEntity(answers1));

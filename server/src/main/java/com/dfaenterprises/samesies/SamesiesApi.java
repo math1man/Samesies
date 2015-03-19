@@ -484,16 +484,20 @@ public class SamesiesApi {
             path = "episode/find/{myId}/{mode}/{matchMale}/{matchFemale}/{matchOther}",
             httpMethod = ApiMethod.HttpMethod.POST)
     public Episode findEpisode(@Named("myId") long myUid, @Named("mode") String mode, @Named("matchMale") boolean matchMale,
-                               @Named("matchFemale") boolean matchFemale, @Named("matchOther") boolean matchOther) throws ServiceException {
+                               @Named("matchFemale") boolean matchFemale, @Named("matchOther") boolean matchOther,
+                               @Nullable@Named("latitude") Float latitude, @Nullable@Named("longitude") Float longitude,
+                               @Nullable@Named("community") String community) throws ServiceException {
         DatastoreService ds = getDS();
-        // TODO: needs to match by community/location also...
-
-        Settings settings = new Settings(mode, matchMale, matchFemale, matchOther);
+        GeoPt location = null;
+        if (latitude != null && longitude != null) {
+            location = new GeoPt(latitude, longitude);
+        }
+        Settings settings = new Settings(mode, matchMale, matchFemale, matchOther, location, community);
 
         Query query = new Query("Episode").setFilter(Query.CompositeFilterOperator.and(
-                        new Query.FilterPredicate("status", Query.FilterOperator.EQUAL, Episode.Status.MATCHING.name()),
-                        new Query.FilterPredicate("isPersistent", Query.FilterOperator.EQUAL, false),
-                        new Query.FilterPredicate("mode", Query.FilterOperator.EQUAL, mode)))
+                new Query.FilterPredicate("status", Query.FilterOperator.EQUAL, Episode.Status.MATCHING.name()),
+                new Query.FilterPredicate("isPersistent", Query.FilterOperator.EQUAL, false),
+                new Query.FilterPredicate("mode", Query.FilterOperator.EQUAL, mode)))
                 .addSort("startDate", Query.SortDirection.ASCENDING);
         PreparedQuery pq = ds.prepare(query);
 
@@ -771,7 +775,13 @@ public class SamesiesApi {
     }
 
     /**
-     * This method decides whether a user is compatible with a matching-state episode
+     * This method decides whether a two user-settings pairs are compatible.
+     * First, it double-checks to make sure the uids are different or returns false.
+     * Second, it checks if the community/location settings match. If both have communities that are
+     * different, it returns false. If either did not have a community, it checks if they both have
+     * locations. If the locations are more than 10 miles apart, it returns false.
+     * Third, it checks if their last match was each other. If true, it returns false.
+     * Finally, it returns whether or not their genders/preferences are compatible.
      * @param ds
      * @param uid1
      * @param settings1
@@ -780,7 +790,26 @@ public class SamesiesApi {
      * @return
      */
     private static boolean isMatch(DatastoreService ds, long uid1, Settings settings1, long uid2, Settings settings2) throws NotFoundException {
-        if (uid1 == uid2) { // cannot match with yourself (somehow)
+        // cannot match with yourself (somehow)
+        if (uid1 == uid2) {
+            return false;
+        }
+        // check community
+        if (settings1.hasCommunity() && settings2.hasCommunity()) {
+            // communities must be the same
+            if (!settings1.getCommunity().equals(settings2.getCommunity())) {
+                return false;
+            }
+        // if no communities, check location
+        } else if (settings1.hasLocation() && settings2.hasLocation()) {
+            // location distance must be under 10 miles
+            if (distance(settings1.getLocation(), settings2.getLocation()) > 10) {
+                return false;
+            }
+        // For backwards compatibility, need to allow for settings to have neither
+        // community nor location. These settings must only match with themselves
+        } else if (settings1.hasCommunity() || settings1.hasLocation()
+                || settings2.hasCommunity() || settings2.hasLocation()) {
             return false;
         }
         // make sure their last pairing wasn't each other
@@ -789,11 +818,11 @@ public class SamesiesApi {
             return false;
         }
         // finally check that genders are acceptable to each other
-        return isMatch(getUserById(ds, uid1, User.Relation.ADMIN).getGender(), settings2)
-                && isMatch(getUserById(ds, uid2, User.Relation.ADMIN).getGender(), settings1);
+        return checkGender(getUserById(ds, uid1, User.Relation.ADMIN).getGender(), settings2)
+                && checkGender(getUserById(ds, uid2, User.Relation.ADMIN).getGender(), settings1);
     }
 
-    private static boolean isMatch(String gender, Settings settings) {
+    private static boolean checkGender(String gender, Settings settings) {
         if (gender == null) {
             return settings.getMatchOther();
         }
@@ -805,6 +834,26 @@ public class SamesiesApi {
             default:
                 return settings.getMatchOther();
         }
+    }
+
+    /**
+     * http://en.wikipedia.org/wiki/Haversine_formula
+     * @param location1
+     * @param location2
+     * @return
+     */
+    private static double distance(GeoPt location1, GeoPt location2) {
+        double r = 3959; // miles (6371 km)
+        double lat1 = Math.toRadians(location1.getLatitude());
+        double lon1 = Math.toRadians(location1.getLongitude());
+        double lat2 = Math.toRadians(location2.getLatitude());
+        double lon2 = Math.toRadians(location2.getLongitude());
+        double h = haversin(lat2 - lat1) + Math.cos(lat1) * Math.cos(lat2) * haversin(lon2 - lon1);
+        return 2 * r * Math.asin(Math.sqrt(h));
+    }
+
+    private static double haversin(double radians) {
+        return Math.sin(radians / 2) * Math.sin(radians / 2);
     }
 
     private static User getUserById(DatastoreService ds, long id, User.Relation relation) throws NotFoundException {
