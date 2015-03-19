@@ -477,7 +477,7 @@
                 Utils.interval(function () {
                     API.getEpisode(episode.id).then(function (resp) {
                         if ($scope.is('waiting')) {
-                            getResponse(resp.result);
+                            updateEpisode(resp.result);
                         }
                     });
                 }, PING_INTERVAL);
@@ -620,14 +620,16 @@
             $scope.episodeData.theirAnswer = "Waiting for your partner to answer...";
             go('waiting');
             API.answerEpisode(episode.id, Data.user.id, $scope.episodeData.myAnswer).then(function(resp) {
-                getResponse(resp.result);
+                updateEpisode(resp.result);
             }, function(reason) {
                 console.log(reason);
             });
         };
 
-        var getResponse = function(ep) {
+        var updateEpisode = function(ep) {
+            var user = episode.user;
             episode = ep;
+            episode.user = user;
             if (episode.status === "ABANDONED") {
                 Utils.interruptAll();
                 $ionicPopup.confirm({
