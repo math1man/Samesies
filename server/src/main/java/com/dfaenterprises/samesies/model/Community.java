@@ -1,5 +1,7 @@
 package com.dfaenterprises.samesies.model;
 
+import com.google.appengine.api.datastore.GeoPt;
+
 import java.util.List;
 
 /**
@@ -8,8 +10,7 @@ import java.util.List;
 public class Community {
 
     private String name;
-    // **Low-Priority** TODO: remove location eventually, needed for compatibility
-    private String location;
+    private GeoPt location;
     private List<User> users;
 
     public Community() {
@@ -17,7 +18,13 @@ public class Community {
 
     public Community(String name, List<User> users) {
         this.name = name;
-        this.location = name;
+        this.location = null;
+        this.users = users;
+    }
+
+    public Community(GeoPt location, List<User> users) {
+        this.name = "Near By";
+        this.location = location;
         this.users = users;
     }
 
@@ -29,11 +36,11 @@ public class Community {
         this.name = name;
     }
 
-    public String getLocation() {
+    public GeoPt getLocation() {
         return location;
     }
 
-    public void setLocation(String location) {
+    public void setLocation(GeoPt location) {
         this.location = location;
     }
 

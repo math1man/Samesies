@@ -79,9 +79,9 @@ public class SamesiesApi {
 
     public void initUsers() throws ServiceException {
         DatastoreService ds = getDS();
-        User user1 = new User("ari@samesies.org", "samesies123", "Saint Paul, MN", "Ajawa",
+        User user1 = new User("ari@samesies.org", "samesies123", "Ajawa",
                 "Ari Weiland", 20, "Male", "I am a junior Physics and Computer Science major at Macalester College.");
-        User user2 = new User("luke@samesies.org", "samesies456", "Saint Paul, MN", "KoboldForeman",
+        User user2 = new User("luke@samesies.org", "samesies456", "KoboldForeman",
                 "Luke Gehman", 21, "Male", "I am a junior Biology major at Macalester College. I play a lot of Dota 2.");
         EntityUtils.put(ds, user1, user2);
 
@@ -136,9 +136,6 @@ public class SamesiesApi {
         }
         if (newUser.getPassword() == null) {
             throw new BadRequestException("Invalid Password");
-        }
-        if (newUser.getCommunity() == null && newUser.getLocation() == null) {
-            throw new BadRequestException("Invalid Community");
         }
         if (getUserByEmail(ds, email, User.Relation.STRANGER) == null) {
             newUser.initNewUser();
@@ -378,19 +375,10 @@ public class SamesiesApi {
     //----------------------------
 
     @ApiMethod(name = "samesiesApi.getCommunity",
-            path = "community",
+            path = "community/{name}",
             httpMethod = ApiMethod.HttpMethod.GET)
-    public Community getCommunity(@Nullable@Named("location") String location, @Nullable@Named("name") String name) throws ServiceException {
-        // **Post-Beta** TODO: eventually need to be more clever about location stuff
+    public Community getCommunity(@Named("name") String name) throws ServiceException {
         DatastoreService ds = getDS();
-        // **Low-Priority** TODO: eventually remove location, but needed for compatibility
-        if (name == null) {
-            if (location == null) {
-                throw new BadRequestException("Must specify a community");
-            } else {
-                name = location;
-            }
-        }
         Query query = new Query("User").setFilter(Query.CompositeFilterOperator.and(
                 new Query.FilterPredicate("community", Query.FilterOperator.EQUAL, name),
                 new Query.FilterPredicate("isBanned", Query.FilterOperator.EQUAL, false)));
@@ -401,6 +389,48 @@ public class SamesiesApi {
         }
         Collections.shuffle(users);
         return new Community(name, users);
+    }
+
+    @ApiMethod(name = "samesiesApi.getNearBy",
+            path = "nearby/{location}",
+            httpMethod = ApiMethod.HttpMethod.GET)
+    public Community getNearBy(@Named("location") GeoPt location) throws ServiceException {
+        DatastoreService ds = getDS();
+        Query query = new Query("User").setFilter(new Query.FilterPredicate("isBanned", Query.FilterOperator.EQUAL, false));
+        PreparedQuery pq = ds.prepare(query);
+        List<User> users = new ArrayList<>();
+        for (Entity e : pq.asIterable()) {
+            User user = new User(e, User.Relation.STRANGER);
+            if (user.getLocation() != null && distance(user.getLocation(), location) <= 10) {
+                users.add(user);
+            }
+        }
+        Collections.shuffle(users);
+        return new Community(location, users);
+    }
+
+    @ApiMethod(name = "samesiesApi.getUserCommunities",
+            path = "communities/user/{id}",
+            httpMethod = ApiMethod.HttpMethod.GET)
+    public List<CommunityUser> getUserCommunities(@Named("id") long uid) throws ServiceException {
+        DatastoreService ds = getDS();
+        Query query = new Query("CommunityUser").setFilter(Query.CompositeFilterOperator.and(
+                new Query.FilterPredicate("uid", Query.FilterOperator.EQUAL, uid),
+                new Query.FilterPredicate("isValidated", Query.FilterOperator.EQUAL, true)));
+        PreparedQuery pq = ds.prepare(query);
+        List<CommunityUser> communities = new ArrayList<>();
+        for (Entity e : pq.asIterable()) {
+            communities.add(new CommunityUser(e));
+        }
+        return communities;
+    }
+
+    @ApiMethod(name = "samesiesApi.joinCommunity",
+            path = "communities/join/{name}/{id}",
+            httpMethod = ApiMethod.HttpMethod.POST)
+    public void joinCommunity(@Named("id") long uid, @Named("name") String name) throws ServiceException {
+        DatastoreService ds = getDS();
+        // TODO: this method... but how to validate?
     }
 
     //----------------------------

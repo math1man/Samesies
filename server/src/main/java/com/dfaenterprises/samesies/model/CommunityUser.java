@@ -9,6 +9,7 @@ public class CommunityUser extends Storable {
 
     private String community;
     private Long uid;
+    private Boolean isValidated;
 
     public CommunityUser() {
     }
@@ -17,11 +18,13 @@ public class CommunityUser extends Storable {
         super(e);
         this.community = (String) e.getProperty("community");
         this.uid = (Long) e.getProperty("uid");
+        this.isValidated = (Boolean) e.getProperty("isValidated");
     }
 
     public CommunityUser(String community, Long uid) {
         this.community = community;
         this.uid = uid;
+        this.isValidated = false;
     }
 
     @Override
@@ -29,6 +32,7 @@ public class CommunityUser extends Storable {
         Entity e = getEntity("CommunityUser");
         e.setProperty("community", community);
         e.setProperty("uid", uid);
+        e.setProperty("isValidated", isValidated);
         return e;
     }
 }

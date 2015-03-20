@@ -2,6 +2,7 @@ package com.dfaenterprises.samesies.model;
 
 import com.dfaenterprises.samesies.EntityUtils;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.GeoPt;
 import com.google.appengine.api.datastore.Text;
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -21,11 +22,9 @@ public class User extends Storable {
     private String password;
     private String newPassword;
     private String hashedPw;
-    private String community;
-    // **Low-Priority** TODO: remove location eventually, needed for compatibility
-    private String location;
     private String alias;
     private Text avatar;
+    private GeoPt location;
     private String name;
     private Long age;
     private String gender;
@@ -45,20 +44,11 @@ public class User extends Storable {
     public User(Entity e, Relation relation) {
         super(e);
         int ordinal = relation.ordinal();
-
         // public
-        this.community = (String) e.getProperty("community");
-        this.location = community;
         this.alias = (String) e.getProperty("alias");
         this.avatar = (Text) e.getProperty("avatar");
+        this.location = (GeoPt) e.getProperty("location");
         this.isBanned = (Boolean) e.getProperty("isBanned");
-
-        // private
-        if (ordinal >= Relation.SELF.ordinal()) {
-            this.email = (String) e.getProperty("email");
-            this.hashedPw = (String) e.getProperty("hashedPw");
-            this.isActivated = (Boolean) e.getProperty("isActivated");
-        }
         // protected
         if (ordinal >= Relation.FRIEND.ordinal()) {
             this.name = (String) e.getProperty("name");
@@ -67,14 +57,18 @@ public class User extends Storable {
             this.aboutMe = (String) e.getProperty("aboutMe");
             this.questions = EntityUtils.getListProp(e, "questions", 5, String.class);
         }
+        // private
+        if (ordinal >= Relation.SELF.ordinal()) {
+            this.email = (String) e.getProperty("email");
+            this.hashedPw = (String) e.getProperty("hashedPw");
+            this.isActivated = (Boolean) e.getProperty("isActivated");
+        }
     }
 
-    public User(String email, String password, String community, String alias,
+    public User(String email, String password, String alias,
                 String name, Integer age, String gender, String aboutMe) {
         this.email = email;
         this.password = password;
-        this.community = community;
-        this.location = community;
         this.alias = alias;
         this.avatar = getDefaultAvatar();
         this.name = name;
@@ -118,22 +112,6 @@ public class User extends Storable {
         this.hashedPw = hashedPw;
     }
 
-    public String getCommunity() {
-        return community;
-    }
-
-    public void setCommunity(String community) {
-        this.community = community;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
     public String getAlias() {
         return alias;
     }
@@ -147,6 +125,14 @@ public class User extends Storable {
             setDefaultAvatar();
         }
         return avatar.getValue();
+    }
+
+    public GeoPt getLocation() {
+        return location;
+    }
+
+    public void setLocation(GeoPt location) {
+        this.location = location;
     }
 
     public void setAvatar(String avatar) {
@@ -250,13 +236,9 @@ public class User extends Storable {
             hashedPw = BCrypt.hashpw(password, BCrypt.gensalt());
         }
         e.setUnindexedProperty("hashedPw", hashedPw);
-        String community = this.community;
-        if (community == null) {
-            community = this.location;
-        }
-        e.setProperty("community", community);
         e.setProperty("alias", alias);
         e.setUnindexedProperty("avatar", avatar);
+        e.setUnindexedProperty("location", location);
         e.setProperty("name", name);
         e.setProperty("age", age);
         e.setProperty("gender", gender);
