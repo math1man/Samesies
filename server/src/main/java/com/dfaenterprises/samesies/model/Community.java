@@ -1,31 +1,43 @@
 package com.dfaenterprises.samesies.model;
 
-import com.google.appengine.api.datastore.GeoPt;
-
-import java.util.List;
+import com.dfaenterprises.samesies.EntityUtils;
+import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.Text;
 
 /**
  * @author Ari Weiland
  */
-public class Community {
+public class Community extends Storable {
+
+    public static enum Validation {
+        NONE, EMAIL, PASSWORD
+    }
 
     private String name;
-    private GeoPt location;
-    private List<User> users;
+    private Text description;
+    private Validation validation;
+    private String validationString;
 
     public Community() {
     }
 
-    public Community(String name, List<User> users) {
-        this.name = name;
-        this.location = null;
-        this.users = users;
+    public Community(Entity e) {
+        super(e);
+        this.name = (String) e.getProperty("name");
+        this.description = (Text) e.getProperty("description");
+        this.validation = EntityUtils.getEnumProp(e, "validation", Validation.class);
+        this.validationString = (String) e.getProperty("validationString");
     }
 
-    public Community(GeoPt location, List<User> users) {
-        this.name = "Near By";
-        this.location = location;
-        this.users = users;
+    public Community(String name, String description) {
+        this(name, description, Validation.NONE, null);
+    }
+
+    public Community(String name, String description, Validation validation, String validationString) {
+        this.name = name;
+        setDescription(description);
+        this.validation = validation;
+        this.validationString = validationString;
     }
 
     public String getName() {
@@ -36,19 +48,45 @@ public class Community {
         this.name = name;
     }
 
-    public GeoPt getLocation() {
-        return location;
+    public String getDescription() {
+        if (description == null) {
+            return null;
+        } else {
+            return description.getValue();
+        }
     }
 
-    public void setLocation(GeoPt location) {
-        this.location = location;
+    public void setDescription(String description) {
+        if (description == null) {
+            this.description = null;
+        } else {
+            this.description = new Text(description);
+        }
     }
 
-    public List<User> getUsers() {
-        return users;
+    public Validation getValidation() {
+        return validation;
     }
 
-    public void setUsers(List<User> users) {
-        this.users = users;
+    public void setValidation(Validation validation) {
+        this.validation = validation;
+    }
+
+    public String getValidationString() {
+        return validationString;
+    }
+
+    public void setValidationString(String validationString) {
+        this.validationString = validationString;
+    }
+
+    @Override
+    public Entity toEntity() {
+        Entity e = getEntity("Community");
+        e.setProperty("name", name);
+        e.setUnindexedProperty("description", description);
+        e.setUnindexedProperty("validation", validation.name());
+        e.setUnindexedProperty("validationString", validationString);
+        return e;
     }
 }

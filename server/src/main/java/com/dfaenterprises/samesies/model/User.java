@@ -24,7 +24,8 @@ public class User extends Storable {
     private String hashedPw;
     private String alias;
     private Text avatar;
-    private GeoPt location;
+    private Float latitude;
+    private Float longitude;
     private String name;
     private Long age;
     private String gender;
@@ -47,7 +48,7 @@ public class User extends Storable {
         // public
         this.alias = (String) e.getProperty("alias");
         this.avatar = (Text) e.getProperty("avatar");
-        this.location = (GeoPt) e.getProperty("location");
+        setLocation((GeoPt) e.getProperty("location"));
         this.isBanned = (Boolean) e.getProperty("isBanned");
         // protected
         if (ordinal >= Relation.FRIEND.ordinal()) {
@@ -127,12 +128,39 @@ public class User extends Storable {
         return avatar.getValue();
     }
 
+    public Float getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Float latitude) {
+        this.latitude = latitude;
+    }
+
+    public Float getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Float longitude) {
+        this.longitude = longitude;
+    }
+
+    public boolean hasLocation() {
+        return latitude != null && longitude != null;
+    }
+
     public GeoPt getLocation() {
-        return location;
+        if (hasLocation()) {
+            return new GeoPt(latitude, longitude);
+        } else {
+            return null;
+        }
     }
 
     public void setLocation(GeoPt location) {
-        this.location = location;
+        if (location != null) {
+            this.latitude = location.getLatitude();
+            this.longitude = location.getLongitude();
+        }
     }
 
     public void setAvatar(String avatar) {
@@ -238,7 +266,7 @@ public class User extends Storable {
         e.setUnindexedProperty("hashedPw", hashedPw);
         e.setProperty("alias", alias);
         e.setUnindexedProperty("avatar", avatar);
-        e.setUnindexedProperty("location", location);
+        e.setUnindexedProperty("location", getLocation());
         e.setProperty("name", name);
         e.setProperty("age", age);
         e.setProperty("gender", gender);

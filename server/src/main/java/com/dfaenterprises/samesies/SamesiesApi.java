@@ -377,7 +377,7 @@ public class SamesiesApi {
     @ApiMethod(name = "samesiesApi.getCommunity",
             path = "community/{name}",
             httpMethod = ApiMethod.HttpMethod.GET)
-    public Community getCommunity(@Named("name") String name) throws ServiceException {
+    public UserGroup getCommunity(@Named("name") String name) throws ServiceException {
         DatastoreService ds = getDS();
         Query query = new Query("User").setFilter(Query.CompositeFilterOperator.and(
                 new Query.FilterPredicate("community", Query.FilterOperator.EQUAL, name),
@@ -388,49 +388,105 @@ public class SamesiesApi {
             users.add(new User(e, User.Relation.STRANGER));
         }
         Collections.shuffle(users);
-        return new Community(name, users);
+        return new UserGroup(name, users);
     }
 
     @ApiMethod(name = "samesiesApi.getNearBy",
-            path = "nearby/{location}",
+            path = "nearby/{latitude}/{longitude}",
             httpMethod = ApiMethod.HttpMethod.GET)
-    public Community getNearBy(@Named("location") GeoPt location) throws ServiceException {
+    public UserGroup getNearBy(@Named("latitude") float latitude, @Named("longitude") float longitude) throws ServiceException {
         DatastoreService ds = getDS();
+        GeoPt location = new GeoPt(latitude, longitude);
         Query query = new Query("User").setFilter(new Query.FilterPredicate("isBanned", Query.FilterOperator.EQUAL, false));
         PreparedQuery pq = ds.prepare(query);
         List<User> users = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
             User user = new User(e, User.Relation.STRANGER);
-            if (user.getLocation() != null && distance(user.getLocation(), location) <= 10) {
+            if (user.hasLocation() && distance(user.getLocation(), location) <= 10) {
                 users.add(user);
             }
         }
         Collections.shuffle(users);
-        return new Community(location, users);
+        return new UserGroup("Near By", users);
     }
 
     @ApiMethod(name = "samesiesApi.getUserCommunities",
             path = "communities/user/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
-    public List<CommunityUser> getUserCommunities(@Named("id") long uid) throws ServiceException {
+    public List<Long> getUserCommunities(@Named("id") long uid) throws ServiceException {
         DatastoreService ds = getDS();
         Query query = new Query("CommunityUser").setFilter(Query.CompositeFilterOperator.and(
                 new Query.FilterPredicate("uid", Query.FilterOperator.EQUAL, uid),
                 new Query.FilterPredicate("isValidated", Query.FilterOperator.EQUAL, true)));
         PreparedQuery pq = ds.prepare(query);
-        List<CommunityUser> communities = new ArrayList<>();
+        List<Long> communities = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
-            communities.add(new CommunityUser(e));
+            communities.add(new CommunityUser(e).getCid());
         }
         return communities;
     }
 
     @ApiMethod(name = "samesiesApi.joinCommunity",
-            path = "communities/join/{name}/{id}",
+            path = "communities/join/{id}/{myId}",
             httpMethod = ApiMethod.HttpMethod.POST)
-    public void joinCommunity(@Named("id") long uid, @Named("name") String name) throws ServiceException {
+    public Community joinCommunity(@Named("id") long id, @Named("myId") long myUid, @Nullable@Named("string") String string) throws ServiceException {
         DatastoreService ds = getDS();
-        // TODO: this method... but how to validate?
+        Community community;
+        try {
+            community = new Community(ds.get(KeyFactory.createKey("Community", id)));
+        } catch (EntityNotFoundException e) {
+            throw new NotFoundException("Community not found", e);
+        }
+        CommunityUser cu;
+        switch (community.getValidation()) {
+            case NONE:
+                cu = new CommunityUser(community.getId(), myUid, true);
+                EntityUtils.put(ds, cu);
+                return community;
+            case EMAIL:
+                // validation string is an email domain
+                if (string != null && string.contains(community.getValidationString())) {
+                    cu = new CommunityUser(community.getId(), myUid);
+                    EntityUtils.put(ds, cu);
+                    // TODO: send email and stuff
+                }
+                break;
+            case PASSWORD:
+                // validation string is a password
+                if (string != null && BCrypt.checkpw(string, community.getValidationString())) {
+                    cu = new CommunityUser(community.getId(), myUid, true);
+                    EntityUtils.put(ds, cu);
+                    return community;
+                }
+                break;
+        }
+        return null;
+    }
+
+    // TODO: getCommunities via a search keyword (ie. name.contains(keyword))
+
+    @ApiMethod(name = "samesiesApi.createOpenCommunity",
+            path = "communities/create/{name}",
+            httpMethod = ApiMethod.HttpMethod.POST)
+    public void createOpenCommunity(@Named("name") String name, @Nullable@Named("description") String description) throws ServiceException {
+        EntityUtils.put(getDS(), new Community(name, description));
+    }
+
+    @ApiMethod(name = "samesiesApi.createEmailCommunity",
+            path = "communities/create/email/{name}/{emailSuffix}",
+            httpMethod = ApiMethod.HttpMethod.POST)
+    public void createEmailCommunity(@Named("name") String name, @Named("emailSuffix") String emailSuffix,
+                                     @Nullable@Named("description") String description) throws ServiceException {
+        EntityUtils.put(getDS(), new Community(name, description, Community.Validation.EMAIL, emailSuffix));
+    }
+
+    @ApiMethod(name = "samesiesApi.createPasswordCommunity",
+            path = "communities/create/password/{name}/{password}",
+            httpMethod = ApiMethod.HttpMethod.POST)
+    public void createPasswordCommunity(@Named("name") String name, @Named("password") String password,
+                                     @Nullable@Named("description") String description) throws ServiceException {
+        EntityUtils.put(getDS(), new Community(name, description, Community.Validation.PASSWORD,
+                BCrypt.hashpw(password, BCrypt.gensalt())));
     }
 
     //----------------------------
