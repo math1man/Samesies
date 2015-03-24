@@ -676,6 +676,7 @@
                 } else {
                     API.endEpisode(episode.id);
                 }
+                episode = null;
             }
         };
 
