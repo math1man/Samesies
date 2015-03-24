@@ -523,6 +523,7 @@ public class SamesiesApi {
             episode.setStatus(Episode.Status.IN_PROGRESS);
             episode.setUid2(myUid);
             episode.setQids(getQids(ds, mode));
+            episode.setUser(getUserById(ds, episode.getUid1(), User.Relation.STRANGER));
             episode.modify();
         }
         EntityUtils.put(ds, episode);

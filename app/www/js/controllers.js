@@ -464,10 +464,8 @@
             $scope.helpPopup.hide();
         };
 
-        var episode;
-
         $scope.isPersistent = function() {
-           return episode && episode.isPersistent;
+           return Data.episode && Data.episode.isPersistent;
         };
 
         var go = function(state) {
@@ -475,7 +473,7 @@
             $scope.episodeData.state = state;
             if (state === 'waiting') {
                 Utils.interval(function () {
-                    API.getEpisode(episode.id).then(function (resp) {
+                    API.getEpisode(Data.episode.id).then(function (resp) {
                         if ($scope.is('waiting')) {
                             updateEpisode(resp.result);
                         }
@@ -502,9 +500,8 @@
 
         $scope.find = function() {
             if (!$scope.isPersistent()) {
-                if (episode) {
-                    API.endEpisode(episode.id);
-                    episode = null;
+                if (Data.episode) {
+                    API.endEpisode(Data.episode.id);
                 }
                 $scope.episodeData = {
                     state: 'matching',
@@ -512,19 +509,19 @@
                 };
                 // TODO: location/community
                 API.findCommunityEpisode(Data.user.id, Data.settings, Data.user.community).then(function (resp) {
-                    episode = resp.result;
-                    if (episode.status === "MATCHING") {
+                    Data.episode = resp.result;
+                    if (Data.episode.status === "MATCHING") {
                         Utils.interval(function () {
-                            API.getEpisode(episode.id).then(function (resp) {
+                            API.getEpisode(Data.episode.id).then(function (resp) {
                                 // second condition prevents multiple calls
-                                episode = resp.result;
-                                if (episode.status === "IN_PROGRESS" && $scope.is('matching')) {
-                                    loadEpisode(episode);
+                                Data.episode = resp.result;
+                                if (Data.episode.status === "IN_PROGRESS" && $scope.is('matching')) {
+                                    loadEpisode(Data.episode);
                                 }
                             });
                         }, PING_INTERVAL);
                     } else {
-                        loadEpisode(episode);
+                        loadEpisode(Data.episode);
                     }
                 });
             }
@@ -551,9 +548,9 @@
         $scope.next = function() {
             $scope.episodeData.myAnswer = '';
             if ($scope.episodeData.stage == 10) {
-                API.endEpisode(episode.id);
-                episode.status = "COMPLETE";
-                API.getUser(Utils.getPartnerId(episode)).then(function(resp) {
+                API.endEpisode(Data.episode.id);
+                Data.episode.status = "COMPLETE";
+                API.getUser(Utils.getPartnerId(Data.episode)).then(function(resp) {
                     Data.tempUser = resp.result;
                     $ionicPopup.confirm({
                         title: 'Is it Samesies?',
@@ -581,7 +578,7 @@
                                 $scope.find();
                             }
                         } else {
-                            API.startChat(episode.id, true, Data.user.id, Data.tempUser.id).then(function (resp) {
+                            API.startChat(Data.episode.id, true, Data.user.id, Data.tempUser.id).then(function (resp) {
                                 Data.chat = resp.result;
                                 if (answer) {
                                     Data.chat.user = Data.tempUser;
@@ -619,7 +616,7 @@
         $scope.answer = function() {
             $scope.episodeData.theirAnswer = "Waiting for your partner to answer...";
             go('waiting');
-            API.answerEpisode(episode.id, Data.user.id, $scope.episodeData.myAnswer).then(function(resp) {
+            API.answerEpisode(Data.episode.id, Data.user.id, $scope.episodeData.myAnswer).then(function(resp) {
                 updateEpisode(resp.result);
             }, function(reason) {
                 console.log(reason);
@@ -627,10 +624,10 @@
         };
 
         var updateEpisode = function(ep) {
-            var user = episode.user;
-            episode = ep;
-            episode.user = user;
-            if (episode.status === "ABANDONED") {
+            var user = Data.episode.user;
+            Data.episode = ep;
+            Data.episode.user = user;
+            if (Data.episode.status === "ABANDONED") {
                 Utils.interruptAll();
                 $ionicPopup.confirm({
                     title: 'Partner Left',
@@ -650,9 +647,9 @@
                 var index = $scope.episodeData.stage - 1;
                 var answer, answers;
                 if ($scope.episodeData.is1) {
-                    answers = episode.answers2;
+                    answers = Data.episode.answers2;
                 } else {
-                    answers = episode.answers1;
+                    answers = Data.episode.answers1;
                 }
                 // make sure it has the list and that the list is long enough
                 if (answers && answers.length > index) {
@@ -667,16 +664,16 @@
 
         var cleanUpEpisode = function() {
             Utils.interruptAll();
-            if (episode) {
-                if (episode.isPersistent) {
-                    if (episode.status === "IN_PROGRESS") {
-                        episode.data = $scope.episodeData;
-                        Data.connections.push(episode);
+            if (Data.episode) {
+                if (Data.episode.isPersistent) {
+                    if (Data.episode.status === "IN_PROGRESS") {
+                        Data.episode.data = $scope.episodeData;
+                        Data.connections.push(Data.episode);
                     }
                 } else {
-                    API.endEpisode(episode.id);
+                    API.endEpisode(Data.episode.id);
                 }
-                episode = null;
+                Data.episode = null;
             }
         };
 
@@ -694,9 +691,7 @@
         };
 
         if (Data.episode) {
-            episode = Data.episode;
-            Data.episode = null; // prevent possible shenanigans
-            loadEpisode(episode);
+            loadEpisode(Data.episode);
         } else {
             $scope.find();
         }
