@@ -973,6 +973,17 @@
             });
         };
 
+        window.addEventListener('native.keyboardshow', function (e) {
+            console.log("Keyboard shown!");
+            console.log(e.keyboardHeight);
+            document.getElementById("inputBar").style.marginBottom = e.keyboardHeight + "px";
+        });
+
+        window.addEventListener('native.keyboardhide', function () {
+            console.log("Keyboard hidden!");
+            document.getElementById("inputBar").style.marginBottom = "0";
+        });
+
         $scope.$on('$ionicView.beforeLeave', function() {
             Utils.interruptAll();
             Data.chat = null;
@@ -1478,6 +1489,12 @@
         };
 
         $scope.submit = function() {
+            $ionicPopup.alert({
+                title: 'Feedback Sent',
+                template: 'Your feedback has been sent!',
+                okText: 'Okay' ,
+                okType: 'button-royal'
+            });
             if ($scope.feedback) {
                 API.sendFeedback($scope.feedback);
             }
