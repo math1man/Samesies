@@ -601,8 +601,7 @@ public class SamesiesApi {
                         new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, uid),
                         new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, uid)),
                 new Query.FilterPredicate("isPersistent", Query.FilterOperator.EQUAL, true)))
-                .addSort("startDate", Query.SortDirection.ASCENDING);
-        // TODO: sort by lastModified instead
+                .addSort("lastModified", Query.SortDirection.ASCENDING);
         PreparedQuery pq = ds.prepare(query);
 
         List<Episode> connections = new ArrayList<>();
@@ -729,7 +728,7 @@ public class SamesiesApi {
     @ApiMethod(name = "samesiesApi.getMessages",
             path = "chat/messages/{chatId}/{after}",
             httpMethod = ApiMethod.HttpMethod.GET)
-    public List<Message> getMessages(@Named("chatId") long cid, @Named("after") Date after, @Nullable @Named("myId") Long myUid) throws ServiceException {
+    public List<Message> getMessages(@Named("chatId") long cid, @Named("after") Date after, @Nullable@Named("myId") Long myUid) throws ServiceException {
         // TODO: eventually remove the @Nullable to the myUid parameter
         // For now we need it for backwards compatibility
         DatastoreService ds = getDS();
