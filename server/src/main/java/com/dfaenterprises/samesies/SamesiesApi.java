@@ -145,23 +145,13 @@ public class SamesiesApi {
             EntityUtils.put(ds, newUser);
             sendEmail(newUser, "Activate your Samesies Account",
                     "Click the link below to activate your account:\n" +
-                    "https://samesies-app.appspot.com/_ah/api/samesies/v1/user/activate/" + newUser.getId() + "\n\n" +
+                    "https://samesies-app.appspot.com/_ah/spi/activate?user_id=" + newUser.getId() + "\n\n" +
                     "Have fun,\n" +
                     "The Samesies Team");
             return newUser;
         } else {
             throw new ForbiddenException("Email already in use");
         }
-    }
-
-    @ApiMethod(name = "samesiesApi.activateUser",
-            path = "user/activate/{id}",
-            httpMethod = ApiMethod.HttpMethod.GET)
-    public void activateUser(@Named("id") long uid) throws ServiceException {
-        DatastoreService ds = getDS();
-        User user = getUserById(ds, uid, User.Relation.ADMIN);
-        user.setIsActivated(true);
-        EntityUtils.put(ds, user);
     }
 
     @ApiMethod(name = "samesiesApi.recoverUser",
