@@ -1,19 +1,65 @@
 (function() {
 
-    var app = angular.module('samesies', ['ionic', 'samesies.controllers', 'samesies.services', 'samesies.filters', 'samesies.directives']);
+    var app = angular.module('samesies', ['ionic', 'ngCordova', 'samesies.controllers', 'samesies.services', 'samesies.filters', 'samesies.directives']);
 
-    app.run(function ($ionicPlatform) {
+    app.run(function ($window, $rootScope, $ionicPlatform, $cordovaKeyboard, $cordovaPush, $cordovaToast) {
         $ionicPlatform.ready(function () {
-            // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
-            // for form inputs)
-            if (window.cordova && window.cordova.plugins.Keyboard) {
-                cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
-                cordova.plugins.Keyboard.disableScroll(true);
+            $cordovaKeyboard.hideKeyboardAccessoryBar(true);
+            $cordovaKeyboard.disableScroll(true);
+
+            if (!$window.localStorage['pushId']) {
+                var config;
+                if ($ionicPlatform.isAndroid()) {
+                    config = {
+                        "senderID": "samesies-app"
+                    };
+                } else if ($ionicPlatform.isIOS()) {
+                    config = {
+                        "badge": "true",
+                        "sound": "true",
+                        "alert": "true"
+                    }
+                }
+                $cordovaPush.register(config).then(function (result) {
+                    console.log("Register success " + result);
+                    // ** NOTE: Android regid result comes back in the pushNotificationReceived, only iOS returned here
+                    if ($ionicPlatform.isIOS()) {
+                        $window.localStorage['pushId'] = result.deviceToken;
+                    }
+                }, function (err) {
+                    console.log("Register error " + err)
+                });
             }
-            if (window.StatusBar) {
-                // org.apache.cordova.statusbar required
-                StatusBar.styleDefault();
-            }
+
+            $rootScope.$on('$cordovaPush:notificationReceived', function (event, notification) {
+                if ($ionicPlatform.isAndroid()) {
+                    if (notification.event == "registered") {
+                        $window.localStorage['pushId'] = notification.regid;
+                    } else if (notification.event == "message") {
+                        $cordovaToast.showLongTop(notification.message);
+                    } else if (notification.event == "error") {
+                        console.log("Push notification error event", notification.msg);
+                    } else {
+                        // TODO: what is this?
+                        console.log("Push notification handler - Unprocessed Event", notification.event);
+                    }
+                } else if ($ionicPlatform.isIOS()) {
+                    if (notification.foreground === "1") {
+                        if (notification.body && notification.messageFrom) {
+                            // TODO: what is this code for?
+                            $cordovaToast.showLongTop(notification.body);
+                        } else {
+                            $cordovaToast.showLongTop(notification.alert);
+                        }
+
+                        if (notification.badge) {
+                            $cordovaPush.setBadgeNumber(notification.badge).then(function () {}, function (err) {
+                                console.log(err)
+                            });
+                        }
+                    }
+                }
+            });
         });
     });
 

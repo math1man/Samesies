@@ -15,14 +15,13 @@
                 // initialize API variable
                 API.init(gapi.client.samesies.samesiesApi);
 
+                // retrieve static data
                 API.getAllQuestions().then(function(resp) {
                     Data.questions = resp.result.items;
                 });
-
                 API.getCategories().then(function(resp) {
                     Data.categories = resp.result.items;
                 });
-
                 API.getModes().then(function(resp) {
                     Data.modes = resp.result.items;
                     if (Data.modes && Data.modes.length) {
@@ -174,7 +173,7 @@
 
     });
 
-    app.controller('LoginCtrl', function($scope, $window, $ionicPopup, API, Data) {
+    app.controller('LoginCtrl', function($scope, $window, $ionicPlatform, $ionicPopup, API, Data) {
 
         $scope.$on('modal.shown', function() {
             $scope.loginData = {
@@ -182,13 +181,15 @@
                 email: $window.localStorage['email'],
                 community: 'Macalester College'
             };
+            $scope.loginCheck = {};
             $scope.isLoading = false;
         });
 
         $scope.login = function(user) {
+            API.registerPush(user.id, $ionicPlatform.platform().toLowerCase(), $window.localStorage['pushId']);
             $window.localStorage['email'] = $scope.loginData.email;
             $scope.loginData = null;
-            $scope.loginKey = [''];
+            $scope.loginCheck = {};
             Data.user = user;
             Data.isLoading = 3;
             $scope.refresh();
@@ -229,8 +230,6 @@
                 });
             }
         };
-
-        $scope.loginCheck = {};
 
         $scope.createAccount = function() {
             if (!$scope.loginData.email) {
