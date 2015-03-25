@@ -351,7 +351,6 @@
             Data.connections = [];
             Data.chats = [];
             Data.friends = [];
-            Data.isLoading = 0;
             $scope.loginPopup.show();
         };
 
