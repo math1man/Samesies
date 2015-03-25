@@ -145,6 +145,9 @@
             },
             sendFeedback: function(feedback) {
                 API.sendFeedback(feedback).then();
+            },
+            registerPush: function(id, type, pushId) {
+                API.registerPush({id: id, type: type, pushId: pushId}).then();
             }
         };
     });
