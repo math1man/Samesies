@@ -601,7 +601,7 @@ public class SamesiesApi {
                         new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, uid),
                         new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, uid)),
                 new Query.FilterPredicate("isPersistent", Query.FilterOperator.EQUAL, true)))
-                .addSort("lastModified", Query.SortDirection.ASCENDING);
+                .addSort("startDate", Query.SortDirection.ASCENDING);
         PreparedQuery pq = ds.prepare(query);
 
         List<Episode> connections = new ArrayList<>();

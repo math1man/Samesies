@@ -182,13 +182,14 @@
                 email: $window.localStorage['email'],
                 community: 'Macalester College'
             };
+            $scope.loginCheck = {};
             $scope.isLoading = false;
         });
 
         $scope.login = function(user) {
             $window.localStorage['email'] = $scope.loginData.email;
             $scope.loginData = null;
-            $scope.loginKey = [''];
+            $scope.loginCheck = {};
             Data.user = user;
             Data.isLoading = 3;
             $scope.refresh();
@@ -352,7 +353,6 @@
             Data.connections = [];
             Data.chats = [];
             Data.friends = [];
-            Data.isLoading = 0;
             $scope.loginPopup.show();
         };
 
