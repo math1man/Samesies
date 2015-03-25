@@ -115,6 +115,10 @@
 
         $scope.refresh = function() {
             if (Data.user) {
+                API.getCommunity(Data.user.community).then(function(resp) {
+                    Data.community = resp.result;
+                    $scope.$apply();
+                });
                 API.getFriends(Data.user.id).then(function(resp) {
                     var friends = resp.result.items;
                     if (friends && friends.length) {
@@ -170,26 +174,24 @@
 
     });
 
-    app.controller('LoginCtrl', function($scope, $ionicPopup, API, Data) {
+    app.controller('LoginCtrl', function($scope, $window, $ionicPopup, API, Data) {
 
         $scope.$on('modal.shown', function() {
             $scope.loginData = {
                 error: false,
+                email: $window.localStorage['email'],
                 community: 'Macalester College'
             };
             $scope.isLoading = false;
         });
 
         $scope.login = function(user) {
+            $window.localStorage['email'] = $scope.loginData.email;
             $scope.loginData = null;
             $scope.loginKey = [''];
             Data.user = user;
             Data.isLoading = 3;
             $scope.refresh();
-            API.getCommunity(user.community).then(function(resp) {
-                Data.community = resp.result;
-                $scope.$apply();
-            });
             $scope.resetToggle();
             $scope.closeLogin();
         };
@@ -700,8 +702,6 @@
 
     app.controller('CommunitiesCtrl', function($scope, $ionicPopover, $ionicPopup, API, Data) {
 
-        $scope.selected = Data.community.name;
-
         $scope.loadCommunity = function(community) {
             if ($scope.selectPopup) {
                 $scope.selectPopup.hide();
@@ -796,7 +796,7 @@
 
     });
 
-    app.controller('ChatCtrl', function($scope, $timeout, $ionicPopup, $ionicScrollDelegate, API, Data, Utils) {
+    app.controller('ChatCtrl', function($scope, $window, $timeout, $ionicPopup, $ionicScrollDelegate, API, Data, Utils) {
 
         // TODO: the focusInput/scrollBottom interactions are really awkward, so we aren't using focusInput atm
 
@@ -968,13 +968,13 @@
             });
         };
 
-        window.addEventListener('native.keyboardshow', function (e) {
+        $window.addEventListener('native.keyboardshow', function (e) {
             console.log("Keyboard shown!");
             console.log(e.keyboardHeight);
             document.getElementById("inputBar").style.marginBottom = e.keyboardHeight + "px";
         });
 
-        window.addEventListener('native.keyboardhide', function () {
+        $window.addEventListener('native.keyboardhide', function () {
             console.log("Keyboard hidden!");
             document.getElementById("inputBar").style.marginBottom = "0";
         });
