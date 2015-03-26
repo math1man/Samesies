@@ -232,8 +232,6 @@
             }
         };
 
-        $scope.loginCheck = {};
-
         $scope.createAccount = function() {
             if (!$scope.loginData.email) {
                 $scope.loginData.error = "Invalid email";
