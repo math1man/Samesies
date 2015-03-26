@@ -22,9 +22,6 @@
             getUser: function(id) {
                 return API.getUser({id: id});
             },
-            getUsers: function(ids) {
-                return API.getUsers({ids: ids});
-            },
             updateUser: function(user) {
                 return API.updateUser(user);
             },
