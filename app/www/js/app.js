@@ -8,7 +8,9 @@
             // for form inputs)
             if ($window.cordova) {
                 $cordovaKeyboard.hideAccessoryBar(true);
-                $cordovaKeyboard.disableScroll(true);
+                if (ionic.Platform.isIOS()) {
+                    $cordovaKeyboard.disableScroll(true);
+                }
             }
         });
     });

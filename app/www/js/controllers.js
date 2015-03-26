@@ -476,7 +476,7 @@
 
     });
 
-    app.controller('EpisodeCtrl', function($scope, $state, $window, $ionicPopup, $ionicModal, API, Utils, Data) {
+    app.controller('EpisodeCtrl', function($scope, $state, $window, $cordovaKeyboard, $ionicPopup, $ionicModal, API, Utils, Data) {
 
         $ionicModal.fromTemplateUrl('templates/help.html', {
             scope: $scope,
@@ -643,6 +643,7 @@
         };
 
         $scope.answer = function() {
+            $cordovaKeyboard.close();
             $scope.episodeData.theirAnswer = "Waiting for your partner to answer...";
             go('waiting');
             API.answerEpisode(Data.episode.id, Data.user.id, $scope.episodeData.myAnswer).then(function(resp) {
@@ -995,16 +996,18 @@
             });
         };
 
-        $window.addEventListener('native.keyboardshow', function (e) {
-            console.log("Keyboard shown!");
-            console.log(e.keyboardHeight);
-            document.getElementById("inputBar").style.marginBottom = e.keyboardHeight + "px";
-        });
+        if (ionic.Platform.isIOS()) {
+            $window.addEventListener('native.keyboardshow', function (e) {
+                console.log("Keyboard shown!");
+                console.log(e.keyboardHeight);
+                document.getElementById("inputBar").style.marginBottom = e.keyboardHeight + "px";
+            });
 
-        $window.addEventListener('native.keyboardhide', function () {
-            console.log("Keyboard hidden!");
-            document.getElementById("inputBar").style.marginBottom = "0";
-        });
+            $window.addEventListener('native.keyboardhide', function () {
+                console.log("Keyboard hidden!");
+                document.getElementById("inputBar").style.marginBottom = "0";
+            });
+        }
 
         $scope.$on('$ionicView.beforeLeave', function() {
             Utils.interruptAll();
