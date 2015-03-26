@@ -186,7 +186,9 @@
         });
 
         $scope.login = function(user) {
-            API.registerPush(user.id, $ionicPlatform.platform().toLowerCase(), $window.localStorage['pushId']);
+            if ($window.localStorage['pushId']) {
+                API.registerPush(user.id, $ionicPlatform.platform().toLowerCase(), $window.localStorage['pushId']);
+            }
             $window.localStorage['email'] = $scope.loginData.email;
             $scope.loginData = null;
             $scope.loginCheck = {};
