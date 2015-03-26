@@ -20,6 +20,7 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * @author Ari Weiland
@@ -226,13 +227,39 @@ public class SamesiesApi {
             path = "user/find/{email}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public User findUser(@Named("email") String email) throws ServiceException {
-        DatastoreService ds = getDS();
-
-        User user = getUserByEmail(ds, email, User.Relation.STRANGER);
+        User user = getUserByEmail(getDS(), email, User.Relation.STRANGER);
         if (user == null || user.getIsBanned()) { // ignore banned users
             return null;
         } else {
             return user;
+        }
+    }
+
+    @ApiMethod(name = "samesiesApi.searchUsers",
+            path = "user/search/{string}",
+            httpMethod = ApiMethod.HttpMethod.GET)
+    public List<User> searchUsers(@Named("string") String string) throws ServiceException {
+        DatastoreService ds = getDS();
+        // first, lets check if they straight entered an email
+        User user = getUserByEmail(getDS(), string, User.Relation.STRANGER);
+        if (user != null && !user.getIsBanned()) { // ignore banned users
+            return Collections.singletonList(user);
+        } else {
+            Query query = new Query("User");
+            PreparedQuery pq = ds.prepare(query);
+            List<User> users = new ArrayList<>();
+            Pattern pattern = Pattern.compile(".*" + Pattern.quote(string.toLowerCase()) + ".*");
+            for (Entity e : pq.asIterable()) {
+                User u = new User(e);
+                if (!u.getIsBanned() && (u.getName() != null && pattern.matcher(u.getName().toLowerCase()).matches()
+                        || u.getAlias() != null && pattern.matcher(u.getAlias().toLowerCase()).matches())) {
+                    users.add(new User(e, User.Relation.STRANGER));
+                    if (users.size() == 10) {
+                        return users;
+                    }
+                }
+            }
+            return users;
         }
     }
 
