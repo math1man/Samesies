@@ -643,7 +643,9 @@
         };
 
         $scope.answer = function() {
-            $cordovaKeyboard.close();
+            if (ionic.Platform.isIOS()) {
+                $cordovaKeyboard.close();
+            }
             $scope.episodeData.theirAnswer = "Waiting for your partner to answer...";
             go('waiting');
             API.answerEpisode(Data.episode.id, Data.user.id, $scope.episodeData.myAnswer).then(function(resp) {
