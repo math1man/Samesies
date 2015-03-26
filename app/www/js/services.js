@@ -28,9 +28,6 @@
             updateUser: function(user) {
                 return API.updateUser(user);
             },
-            findUser: function(email) {
-                return API.findUser({email: email});
-            },
             searchUsers: function(string) {
                 return API.searchUsers({string: string});
             },
