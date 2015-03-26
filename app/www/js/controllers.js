@@ -1050,19 +1050,22 @@
     });
 
     app.controller('FindFriendCtrl', function($scope, API, Data, Utils) {
-        $scope.tempUser = null;
-        $scope.email = [''];
+        $scope.list = [];
+        $scope.search = [''];
 
         $scope.findFriend = function() {
-            API.findUser($scope.email[0]).then(function(resp) {
-                $scope.tempUser = resp.result;
-                $scope.$apply();
+            API.searchUsers($scope.search[0]).then(function(resp) {
+                var list = resp.result.items;
+                if (list && list.length) {
+                    $scope.list = list;
+                    $scope.$apply();
+                }
             });
         };
 
-        $scope.add = function() {
-            if ($scope.tempUser) {
-                API.addFriend(Data.user.id, $scope.tempUser.id).then(function(resp) {
+        $scope.add = function(user) {
+            if (user) {
+                API.addFriend(Data.user.id, user.id).then(function(resp) {
                     var friend = resp.result;
                     if (friend && !Utils.containsById(Data.friends, friend)) {
                         Data.friends.push(friend);
@@ -1074,8 +1077,8 @@
         };
 
         $scope.$on('popover.hidden', function() {
-            $scope.tempUser = null;
-            $scope.email = [''];
+            $scope.list = [];
+            $scope.search = [''];
         });
 
     });

@@ -1,6 +1,6 @@
 (function() {
 
-    var app = angular.module('samesies', ['ionic', 'samesies.controllers', 'samesies.services', 'samesies.filters', 'samesies.directives']);
+    var app = angular.module('samesies', ['ionic', 'ngCordova', 'samesies.controllers', 'samesies.services', 'samesies.filters', 'samesies.directives']);
 
     app.run(function ($window, $ionicPlatform, $cordovaKeyboard) {
         $ionicPlatform.ready(function () {
