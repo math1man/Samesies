@@ -180,6 +180,7 @@
             $scope.loginData = {
                 error: false,
                 email: $window.localStorage['email'],
+                avatar: 'img/lone_icon.png',
                 community: 'Macalester College'
             };
             $scope.loginCheck = {};
@@ -265,6 +266,34 @@
                     });
                 });
             }
+        };
+
+        $scope.selectAvatar = function() {
+            $scope.tempData = {
+                image: $scope.loginData.avatar
+            };
+            $ionicPopup.show({
+                scope: $scope,
+                title: 'Update Profile Picture',
+                templateUrl: 'templates/upload-avatar.html',
+                buttons: [
+                    {
+                        text: 'Cancel',
+                        type: 'button-stable'
+                    }, {
+                        text: 'Okay',
+                        type: 'button-royal',
+                        onTap: function() {
+                            return $scope.tempData.image;
+                        }
+                    }
+                ]
+            }).then(function(image) {
+                if (angular.isDefined(image)) {
+                    $scope.loginData.avatar = image;
+                }
+                $scope.tempData = null;
+            });
         };
 
         $scope.recoverPassword = function() {
