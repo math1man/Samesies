@@ -245,7 +245,7 @@ public class SamesiesApi {
             Query query = new Query("User");
             PreparedQuery pq = ds.prepare(query);
             List<User> users = new ArrayList<>();
-            Pattern pattern = Pattern.compile(".*" + Pattern.quote(string.toLowerCase()) + ".*");
+            Pattern pattern = getSearchPattern(string);
             for (Entity e : pq.asIterable()) {
                 User u = new User(e);
                 if (!u.getIsBanned() && (u.getName() != null && pattern.matcher(u.getName().toLowerCase()).matches()
@@ -430,15 +430,18 @@ public class SamesiesApi {
     @ApiMethod(name = "samesiesApi.getUserCommunities",
             path = "communities/user/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
-    public List<Long> getUserCommunities(@Named("id") long uid) throws ServiceException {
+    public List<Community> getUserCommunities(@Named("id") long uid) throws ServiceException {
         DatastoreService ds = getDS();
         Query query = new Query("CommunityUser").setFilter(Query.CompositeFilterOperator.and(
                 new Query.FilterPredicate("uid", Query.FilterOperator.EQUAL, uid),
                 new Query.FilterPredicate("isValidated", Query.FilterOperator.EQUAL, true)));
         PreparedQuery pq = ds.prepare(query);
-        List<Long> communities = new ArrayList<>();
+        List<Community> communities = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
-            communities.add(new CommunityUser(e).getCid());
+            Community community = getCommunity(ds, new CommunityUser(e).getCid());
+            if (community != null) {
+                communities.add(community);
+            }
         }
         return communities;
     }
@@ -480,7 +483,27 @@ public class SamesiesApi {
         return null;
     }
 
-    // TODO: getCommunities via a search keyword (ie. name.contains(keyword))
+    @ApiMethod(name = "samesiesApi.searchCommunities",
+            path = "communities/search/{string}",
+            httpMethod = ApiMethod.HttpMethod.GET)
+    public List<Community> searchCommunities(@Named("string") String string) throws ServiceException {
+        DatastoreService ds = getDS();
+        Query query = new Query("Community").addProjection(new PropertyProjection("name", String.class))
+                .addProjection(new PropertyProjection("description", String.class));
+        PreparedQuery pq = ds.prepare(query);
+        List<Community> communities = new ArrayList<>();
+        Pattern pattern = getSearchPattern(string);
+        for (Entity e : pq.asIterable()) {
+            Community c = new Community(e);
+            if (c.getName() != null && pattern.matcher(c.getName().toLowerCase()).matches()) {
+                communities.add(c);
+                if (communities.size() == 10) {
+                    return communities;
+                }
+            }
+        }
+        return communities;
+    }
 
     @ApiMethod(name = "samesiesApi.createOpenCommunity",
             path = "communities/create/{name}",
@@ -967,6 +990,10 @@ public class SamesiesApi {
         return Math.sin(radians / 2) * Math.sin(radians / 2);
     }
 
+    private static Pattern getSearchPattern(String string) {
+        return Pattern.compile(".*" + Pattern.quote(string.toLowerCase()) + ".*");
+    }
+
     private static User getUserById(DatastoreService ds, long id, User.Relation relation) throws NotFoundException {
         try {
             return new User(ds.get(KeyFactory.createKey("User", id)), relation);
@@ -1008,6 +1035,14 @@ public class SamesiesApi {
             }
         }
         return new Friend(e);
+    }
+
+    private static Community getCommunity(DatastoreService ds, long cid) throws NotFoundException {
+        try {
+            return new Community(ds.get(KeyFactory.createKey("Community", cid)));
+        } catch (EntityNotFoundException e) {
+            throw new NotFoundException("Community not found", e);
+        }
     }
 
     private static Question getQuestion(DatastoreService ds, long qid) throws NotFoundException {

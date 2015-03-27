@@ -2,7 +2,6 @@ package com.dfaenterprises.samesies.model;
 
 import com.dfaenterprises.samesies.EntityUtils;
 import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.Text;
 
 /**
  * @author Ari Weiland
@@ -14,7 +13,7 @@ public class Community extends Storable {
     }
 
     private String name;
-    private Text description;
+    private String description;
     private Validation validation;
     private String validationString;
 
@@ -24,7 +23,7 @@ public class Community extends Storable {
     public Community(Entity e) {
         super(e);
         this.name = (String) e.getProperty("name");
-        this.description = (Text) e.getProperty("description");
+        this.description = (String) e.getProperty("description");
         this.validation = EntityUtils.getEnumProp(e, "validation", Validation.class);
         this.validationString = (String) e.getProperty("validationString");
     }
@@ -49,19 +48,11 @@ public class Community extends Storable {
     }
 
     public String getDescription() {
-        if (description == null) {
-            return null;
-        } else {
-            return description.getValue();
-        }
+        return description;
     }
 
     public void setDescription(String description) {
-        if (description == null) {
-            this.description = null;
-        } else {
-            this.description = new Text(description);
-        }
+        this.description = description;
     }
 
     public Validation getValidation() {
