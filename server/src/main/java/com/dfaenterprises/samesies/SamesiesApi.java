@@ -387,7 +387,7 @@ public class SamesiesApi {
             path = "community",
             httpMethod = ApiMethod.HttpMethod.GET)
     public Community getCommunity(@Nullable@Named("location") String location, @Nullable@Named("name") String name, @Nullable@Named("id") Long cid) throws ServiceException {
-        // **Eventually** TODO: eventually remove name and make cid not Nullable, but needed for compatibility
+        // **v1.1.0** TODO: eventually remove name and make cid not Nullable, but needed for compatibility
         DatastoreService ds = getDS();
         List<User> users = new ArrayList<>();
         if (cid == null) {
@@ -657,7 +657,7 @@ public class SamesiesApi {
                                @Nullable@Named("isPersistent") Boolean isPersistent, @Nullable@Named("cid") Long cid,
                                @Nullable@Named("latitude") Float latitude, @Nullable@Named("longitude") Float longitude) throws ServiceException {
         DatastoreService ds = getDS();
-        // **Eventually** TODO: make isPersistent not Nullable
+        // **v1.1.0** TODO: make isPersistent not Nullable
         if (isPersistent == null) {
             isPersistent = false;
         }

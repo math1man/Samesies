@@ -557,7 +557,7 @@
                 if (Data.community.id != EVERYONE_CID) {
                     params.cid = Data.community.id;
                 }
-                // **Post-Beta** TODO: location
+                // **Eventually** TODO: location
                 // TODO: handle isPersistent
                 API.findEpisode(Data.user.id, false, Data.settings, params).then(function (resp) {
                     Data.episode = resp.result;

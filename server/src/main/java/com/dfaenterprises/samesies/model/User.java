@@ -24,7 +24,7 @@ public class User extends Storable {
     private String hashedPw;
     private String alias;
     private Text avatar;
-    // **Post-Beta** TODO: maybe add a hasAvatar param?
+    // **Eventually** TODO: maybe add a hasAvatar param?
     private Float latitude;
     private Float longitude;
     private String name;
