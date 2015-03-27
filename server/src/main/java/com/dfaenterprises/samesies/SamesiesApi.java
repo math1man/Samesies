@@ -203,6 +203,7 @@ public class SamesiesApi {
                 throw new BadRequestException("Invalid Password");
             }
         }
+        user.setGeoPt(dsUser.getGeoPt());
         user.setIsActivated(dsUser.getIsActivated());
         user.setIsBanned(dsUser.getIsBanned());
         EntityUtils.put(ds, user);
@@ -520,7 +521,7 @@ public class SamesiesApi {
             path = "communities/create/password/{name}/{password}",
             httpMethod = ApiMethod.HttpMethod.POST)
     public void createPasswordCommunity(@Named("name") String name, @Named("password") String password,
-                                     @Nullable@Named("description") String description) throws ServiceException {
+                                        @Nullable@Named("description") String description) throws ServiceException {
         EntityUtils.put(getDS(), new Community(name, description, Community.Validation.PASSWORD,
                 BCrypt.hashpw(password, BCrypt.gensalt())));
     }
