@@ -380,10 +380,18 @@ public class SamesiesApi {
     //----------------------------
 
     @ApiMethod(name = "samesiesApi.getCommunity",
-            path = "community/{name}",
+            path = "community",
             httpMethod = ApiMethod.HttpMethod.GET)
-    public UserGroup getCommunity(@Named("name") String name) throws ServiceException {
+    public UserGroup getCommunity(@Nullable@Named("location") String location, @Nullable@Named("name") String name) throws ServiceException {
         DatastoreService ds = getDS();
+        // **Low-Priority** TODO: eventually remove location, but needed for compatibility
+        if (name == null) {
+            if (location == null) {
+                throw new BadRequestException("Must specify a community");
+            } else {
+                name = location;
+            }
+        }
         Query query = new Query("User").setFilter(Query.CompositeFilterOperator.and(
                 new Query.FilterPredicate("community", Query.FilterOperator.EQUAL, name),
                 new Query.FilterPredicate("isBanned", Query.FilterOperator.EQUAL, false)));
