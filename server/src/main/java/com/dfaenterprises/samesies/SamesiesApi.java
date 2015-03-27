@@ -939,7 +939,7 @@ public class SamesiesApi {
     }
 
     //----------------------------
-    //      Feedback Calls
+    //    Miscellaneous Calls
     //----------------------------
 
     @ApiMethod(name = "samesiesApi.sendFeedback",
@@ -947,6 +947,17 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.POST)
     public void sendFeedback(Feedback feedback) throws ServiceException {
         EntityUtils.put(getDS(), feedback);
+    }
+
+    @ApiMethod(name = "samesiesApi.sendEmail",
+            path = "email/{uid}/{subject}",
+            httpMethod = ApiMethod.HttpMethod.POST)
+    public void sendEmail(@Named("uid") long uid, @Named("subject") String subject, @Named("message") String[] messageLines) throws ServiceException {
+        StringBuilder sb = new StringBuilder();
+        for (String s : messageLines) {
+            sb.append(s).append('\n');
+        }
+        sendEmail(getUser(getDS(), uid, User.Relation.ADMIN), subject, sb.toString());
     }
 
     //----------------------------
