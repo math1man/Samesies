@@ -465,7 +465,11 @@ public class SamesiesApi {
                 if (string != null && string.contains(community.getValidationString())) {
                     cu = new CommunityUser(community.getId(), myUid);
                     EntityUtils.put(ds, cu);
-                    // TODO: send email and stuff
+                    sendEmail(getUserById(ds, myUid, User.Relation.ADMIN), "Join " + community.getName(),
+                            "Click the link below to join the Samesies community for " + community.getName() + ":\n" +
+                            "https://samesies-app.appspot.com/_ah/spi/communities/join?community_user_id=" + cu.getId() + "\n\n" +
+                            "Have fun,\n" +
+                            "The Samesies Team");
                 }
                 break;
             case PASSWORD:
