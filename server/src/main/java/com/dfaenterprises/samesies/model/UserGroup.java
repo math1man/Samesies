@@ -8,6 +8,8 @@ import java.util.List;
 public class UserGroup {
 
     private String name;
+    // **Low-Priority** TODO: remove location eventually, needed for compatibility
+    private String location;
     private List<User> users;
 
     public UserGroup() {
@@ -15,6 +17,7 @@ public class UserGroup {
 
     public UserGroup(String name, List<User> users) {
         this.name = name;
+        this.location = name;
         this.users = users;
     }
 
@@ -24,6 +27,14 @@ public class UserGroup {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     public List<User> getUsers() {
