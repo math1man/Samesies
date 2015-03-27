@@ -66,21 +66,6 @@ public class User extends Storable {
         }
     }
 
-    public User(String email, String password, String alias,
-                String name, Integer age, String gender, String aboutMe) {
-        this.email = email;
-        this.password = password;
-        this.alias = alias;
-        this.avatar = getDefaultAvatar();
-        this.name = name;
-        this.age = Long.valueOf(age);
-        this.gender = gender;
-        this.aboutMe = aboutMe;
-        this.questions = blankQuestions();
-        this.isActivated = true;
-        this.isBanned = false;
-    }
-
     public String getEmail() {
         return email;
     }
