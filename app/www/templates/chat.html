@@ -12,7 +12,7 @@
 			<h6 ng-show="message.sentDate">{{dispDate(message)}}</h6>
 		</div>
 	</ion-content>
-	<ion-footer-bar class="bar-stable">
+	<ion-footer-bar class="bar-stable" id="inputBar">
 		<label class="item-input-wrapper">
 			<input id="chatInput" type="text" ng-model="buffer" ng-keypress="$event.keyCode === 13 && sendChat()"
 				   placeholder="Send to {{dispName(data('chat').user)}}"/>

@@ -22,14 +22,11 @@
             getUser: function(id) {
                 return API.getUser({id: id});
             },
-            getUsers: function(ids) {
-                return API.getUsers({ids: ids});
-            },
             updateUser: function(user) {
                 return API.updateUser(user);
             },
-            findUser: function(email) {
-                return API.findUser({email: email});
+            searchUsers: function(string) {
+                return API.searchUsers({string: string});
             },
             flagUser: function(flaggedId, flaggerId, reason) {
                 API.flagUser({flaggedId: flaggedId, flaggerId: flaggerId, reason: reason}).then();

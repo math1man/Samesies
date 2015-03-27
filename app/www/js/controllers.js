@@ -115,6 +115,10 @@
 
         $scope.refresh = function() {
             if (Data.user) {
+                API.getCommunity(Data.user.community).then(function(resp) {
+                    Data.community = resp.result;
+                    $scope.$apply();
+                });
                 API.getFriends(Data.user.id).then(function(resp) {
                     var friends = resp.result.items;
                     if (friends && friends.length) {
@@ -170,26 +174,26 @@
 
     });
 
-    app.controller('LoginCtrl', function($scope, $ionicPopup, API, Data) {
+    app.controller('LoginCtrl', function($scope, $window, $ionicPopup, API, Data) {
 
         $scope.$on('modal.shown', function() {
             $scope.loginData = {
                 error: false,
+                email: $window.localStorage['email'],
+                avatar: 'img/lone_icon.png',
                 community: 'Macalester College'
             };
+            $scope.loginCheck = {};
             $scope.isLoading = false;
         });
 
         $scope.login = function(user) {
+            $window.localStorage['email'] = $scope.loginData.email;
             $scope.loginData = null;
-            $scope.loginKey = [''];
+            $scope.loginCheck = {};
             Data.user = user;
             Data.isLoading = 3;
             $scope.refresh();
-            API.getCommunity(user.community).then(function(resp) {
-                Data.community = resp.result;
-                $scope.$apply();
-            });
             $scope.resetToggle();
             $scope.closeLogin();
         };
@@ -228,8 +232,6 @@
             }
         };
 
-        $scope.loginCheck = {};
-
         $scope.createAccount = function() {
             if (!$scope.loginData.email) {
                 $scope.loginData.error = "Invalid email";
@@ -262,6 +264,34 @@
                     });
                 });
             }
+        };
+
+        $scope.selectAvatar = function() {
+            $scope.tempData = {
+                image: $scope.loginData.avatar
+            };
+            $ionicPopup.show({
+                scope: $scope,
+                title: 'Update Profile Picture',
+                templateUrl: 'templates/upload-avatar.html',
+                buttons: [
+                    {
+                        text: 'Cancel',
+                        type: 'button-stable'
+                    }, {
+                        text: 'Okay',
+                        type: 'button-royal',
+                        onTap: function() {
+                            return $scope.tempData.image;
+                        }
+                    }
+                ]
+            }).then(function(image) {
+                if (angular.isDefined(image)) {
+                    $scope.loginData.avatar = image;
+                }
+                $scope.tempData = null;
+            });
         };
 
         $scope.recoverPassword = function() {
@@ -350,7 +380,6 @@
             Data.connections = [];
             Data.chats = [];
             Data.friends = [];
-            Data.isLoading = 0;
             $scope.loginPopup.show();
         };
 
@@ -447,7 +476,7 @@
 
     });
 
-    app.controller('EpisodeCtrl', function($scope, $state, $window, $ionicPopup, $ionicModal, API, Utils, Data) {
+    app.controller('EpisodeCtrl', function($scope, $state, $window, $cordovaKeyboard, $ionicPopup, $ionicModal, API, Utils, Data) {
 
         $ionicModal.fromTemplateUrl('templates/help.html', {
             scope: $scope,
@@ -464,10 +493,8 @@
             $scope.helpPopup.hide();
         };
 
-        var episode;
-
         $scope.isPersistent = function() {
-           return episode && episode.isPersistent;
+           return Data.episode && Data.episode.isPersistent;
         };
 
         var go = function(state) {
@@ -475,7 +502,7 @@
             $scope.episodeData.state = state;
             if (state === 'waiting') {
                 Utils.interval(function () {
-                    API.getEpisode(episode.id).then(function (resp) {
+                    API.getEpisode(Data.episode.id).then(function (resp) {
                         if ($scope.is('waiting')) {
                             updateEpisode(resp.result);
                         }
@@ -502,9 +529,8 @@
 
         $scope.find = function() {
             if (!$scope.isPersistent()) {
-                if (episode) {
-                    API.endEpisode(episode.id);
-                    episode = null;
+                if (Data.episode) {
+                    API.endEpisode(Data.episode.id);
                 }
                 $scope.episodeData = {
                     state: 'matching',
@@ -512,19 +538,19 @@
                 };
                 // TODO: location/community
                 API.findCommunityEpisode(Data.user.id, Data.settings, Data.user.community).then(function (resp) {
-                    episode = resp.result;
-                    if (episode.status === "MATCHING") {
+                    Data.episode = resp.result;
+                    if (Data.episode.status === "MATCHING") {
                         Utils.interval(function () {
-                            API.getEpisode(episode.id).then(function (resp) {
+                            API.getEpisode(Data.episode.id).then(function (resp) {
                                 // second condition prevents multiple calls
-                                episode = resp.result;
-                                if (episode.status === "IN_PROGRESS" && $scope.is('matching')) {
-                                    loadEpisode(episode);
+                                Data.episode = resp.result;
+                                if (Data.episode.status === "IN_PROGRESS" && $scope.is('matching')) {
+                                    loadEpisode(Data.episode);
                                 }
                             });
                         }, PING_INTERVAL);
                     } else {
-                        loadEpisode(episode);
+                        loadEpisode(Data.episode);
                     }
                 });
             }
@@ -551,9 +577,9 @@
         $scope.next = function() {
             $scope.episodeData.myAnswer = '';
             if ($scope.episodeData.stage == 10) {
-                API.endEpisode(episode.id);
-                episode.status = "COMPLETE";
-                API.getUser(Utils.getPartnerId(episode)).then(function(resp) {
+                API.endEpisode(Data.episode.id);
+                Data.episode.status = "COMPLETE";
+                API.getUser(Utils.getPartnerId(Data.episode)).then(function(resp) {
                     Data.tempUser = resp.result;
                     $ionicPopup.confirm({
                         title: 'Is it Samesies?',
@@ -581,7 +607,7 @@
                                 $scope.find();
                             }
                         } else {
-                            API.startChat(episode.id, true, Data.user.id, Data.tempUser.id).then(function (resp) {
+                            API.startChat(Data.episode.id, true, Data.user.id, Data.tempUser.id).then(function (resp) {
                                 Data.chat = resp.result;
                                 if (answer) {
                                     Data.chat.user = Data.tempUser;
@@ -617,9 +643,12 @@
         };
 
         $scope.answer = function() {
+            if (ionic.Platform.isIOS()) {
+                $cordovaKeyboard.close();
+            }
             $scope.episodeData.theirAnswer = "Waiting for your partner to answer...";
             go('waiting');
-            API.answerEpisode(episode.id, Data.user.id, $scope.episodeData.myAnswer).then(function(resp) {
+            API.answerEpisode(Data.episode.id, Data.user.id, $scope.episodeData.myAnswer).then(function(resp) {
                 updateEpisode(resp.result);
             }, function(reason) {
                 console.log(reason);
@@ -627,10 +656,10 @@
         };
 
         var updateEpisode = function(ep) {
-            var user = episode.user;
-            episode = ep;
-            episode.user = user;
-            if (episode.status === "ABANDONED") {
+            var user = Data.episode.user;
+            Data.episode = ep;
+            Data.episode.user = user;
+            if (Data.episode.status === "ABANDONED") {
                 Utils.interruptAll();
                 $ionicPopup.confirm({
                     title: 'Partner Left',
@@ -650,9 +679,9 @@
                 var index = $scope.episodeData.stage - 1;
                 var answer, answers;
                 if ($scope.episodeData.is1) {
-                    answers = episode.answers2;
+                    answers = Data.episode.answers2;
                 } else {
-                    answers = episode.answers1;
+                    answers = Data.episode.answers1;
                 }
                 // make sure it has the list and that the list is long enough
                 if (answers && answers.length > index) {
@@ -667,15 +696,16 @@
 
         var cleanUpEpisode = function() {
             Utils.interruptAll();
-            if (episode) {
-                if (episode.isPersistent) {
-                    if (episode.status === "IN_PROGRESS") {
-                        episode.data = $scope.episodeData;
-                        Data.connections.push(episode);
+            if (Data.episode) {
+                if (Data.episode.isPersistent) {
+                    if (Data.episode.status === "IN_PROGRESS") {
+                        Data.episode.data = $scope.episodeData;
+                        Data.connections.push(Data.episode);
                     }
                 } else {
-                    API.endEpisode(episode.id);
+                    API.endEpisode(Data.episode.id);
                 }
+                Data.episode = null;
             }
         };
 
@@ -693,9 +723,7 @@
         };
 
         if (Data.episode) {
-            episode = Data.episode;
-            Data.episode = null; // prevent possible shenanigans
-            loadEpisode(episode);
+            loadEpisode(Data.episode);
         } else {
             $scope.find();
         }
@@ -703,8 +731,6 @@
     });
 
     app.controller('CommunitiesCtrl', function($scope, $ionicPopover, $ionicPopup, API, Data) {
-
-        $scope.selected = Data.community.name;
 
         $scope.loadCommunity = function(community) {
             if ($scope.selectPopup) {
@@ -800,7 +826,7 @@
 
     });
 
-    app.controller('ChatCtrl', function($scope, $timeout, $ionicPopup, $ionicScrollDelegate, API, Data, Utils) {
+    app.controller('ChatCtrl', function($scope, $window, $timeout, $ionicPopup, $ionicScrollDelegate, API, Data, Utils) {
 
         // TODO: the focusInput/scrollBottom interactions are really awkward, so we aren't using focusInput atm
 
@@ -972,6 +998,19 @@
             });
         };
 
+        if (ionic.Platform.isIOS()) {
+            $window.addEventListener('native.keyboardshow', function (e) {
+                console.log("Keyboard shown!");
+                console.log(e.keyboardHeight);
+                document.getElementById("inputBar").style.marginBottom = e.keyboardHeight + "px";
+            });
+
+            $window.addEventListener('native.keyboardhide', function () {
+                console.log("Keyboard hidden!");
+                document.getElementById("inputBar").style.marginBottom = "0";
+            });
+        }
+
         $scope.$on('$ionicView.beforeLeave', function() {
             Utils.interruptAll();
             Data.chat = null;
@@ -1043,19 +1082,22 @@
     });
 
     app.controller('FindFriendCtrl', function($scope, API, Data, Utils) {
-        $scope.tempUser = null;
-        $scope.email = [''];
+        $scope.list = [];
+        $scope.search = [''];
 
         $scope.findFriend = function() {
-            API.findUser($scope.email[0]).then(function(resp) {
-                $scope.tempUser = resp.result;
-                $scope.$apply();
+            API.searchUsers($scope.search[0]).then(function(resp) {
+                var list = resp.result.items;
+                if (list && list.length) {
+                    $scope.list = list;
+                    $scope.$apply();
+                }
             });
         };
 
-        $scope.add = function() {
-            if ($scope.tempUser) {
-                API.addFriend(Data.user.id, $scope.tempUser.id).then(function(resp) {
+        $scope.add = function(user) {
+            if (user) {
+                API.addFriend(Data.user.id, user.id).then(function(resp) {
                     var friend = resp.result;
                     if (friend && !Utils.containsById(Data.friends, friend)) {
                         Data.friends.push(friend);
@@ -1067,8 +1109,8 @@
         };
 
         $scope.$on('popover.hidden', function() {
-            $scope.tempUser = null;
-            $scope.email = [''];
+            $scope.list = [];
+            $scope.search = [''];
         });
 
     });
@@ -1477,6 +1519,12 @@
         };
 
         $scope.submit = function() {
+            $ionicPopup.alert({
+                title: 'Feedback Sent',
+                template: 'Your feedback has been sent!',
+                okText: 'Okay' ,
+                okType: 'button-royal'
+            });
             if ($scope.feedback) {
                 API.sendFeedback($scope.feedback);
             }

@@ -21,8 +21,12 @@
                 <input type="text" ng-model="loginData.community" placeholder="Community" readonly>
             </label>
             <label class="item item-input">
-                <span class="input-label">Alias</span>
-                <input type="text" ng-model="loginData.alias" placeholder="Alias">
+                <span class="input-label">Nickname</span>
+                <input type="text" ng-model="loginData.alias" placeholder="Nickname">
+            </label>
+            <label class="item item-avatar-right" ng-click="selectAvatar()">
+                <img ng-src="{{loginData.avatar}}">
+                Profile Picture
             </label>
             <label class="item item-input">
                 <span class="input-label">Login Key</span>

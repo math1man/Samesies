@@ -20,6 +20,7 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * @author Ari Weiland
@@ -142,23 +143,13 @@ public class SamesiesApi {
             EntityUtils.put(ds, newUser);
             sendEmail(newUser, "Activate your Samesies Account",
                     "Click the link below to activate your account:\n" +
-                    "https://samesies-app.appspot.com/_ah/api/samesies/v1/user/activate/" + newUser.getId() + "\n\n" +
+                    "https://samesies-app.appspot.com/_ah/spi/activate?user_id=" + newUser.getId() + "\n\n" +
                     "Have fun,\n" +
                     "The Samesies Team");
             return newUser;
         } else {
             throw new ForbiddenException("Email already in use");
         }
-    }
-
-    @ApiMethod(name = "samesiesApi.activateUser",
-            path = "user/activate/{id}",
-            httpMethod = ApiMethod.HttpMethod.GET)
-    public void activateUser(@Named("id") long uid) throws ServiceException {
-        DatastoreService ds = getDS();
-        User user = getUserById(ds, uid, User.Relation.ADMIN);
-        user.setIsActivated(true);
-        EntityUtils.put(ds, user);
     }
 
     @ApiMethod(name = "samesiesApi.recoverUser",
@@ -233,13 +224,39 @@ public class SamesiesApi {
             path = "user/find/{email}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public User findUser(@Named("email") String email) throws ServiceException {
-        DatastoreService ds = getDS();
-
-        User user = getUserByEmail(ds, email, User.Relation.STRANGER);
+        User user = getUserByEmail(getDS(), email, User.Relation.STRANGER);
         if (user == null || user.getIsBanned()) { // ignore banned users
             return null;
         } else {
             return user;
+        }
+    }
+
+    @ApiMethod(name = "samesiesApi.searchUsers",
+            path = "user/search/{string}",
+            httpMethod = ApiMethod.HttpMethod.GET)
+    public List<User> searchUsers(@Named("string") String string) throws ServiceException {
+        DatastoreService ds = getDS();
+        // first, lets check if they straight entered an email
+        User user = getUserByEmail(getDS(), string, User.Relation.STRANGER);
+        if (user != null && !user.getIsBanned()) { // ignore banned users
+            return Collections.singletonList(user);
+        } else {
+            Query query = new Query("User");
+            PreparedQuery pq = ds.prepare(query);
+            List<User> users = new ArrayList<>();
+            Pattern pattern = Pattern.compile(".*" + Pattern.quote(string.toLowerCase()) + ".*");
+            for (Entity e : pq.asIterable()) {
+                User u = new User(e);
+                if (!u.getIsBanned() && (u.getName() != null && pattern.matcher(u.getName().toLowerCase()).matches()
+                        || u.getAlias() != null && pattern.matcher(u.getAlias().toLowerCase()).matches())) {
+                    users.add(new User(e, User.Relation.STRANGER));
+                    if (users.size() == 10) {
+                        return users;
+                    }
+                }
+            }
+            return users;
         }
     }
 
@@ -609,6 +626,7 @@ public class SamesiesApi {
             episode.setStatus(Episode.Status.IN_PROGRESS);
             episode.setUid2(myUid);
             episode.setQids(getQids(ds, mode));
+            episode.setUser(getUserById(ds, episode.getUid1(), User.Relation.STRANGER));
             episode.modify();
         }
         EntityUtils.put(ds, episode);
@@ -697,7 +715,6 @@ public class SamesiesApi {
                         new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, uid)),
                 new Query.FilterPredicate("isPersistent", Query.FilterOperator.EQUAL, true)))
                 .addSort("startDate", Query.SortDirection.ASCENDING);
-        // TODO: sort by lastModified instead
         PreparedQuery pq = ds.prepare(query);
 
         List<Episode> connections = new ArrayList<>();
@@ -824,7 +841,7 @@ public class SamesiesApi {
     @ApiMethod(name = "samesiesApi.getMessages",
             path = "chat/messages/{chatId}/{after}",
             httpMethod = ApiMethod.HttpMethod.GET)
-    public List<Message> getMessages(@Named("chatId") long cid, @Named("after") Date after, @Nullable @Named("myId") Long myUid) throws ServiceException {
+    public List<Message> getMessages(@Named("chatId") long cid, @Named("after") Date after, @Nullable@Named("myId") Long myUid) throws ServiceException {
         // TODO: eventually remove the @Nullable to the myUid parameter
         // For now we need it for backwards compatibility
         DatastoreService ds = getDS();

@@ -1,7 +1,5 @@
-
 server/target
 app/platforms
-app/plugins
 app/node_modules
 .idea
 
@@ -14,4 +12,3 @@ app/node_modules
 Letter of Understanding.docx
 
 server/eclipse-launch-profiles
-old
