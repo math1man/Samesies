@@ -38,9 +38,6 @@
         },
         "org.apache.cordova.inappbrowser": {
             "PACKAGE_NAME": "com.dfaenterprises.samesies"
-        },
-        "org.crosswalk.engine": {
-            "PACKAGE_NAME": "com.dfaenterprises.samesies"
         }
     },
     "dependent_plugins": {}

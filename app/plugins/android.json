@@ -15,18 +15,8 @@
                         {
                             "xml": "<feature name=\"InAppBrowser\"><param name=\"android-package\" value=\"org.apache.cordova.inappbrowser.InAppBrowser\" /></feature>",
                             "count": 1
-                        },
-                        {
-                            "xml": "<preference name=\"webView\" value=\"org.crosswalk.engine.XWalkCordovaWebView\" />",
-                            "count": 1
                         }
                     ]
-                }
-            },
-            "AndroidManifest.xml": {
-                "parents": {
-                    "/manifest": [],
-                    "/manifest/application": []
                 }
             }
         }
@@ -36,9 +26,6 @@
             "PACKAGE_NAME": "com.dfaenterprises.samesies"
         },
         "org.apache.cordova.inappbrowser": {
-            "PACKAGE_NAME": "com.dfaenterprises.samesies"
-        },
-        "org.crosswalk.engine": {
             "PACKAGE_NAME": "com.dfaenterprises.samesies"
         }
     },
