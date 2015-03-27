@@ -982,10 +982,6 @@ public class SamesiesApi {
         return Pattern.compile(".*" + Pattern.quote(string.toLowerCase()) + ".*");
     }
 
-    private static Pattern getSearchPattern(String string) {
-        return Pattern.compile(".*" + Pattern.quote(string.toLowerCase()) + ".*");
-    }
-
     private static User getUserById(DatastoreService ds, long id, User.Relation relation) throws NotFoundException {
         try {
             return new User(ds.get(KeyFactory.createKey("User", id)), relation);
