@@ -239,10 +239,6 @@
                 $scope.loginData.error = "Password too short";
             } else if ($scope.loginData.password != $scope.loginData.confirmPassword) {
                 $scope.loginData.error = "Passwords don't match";
-            } else if (!$scope.loginData.community) {
-                $scope.loginData.error = "Invalid community";
-            } else if (!$scope.loginCheck.key || $scope.loginCheck.key.toLowerCase() != 'macalester') {
-                $scope.loginData.error = "Invalid login key";
             } else if (!$scope.loginCheck.accept) {
                 $scope.loginData.error = "Accept Terms and Conditions";
             } else {
