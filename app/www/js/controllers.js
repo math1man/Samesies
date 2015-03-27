@@ -271,6 +271,9 @@
             } else {
                 $scope.loginData.error = "";
             }
+            if (!/\S/.test($scope.loginData.alias)) {
+                $scope.loginData.alias = null;
+            }
             if (!$scope.loginData.error) {
                 $scope.isLoading = true;
                 API.createUser($scope.loginData).then(function(resp){
@@ -1341,7 +1344,7 @@
                         text: 'Okay',
                         type: 'button-royal',
                         onTap: function(e) {
-                            if (!required || $scope.tempData.value) {
+                            if (!required || ($scope.tempData.value && /\S/.test($scope.tempData.value))) {
                                 return $scope.tempData.value;
                             } else {
                                 e.preventDefault();
