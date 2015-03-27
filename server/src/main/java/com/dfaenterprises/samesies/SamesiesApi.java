@@ -78,18 +78,6 @@ public class SamesiesApi {
                 new Entity("Category", "Random")));
     }
 
-    public void initUsers() throws ServiceException {
-        DatastoreService ds = getDS();
-        User user1 = new User("ari@samesies.org", "samesies123", "Ajawa",
-                "Ari Weiland", 20, "Male", "I am a junior Physics and Computer Science major at Macalester College.");
-        User user2 = new User("luke@samesies.org", "samesies456", "KoboldForeman",
-                "Luke Gehman", 21, "Male", "I am a junior Biology major at Macalester College. I play a lot of Dota 2.");
-        EntityUtils.put(ds, user1, user2);
-
-        Friend friend = new Friend(user1.getId(), user2.getId(), Friend.Status.ACCEPTED);
-        EntityUtils.put(ds, friend); // cannot group because need user ids
-    }
-
     public void initModes() throws ServiceException {
         DatastoreService ds = getDS();
         EntityUtils.put(ds, new Mode("Random", "Answer 10 random questions from our database."),
@@ -988,6 +976,10 @@ public class SamesiesApi {
 
     private static double haversin(double radians) {
         return Math.sin(radians / 2) * Math.sin(radians / 2);
+    }
+
+    private static Pattern getSearchPattern(String string) {
+        return Pattern.compile(".*" + Pattern.quote(string.toLowerCase()) + ".*");
     }
 
     private static Pattern getSearchPattern(String string) {
