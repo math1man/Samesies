@@ -38,7 +38,7 @@ public class Episode extends Pairing {
                 (Boolean) e.getProperty("matchFemale"),
                 (Boolean) e.getProperty("matchOther"),
                 (GeoPt)   e.getProperty("location"),
-                (String)  e.getProperty("community"));
+                (Long)  e.getProperty("community"));
         this.status = EntityUtils.getEnumProp(e, "status", Status.class);
         this.qids = EntityUtils.getListProp(e, "qids", 10, Long.class);
         this.answers1 = EntityUtils.getListProp(e, "answers1", 10, String.class);
@@ -172,7 +172,7 @@ public class Episode extends Pairing {
         e.setUnindexedProperty("matchFemale", settings.getMatchFemale());
         e.setUnindexedProperty("matchOther", settings.getMatchOther());
         e.setUnindexedProperty("location", settings.getLocation());
-        e.setUnindexedProperty("community", settings.getCommunity());
+        e.setUnindexedProperty("community", settings.getCid());
         e.setProperty("status", status.name());
         EntityUtils.setListProp(e, "qids", qids);
         EntityUtils.setListProp(e, "answers1", answers1);

@@ -73,34 +73,16 @@
             getModes: function() {
                 return API.getModes();
             },
-            findEpisode: function(myId, settings) {
-                return API.findEpisode({
-                    myId: myId,
-                    mode: settings.mode.mode,
-                    matchMale: settings.matchMale,
-                    matchFemale: settings.matchFemale,
-                    matchOther: settings.matchOther
-                });
-            },
-            findLocationEpisode: function(myId, settings, latitude, longitude) {
+            findEpisode: function(myId, settings, params) {
                 return API.findEpisode({
                     myId: myId,
                     mode: settings.mode.mode,
                     matchMale: settings.matchMale,
                     matchFemale: settings.matchFemale,
                     matchOther: settings.matchOther,
-                    latitude: latitude,
-                    longitude: longitude
-                });
-            },
-            findCommunityEpisode: function(myId, settings, community) {
-                return API.findEpisode({
-                    myId: myId,
-                    mode: settings.mode.mode,
-                    matchMale: settings.matchMale,
-                    matchFemale: settings.matchFemale,
-                    matchOther: settings.matchOther,
-                    community: community
+                    cid: params.cid,
+                    latitude: params.latitude,
+                    longitude: params.longitude
                 });
             },
             connectEpisode: function(myId, theirId, settings) {

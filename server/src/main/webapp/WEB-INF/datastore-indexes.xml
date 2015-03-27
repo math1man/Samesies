@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <datastore-indexes autoGenerate="true">
     <datastore-index kind="Episode" ancestor="false" source="manual">
-        <property name="uid1" direction="asc"/>
-        <property name="startDate" direction="desc"/>
-    </datastore-index>
-    <datastore-index kind="Episode" ancestor="false" source="manual">
         <property name="uid2" direction="asc"/>
         <property name="startDate" direction="desc"/>
     </datastore-index>

@@ -2,10 +2,11 @@
 
     const URL = 'https://samesies-app.appspot.com/_ah/api';
     const PING_INTERVAL = 1000; // ms
+    const EVERYONE_CID = '5686812383117312'; // ID for the "Everyone" community
 
     var app = angular.module('samesies.controllers', []);
 
-    app.controller('IndexCtrl', function($scope, $window, $state, $ionicHistory, $ionicPopup, $ionicModal, API, Data, Utils) {
+    app.controller('IndexCtrl', function($scope, $window, $state, $ionicHistory, $ionicPopup, $ionicPopover, $ionicModal, API, Data, Utils) {
 
         $window.init = function() {
             if (!$state.is('menu')) {
@@ -43,6 +44,8 @@
             animation: 'slide-in-left'
         }).then(function(modal) {
             $scope.settingsPopup = modal;
+            $scope.showSettings();
+            $scope.closeSettings();
         });
 
         $scope.showSettings = function() {
@@ -60,6 +63,20 @@
                 Data.settings.matchOther = true;
             }
             $scope.settingsPopup.hide();
+        };
+
+        $ionicPopover.fromTemplateUrl('templates/select-community.html', {
+            scope: $scope
+        }).then(function(popover) {
+            $scope.selectPopup = popover;
+        });
+
+        $scope.showSelect = function($event) {
+            $scope.selectPopup.show($event);
+        };
+
+        $scope.hideSelect = function() {
+            $scope.selectPopup.hide();
         };
 
         $scope.dispName = function(user) {
@@ -173,6 +190,7 @@
 
         $scope.$on('$destroy', function() {
             $scope.settingsPopup.remove();
+            $scope.selectPopup.remove();
         });
 
     });
@@ -183,8 +201,7 @@
             $scope.loginData = {
                 error: false,
                 email: $window.localStorage['email'],
-                avatar: 'img/lone_icon.png',
-                community: 'Macalester College'
+                avatar: 'img/lone_icon.png'
             };
             $scope.loginCheck = {};
             $scope.isLoading = false;
@@ -535,8 +552,12 @@
                     state: 'matching',
                     stage: 0
                 };
-                // TODO: location/community
-                API.findEpisode(Data.user.id, Data.settings).then(function (resp) {
+                var params = {};
+                if (Data.community.id != EVERYONE_CID) {
+                    params.cid = Data.community.id;
+                }
+                // **Post-Beta** TODO: location
+                API.findEpisode(Data.user.id, Data.settings, params).then(function (resp) {
                     Data.episode = resp.result;
                     if (Data.episode.status === "MATCHING") {
                         Utils.interval(function () {
@@ -729,9 +750,35 @@
 
     });
 
-    app.controller('CommunitiesCtrl', function($scope, $ionicPopover, $ionicPopup, API, Data, Utils) {
+    app.controller('CommunitiesCtrl', function($scope, $ionicPopup, API, Data) {
 
-        // for the selector popup, do not remove
+        $scope.flag = function(user) {
+            $scope.reason = [''];
+            $ionicPopup.show({
+                scope: $scope,
+                title: 'Why is this inappropriate?',
+                template: '<label class="item item-input"><input type="text" placeholder="Reason" ng-model="reason[0]"></label>',
+                buttons: [{
+                    text: 'Cancel',
+                    type: 'button-stable'
+                },{
+                    text: 'Submit',
+                    type: 'button-assertive',
+                    onTap: function() {
+                        return $scope.reason[0];
+                    }
+                }]
+            }).then(function(reason) {
+                if (angular.isDefined(reason)) {
+                    API.flagUser(user.id, Data.user.id, reason);
+                }
+            });
+        };
+
+    });
+
+    app.controller('SelectComCtrl', function($scope, API, Data, Utils) {
+
         $scope.selected = Data.community;
         $scope.search = '';
         $scope.searched = [];
@@ -794,7 +841,6 @@
                             if (resp.result) {
                                 Data.communities.push(resp.result);
                                 $scope.loadCommunity(resp.result);
-                                $scope.hideSelect();
                             }
                         });
                     }
@@ -804,14 +850,13 @@
                     if (resp.result) {
                         Data.communities.push(resp.result);
                         $scope.loadCommunity(resp.result);
-                        $scope.hideSelect();
                     }
                 });
             }
         };
 
         $scope.loadCommunity = function(community) {
-            $scope.selected = community;
+            Data.community = community;
             $scope.hideSelect();
             API.getCommunity(community.name).then(function(resp) {
                 Data.community = resp.result;
@@ -819,49 +864,9 @@
             });
         };
 
-        $ionicPopover.fromTemplateUrl('templates/select-community.html', {
-            scope: $scope
-        }).then(function(popover) {
-            $scope.selectPopup = popover;
-        });
-
-        $scope.showSelect = function($event) {
-            $scope.selectPopup.show($event);
-        };
-
-        $scope.hideSelect = function() {
-            if ($scope.selectPopup) {
-                $scope.selectPopup.hide();
-            }
+        $scope.$on('modal.hidden', function() {
             $scope.search = '';
             $scope.searched = [];
-        };
-
-        $scope.flag = function(user) {
-            $scope.reason = [''];
-            $ionicPopup.show({
-                scope: $scope,
-                title: 'Why is this inappropriate?',
-                template: '<label class="item item-input"><input type="text" placeholder="Reason" ng-model="reason[0]"></label>',
-                buttons: [{
-                    text: 'Cancel',
-                    type: 'button-stable'
-                },{
-                    text: 'Submit',
-                    type: 'button-assertive',
-                    onTap: function() {
-                        return $scope.reason[0];
-                    }
-                }]
-            }).then(function(reason) {
-                if (angular.isDefined(reason)) {
-                    API.flagUser(user.id, Data.user.id, reason);
-                }
-            });
-        };
-
-        $scope.$on('$destroy', function() {
-            $scope.selectPopup.remove();
         });
 
     });

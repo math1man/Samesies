@@ -33,6 +33,8 @@ import java.util.regex.Pattern;
         audiences = {Constants.ANDROID_AUDIENCE})
 public class SamesiesApi {
 
+    public static final long EVERYONE_CID = 5686812383117312L;
+
     public void initQuestions() throws ServiceException {
         DatastoreService ds = getDS();
 
@@ -129,11 +131,12 @@ public class SamesiesApi {
         if (getUserByEmail(ds, email, User.Relation.STRANGER) == null) {
             newUser.initNewUser();
             EntityUtils.put(ds, newUser);
+            EntityUtils.put(ds, new CommunityUser(EVERYONE_CID, newUser.getId(), true));
             sendEmail(email, "Activate your Samesies Account",
                     "Click the link below to activate your account:\n" +
-                    "https://samesies-app.appspot.com/_ah/spi/activate?user_id=" + newUser.getId() + "\n\n" +
-                    "Have fun,\n" +
-                    "The Samesies Team");
+                            "https://samesies-app.appspot.com/_ah/spi/activate?user_id=" + newUser.getId() + "\n\n" +
+                            "Have fun,\n" +
+                            "The Samesies Team");
             return newUser;
         } else {
             throw new ForbiddenException("Email already in use");
@@ -644,13 +647,13 @@ public class SamesiesApi {
     public Episode findEpisode(@Named("myId") long myUid, @Named("mode") String mode, @Named("matchMale") boolean matchMale,
                                @Named("matchFemale") boolean matchFemale, @Named("matchOther") boolean matchOther,
                                @Nullable@Named("latitude") Float latitude, @Nullable@Named("longitude") Float longitude,
-                               @Nullable@Named("community") String community) throws ServiceException {
+                               @Nullable@Named("cid") Long cid) throws ServiceException {
         DatastoreService ds = getDS();
         GeoPt location = null;
         if (latitude != null && longitude != null) {
             location = new GeoPt(latitude, longitude);
         }
-        Settings settings = new Settings(mode, matchMale, matchFemale, matchOther, location, community);
+        Settings settings = new Settings(mode, matchMale, matchFemale, matchOther, location, cid);
 
         Query query = new Query("Episode").setFilter(Query.CompositeFilterOperator.and(
                 new Query.FilterPredicate("status", Query.FilterOperator.EQUAL, Episode.Status.MATCHING.name()),
@@ -955,26 +958,26 @@ public class SamesiesApi {
         // check community
         if (settings1.hasCommunity() && settings2.hasCommunity()) {
             // communities must be the same
-            if (!settings1.getCommunity().equals(settings2.getCommunity())) {
+            if (!settings1.getCid().equals(settings2.getCid())) {
                 return false;
             }
-        // if no communities, check location
         } else if (settings1.hasLocation() && settings2.hasLocation()) {
+            // if no communities, check location
             // location distance must be under 10 miles
             if (distance(settings1.getLocation(), settings2.getLocation()) > 10) {
                 return false;
             }
-        // For backwards compatibility, need to allow for settings to have neither
-        // community nor location. These settings must only match with themselves
         } else if (settings1.hasCommunity() || settings1.hasLocation()
                 || settings2.hasCommunity() || settings2.hasLocation()) {
+            // match no parameters with no parameters
             return false;
         }
         // make sure their last pairing wasn't each other
-        Episode mostRecent = getMostRecentEpisode(ds, uid1);
-        if (mostRecent != null && mostRecent.getOtherUid(uid1).equals(uid2)) {
+        // confirm the episode was a match by searching uid2 (if not matched, would be null)
+        if (isLastMatched(ds, uid1, uid2) || isLastMatched(ds, uid2, uid1)) {
             return false;
         }
+
         // finally check that genders are acceptable to each other
         return checkGender(getUserById(ds, uid1, User.Relation.ADMIN).getGender(), settings2)
                 && checkGender(getUserById(ds, uid2, User.Relation.ADMIN).getGender(), settings1);
@@ -1126,18 +1129,17 @@ public class SamesiesApi {
         }
     }
 
-    private static Episode getMostRecentEpisode(DatastoreService ds, long uid) {
-        Query query = new Query("Episode").setFilter(Query.CompositeFilterOperator.or(
-                        new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, uid),
-                        new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, uid)))
+    private static boolean isLastMatched(DatastoreService ds, long uidA, long uidB) {
+        Query query = new Query("Episode").setFilter(new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, uidA))
                 .addSort("startDate", Query.SortDirection.DESCENDING);
         PreparedQuery pq = ds.prepare(query);
         Iterator<Entity> iter = pq.asIterator(FetchOptions.Builder.withLimit(1));
         if (iter.hasNext()) {
-            return new Episode(iter.next());
-        } else {
-            return null;
+            if (new Episode(iter.next()).getUid1() == uidB) {
+                return true;
+            }
         }
+        return false;
     }
 
     private static Chat getChat(DatastoreService ds, long cid) throws NotFoundException {

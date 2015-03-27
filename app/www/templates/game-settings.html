@@ -4,6 +4,9 @@
         <h1 class="title">Game Settings</h1>
     </ion-header-bar>
     <ion-content>
+        <div class="item" ng-click="showSelect($event)">
+            Search from: {{data('community').name}}
+        </div>
         <div class="item" ng-click="showModes()">
             Game mode: {{settings.mode.mode}} (click to change)
         </div>
