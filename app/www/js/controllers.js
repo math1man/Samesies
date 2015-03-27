@@ -115,9 +115,12 @@
 
         $scope.refresh = function() {
             if (Data.user) {
-                API.getCommunity(Data.user.community).then(function(resp) {
-                    Data.community = resp.result;
-                    $scope.$apply();
+                API.getUserCommunities(Data.user.id).then(function(resp) {
+                    var communities = resp.result.items;
+                    if (communities && communities.length) {
+                        Data.communities = communities;
+                        $scope.$apply();
+                    }
                 });
                 API.getFriends(Data.user.id).then(function(resp) {
                     var friends = resp.result.items;
@@ -726,16 +729,87 @@
 
     });
 
-    app.controller('CommunitiesCtrl', function($scope, $ionicPopover, $ionicPopup, API, Data) {
+    app.controller('CommunitiesCtrl', function($scope, $ionicPopover, $ionicPopup, API, Data, Utils) {
 
         // for the selector popup, do not remove
-        $scope.selected = Data.community.name;
+        $scope.selected = Data.community;
+        $scope.search = '';
+        $scope.searched = [];
+
+        $scope.searchCommunities = function(string) {
+            API.searchCommunities(string).then(function(resp) {
+                var list = resp.result.items;
+                if (list && list.length) {
+                    for (var i=0; i<Data.communities.length; i++) {
+                        Utils.removeById(list, Data.communities[i]);
+                    }
+                    $scope.searched = list;
+                    $scope.$apply();
+                }
+            })
+        };
+
+        $scope.join = function(community) {
+            if (community.validation === 'NONE') {
+                Data.communities.push(community);
+                $scope.loadCommunity(community);
+                $scope.hideSelect();
+            } else if (community.validation === 'EMAIL') {
+                $scope.tempData = [''];
+                $ionicPopup.show({
+                    scope: $scope,
+                    title: 'Enter a valid ' + community.name + ' email',
+                    template: '<label class="item item-input"><input type="email" placeholder="johndoe@community.org" ng-model="tempData[0]"></label>',
+                    buttons: [{
+                        text: 'Cancel',
+                        type: 'button-stable'
+                    },{
+                        text: 'Submit',
+                        type: 'button-royal',
+                        onTap: function() {
+                            return $scope.tempData[0];
+                        }
+                    }]
+                }).then(function(email) {
+                    if (angular.isDefined(email)) {
+                        API.joinCommunity(community.id, Data.user.id, email).then();
+                        $scope.hideSelect();
+                    }
+                });
+            } else if (community.validation === 'PASSWORD') {
+                $scope.tempData = [''];
+                $ionicPopup.show({
+                    scope: $scope,
+                    title: "Enter " + community.name + "'s access password",
+                    template: '<label class="item item-input"><input type="password" placeholder="••••••••" ng-model="tempData[0]"></label>',
+                    buttons: [{
+                        text: 'Cancel',
+                        type: 'button-stable'
+                    },{
+                        text: 'Submit',
+                        type: 'button-royal',
+                        onTap: function() {
+                            return $scope.tempData[0];
+                        }
+                    }]
+                }).then(function(password) {
+                    if (angular.isDefined(password)) {
+                        API.joinCommunity(community.id, Data.user.id, password).then(function (resp) {
+                            if (resp.result) {
+                                Data.communities.push(resp.result);
+                                $scope.loadCommunity(resp.result);
+                            }
+                        });
+                        $scope.hideSelect();
+                    }
+                });
+            }
+        };
 
         $scope.loadCommunity = function(community) {
-            if ($scope.selectPopup) {
-                $scope.selectPopup.hide();
-            }
-            API.getCommunity(community).then(function(resp) {
+            $scope.selected = community;
+            $scope.hideSelect();
+            API.getCommunity(community.name).then(function(resp) {
                 Data.community = resp.result;
                 $scope.$apply();
             });
@@ -749,6 +823,14 @@
 
         $scope.showSelect = function($event) {
             $scope.selectPopup.show($event);
+        };
+
+        $scope.hideSelect = function() {
+            if ($scope.selectPopup) {
+                $scope.selectPopup.hide();
+            }
+            $scope.search = '';
+            $scope.searched = [];
         };
 
         $scope.flag = function(user) {
@@ -771,7 +853,7 @@
                 if (angular.isDefined(reason)) {
                     API.flagUser(user.id, Data.user.id, reason);
                 }
-            })
+            });
         };
 
         $scope.$on('$destroy', function() {
@@ -1082,10 +1164,10 @@
 
     app.controller('FindFriendCtrl', function($scope, API, Data, Utils) {
         $scope.list = [];
-        $scope.search = [''];
+        $scope.search = '';
 
-        $scope.findFriend = function() {
-            API.searchUsers($scope.search[0]).then(function(resp) {
+        $scope.findFriend = function(string) {
+            API.searchUsers(string).then(function(resp) {
                 var list = resp.result.items;
                 if (list && list.length) {
                     $scope.list = list;
@@ -1109,7 +1191,7 @@
 
         $scope.$on('popover.hidden', function() {
             $scope.list = [];
-            $scope.search = [''];
+            $scope.search = '';
         });
 
     });

@@ -46,6 +46,15 @@
             getCommunity: function(name) {
                 return API.getCommunity({name: name});
             },
+            getUserCommunities: function(id) {
+                return API.getUserCommunities({id: id});
+            },
+            searchCommunities: function(string) {
+                return API.searchCommunities({string: string});
+            },
+            joinCommunity: function(id, myId, string) {
+                return API.joinCommunity({id: id, myId: myId, string: string});
+            },
             getQuestion: function(id) {
                 return API.getQuestion({id: id});
             },
@@ -266,10 +275,10 @@
         this.categories = [];
         this.modes = [];
         this.defaultMode = null;
-        this.communities = ['Macalester College'];
+        this.communities = [];
         // global dynamic data
         this.community = {
-            name: this.communities[0],
+            name: 'Click to select a Community',
             users: []
         };
         this.settings = {

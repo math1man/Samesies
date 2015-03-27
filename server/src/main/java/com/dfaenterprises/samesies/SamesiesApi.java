@@ -129,7 +129,7 @@ public class SamesiesApi {
         if (getUserByEmail(ds, email, User.Relation.STRANGER) == null) {
             newUser.initNewUser();
             EntityUtils.put(ds, newUser);
-            sendEmail(newUser, "Activate your Samesies Account",
+            sendEmail(email, "Activate your Samesies Account",
                     "Click the link below to activate your account:\n" +
                     "https://samesies-app.appspot.com/_ah/spi/activate?user_id=" + newUser.getId() + "\n\n" +
                     "Have fun,\n" +
@@ -443,54 +443,12 @@ public class SamesiesApi {
         return communities;
     }
 
-    @ApiMethod(name = "samesiesApi.joinCommunity",
-            path = "communities/join/{id}/{myId}",
-            httpMethod = ApiMethod.HttpMethod.POST)
-    public Community joinCommunity(@Named("id") long id, @Named("myId") long myUid, @Nullable@Named("string") String string) throws ServiceException {
-        DatastoreService ds = getDS();
-        Community community;
-        try {
-            community = new Community(ds.get(KeyFactory.createKey("Community", id)));
-        } catch (EntityNotFoundException e) {
-            throw new NotFoundException("Community not found", e);
-        }
-        CommunityUser cu;
-        switch (community.getValidation()) {
-            case NONE:
-                cu = new CommunityUser(community.getId(), myUid, true);
-                EntityUtils.put(ds, cu);
-                return community;
-            case EMAIL:
-                // validation string is an email domain
-                if (string != null && string.contains(community.getValidationString())) {
-                    cu = new CommunityUser(community.getId(), myUid);
-                    EntityUtils.put(ds, cu);
-                    sendEmail(getUserById(ds, myUid, User.Relation.ADMIN), "Join " + community.getName(),
-                            "Click the link below to join the Samesies community for " + community.getName() + ":\n" +
-                            "https://samesies-app.appspot.com/_ah/spi/communities/join?community_user_id=" + cu.getId() + "\n\n" +
-                            "Have fun,\n" +
-                            "The Samesies Team");
-                }
-                break;
-            case PASSWORD:
-                // validation string is a password
-                if (string != null && BCrypt.checkpw(string, community.getValidationString())) {
-                    cu = new CommunityUser(community.getId(), myUid, true);
-                    EntityUtils.put(ds, cu);
-                    return community;
-                }
-                break;
-        }
-        return null;
-    }
-
     @ApiMethod(name = "samesiesApi.searchCommunities",
             path = "communities/search/{string}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Community> searchCommunities(@Named("string") String string) throws ServiceException {
         DatastoreService ds = getDS();
-        Query query = new Query("Community").addProjection(new PropertyProjection("name", String.class))
-                .addProjection(new PropertyProjection("description", String.class));
+        Query query = new Query("Community");
         PreparedQuery pq = ds.prepare(query);
         List<Community> communities = new ArrayList<>();
         Pattern pattern = getSearchPattern(string);
@@ -504,6 +462,53 @@ public class SamesiesApi {
             }
         }
         return communities;
+    }
+
+    @ApiMethod(name = "samesiesApi.joinCommunity",
+            path = "communities/join/{id}/{myId}",
+            httpMethod = ApiMethod.HttpMethod.POST)
+    public Community joinCommunity(@Named("id") long cid, @Named("myId") long myUid, @Nullable@Named("string") String string) throws ServiceException {
+        DatastoreService ds = getDS();
+        Community community; // need community no matter what because it gets returned
+        try {
+            community = new Community(ds.get(KeyFactory.createKey("Community", cid)));
+        } catch (EntityNotFoundException e) {
+            throw new NotFoundException("Community not found", e);
+        }
+        CommunityUser cu = getCommunityUser(ds, cid, myUid);
+        if (cu == null) {
+            // CommunityUser does not exist, make new one
+            switch (community.getValidation()) {
+                case NONE:
+                    EntityUtils.put(ds, new CommunityUser(community.getId(), myUid, true));
+                    return community;
+                case EMAIL:
+                    // validation string is an email domain
+                    if (string != null && string.contains(community.getValidationString())) {
+                        cu = new CommunityUser(community.getId(), myUid);
+                        EntityUtils.put(ds, cu);
+                        sendEmail(string, "Join " + community.getName(),
+                                "Click the link below to join the Samesies community for " + community.getName() + ":\n" +
+                                "https://samesies-app.appspot.com/_ah/spi/communities/join?community_user_id=" + cu.getId() + "\n\n" +
+                                "Have fun,\n" +
+                                "The Samesies Team");
+                    }
+                    break;
+                case PASSWORD:
+                    // validation string is a password
+                    if (string != null && BCrypt.checkpw(string, community.getValidationString())) {
+                        EntityUtils.put(ds, new CommunityUser(community.getId(), myUid, true));
+                        return community;
+                    }
+                    break;
+            }
+        } else {
+            // CommunityUser already exists, return community if validated
+            if (cu.getIsValidated()) {
+                return community;
+            }
+        }
+        return null;
     }
 
     @ApiMethod(name = "samesiesApi.createOpenCommunity",
@@ -1046,6 +1051,19 @@ public class SamesiesApi {
         }
     }
 
+    private static CommunityUser getCommunityUser(DatastoreService ds, long cid, long uid) {
+        Query query = new Query("CommunityUser").setFilter(Query.CompositeFilterOperator.and(
+                new Query.FilterPredicate("cid", Query.FilterOperator.EQUAL, cid),
+                new Query.FilterPredicate("uid", Query.FilterOperator.EQUAL, uid)));
+        PreparedQuery pq = ds.prepare(query);
+        Entity e = pq.asSingleEntity();
+        if (e == null) {
+            return null;
+        } else {
+            return new CommunityUser(e);
+        }
+    }
+
     private static Question getQuestion(DatastoreService ds, long qid) throws NotFoundException {
         try {
             return new Question(ds.get(KeyFactory.createKey("Question", qid)));
@@ -1127,15 +1145,23 @@ public class SamesiesApi {
     }
 
     private static void sendEmail(User user, String subject, String message) throws InternalServerErrorException {
+        sendEmail(user.getEmail(), user.getName(), subject, message);
+    }
+
+    private static void sendEmail(String email, String subject, String message) throws InternalServerErrorException {
+        sendEmail(email, null, subject, message);
+    }
+
+    private static void sendEmail(String email, String name, String subject, String message) throws InternalServerErrorException {
         Properties props = new Properties();
         Session session = Session.getDefaultInstance(props, null);
         try {
             MimeMessage msg = new MimeMessage(session);
             msg.setFrom(new InternetAddress("noreply@samesies-app.appspotmail.com", "Samesies Admin"));
-            if (user.getName() == null) {
-                msg.addRecipient(javax.mail.Message.RecipientType.TO, new InternetAddress(user.getEmail()));
+            if (name == null) {
+                msg.addRecipient(javax.mail.Message.RecipientType.TO, new InternetAddress(email));
             } else {
-                msg.addRecipient(javax.mail.Message.RecipientType.TO, new InternetAddress(user.getEmail(), user.getName()));
+                msg.addRecipient(javax.mail.Message.RecipientType.TO, new InternetAddress(email, name));
             }
             msg.setSubject(subject);
             msg.setText(message);
