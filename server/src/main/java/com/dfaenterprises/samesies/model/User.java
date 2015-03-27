@@ -24,6 +24,7 @@ public class User extends Storable {
     private String hashedPw;
     private String alias;
     private Text avatar;
+    // TODO: maybe add a hasAvatar param?
     private Float latitude;
     private Float longitude;
     private String name;
@@ -35,7 +36,7 @@ public class User extends Storable {
     private Boolean isActivated;
     private Boolean isBanned;
 
-    // **Low-Priority** TODO: remove community and location eventually, needed for compatibility
+    // **v1.0.0** TODO: remove community and location eventually, needed for compatibility
     private String community;
     private String location;
 

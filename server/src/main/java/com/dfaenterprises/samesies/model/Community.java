@@ -3,19 +3,31 @@ package com.dfaenterprises.samesies.model;
 import com.dfaenterprises.samesies.EntityUtils;
 import com.google.appengine.api.datastore.Entity;
 
+import java.util.List;
+
 /**
  * @author Ari Weiland
  */
 public class Community extends Storable {
 
-    public static enum Validation {
-        NONE, EMAIL, PASSWORD
+    public static enum Type {
+        OPEN, EMAIL, PASSWORD, EXCLUSIVE
     }
 
+    // Database fields
     private String name;
     private String description;
-    private Validation validation;
-    private String validationString;
+    private Type type;
+    private String utilityString;
+
+    // TODO: add a status, which could be among ACTIVATED, PENDING, DEACTIVATED, maybe others?
+
+    // Front end fields
+    private List<User> users;
+
+    // **v1.0.0** TODO: remove location eventually, needed for compatibility
+    private String location;
+
 
     public Community() {
     }
@@ -23,20 +35,28 @@ public class Community extends Storable {
     public Community(Entity e) {
         super(e);
         this.name = (String) e.getProperty("name");
+        this.location = name;
         this.description = (String) e.getProperty("description");
-        this.validation = EntityUtils.getEnumProp(e, "validation", Validation.class);
-        this.validationString = (String) e.getProperty("validationString");
+        this.type = EntityUtils.getEnumProp(e, "type", Type.class);
+        this.utilityString = (String) e.getProperty("utilityString");
     }
 
     public Community(String name, String description) {
-        this(name, description, Validation.NONE, null);
+        this(name, description, Type.OPEN, null);
     }
 
-    public Community(String name, String description, Validation validation, String validationString) {
+    public Community(String name, String description, Type type, String utilityString) {
         this.name = name;
+        this.location = name;
         setDescription(description);
-        this.validation = validation;
-        this.validationString = validationString;
+        this.type = type;
+        this.utilityString = utilityString;
+    }
+
+    public Community(String name, List<User> users) {
+        this.name = name;
+        this.location = name;
+        this.users = users;
     }
 
     public String getName() {
@@ -55,20 +75,36 @@ public class Community extends Storable {
         this.description = description;
     }
 
-    public Validation getValidation() {
-        return validation;
+    public Type getType() {
+        return type;
     }
 
-    public void setValidation(Validation validation) {
-        this.validation = validation;
+    public void setType(Type type) {
+        this.type = type;
     }
 
-    public String getValidationString() {
-        return validationString;
+    public String getUtilityString() {
+        return utilityString;
     }
 
-    public void setValidationString(String validationString) {
-        this.validationString = validationString;
+    public void setUtilityString(String utilityString) {
+        this.utilityString = utilityString;
+    }
+
+    public List<User> getUsers() {
+        return users;
+    }
+
+    public void setUsers(List<User> users) {
+        this.users = users;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     @Override
@@ -76,8 +112,8 @@ public class Community extends Storable {
         Entity e = getEntity("Community");
         e.setProperty("name", name);
         e.setUnindexedProperty("description", description);
-        e.setUnindexedProperty("validation", validation.name());
-        e.setUnindexedProperty("validationString", validationString);
+        e.setUnindexedProperty("type", type.name());
+        e.setUnindexedProperty("utilityString", utilityString);
         return e;
     }
 }

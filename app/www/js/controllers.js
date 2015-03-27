@@ -536,7 +536,7 @@
                     stage: 0
                 };
                 // TODO: location/community
-                API.findCommunityEpisode(Data.user.id, Data.settings, Data.user.community).then(function (resp) {
+                API.findEpisode(Data.user.id, Data.settings).then(function (resp) {
                     Data.episode = resp.result;
                     if (Data.episode.status === "MATCHING") {
                         Utils.interval(function () {
@@ -750,11 +750,7 @@
         };
 
         $scope.join = function(community) {
-            if (community.validation === 'NONE') {
-                Data.communities.push(community);
-                $scope.loadCommunity(community);
-                $scope.hideSelect();
-            } else if (community.validation === 'EMAIL') {
+            if (community.type === 'EMAIL') {
                 $scope.tempData = [''];
                 $ionicPopup.show({
                     scope: $scope,
@@ -776,7 +772,7 @@
                         $scope.hideSelect();
                     }
                 });
-            } else if (community.validation === 'PASSWORD') {
+            } else if (community.type === 'PASSWORD') {
                 $scope.tempData = [''];
                 $ionicPopup.show({
                     scope: $scope,
@@ -798,8 +794,16 @@
                             if (resp.result) {
                                 Data.communities.push(resp.result);
                                 $scope.loadCommunity(resp.result);
+                                $scope.hideSelect();
                             }
                         });
+                    }
+                });
+            } else { // handle OPEN and EXCLUSIVE together
+                API.joinCommunity(community.id, Data.user.id).then(function (resp) {
+                    if (resp.result) {
+                        Data.communities.push(resp.result);
+                        $scope.loadCommunity(resp.result);
                         $scope.hideSelect();
                     }
                 });

@@ -383,9 +383,9 @@ public class SamesiesApi {
     @ApiMethod(name = "samesiesApi.getCommunity",
             path = "community",
             httpMethod = ApiMethod.HttpMethod.GET)
-    public UserGroup getCommunity(@Nullable@Named("location") String location, @Nullable@Named("name") String name) throws ServiceException {
+    public Community getCommunity(@Nullable@Named("location") String location, @Nullable@Named("name") String name) throws ServiceException {
         DatastoreService ds = getDS();
-        // **Low-Priority** TODO: eventually remove location, but needed for compatibility
+        // **v1.0.0** TODO: eventually remove location, but needed for compatibility
         if (name == null) {
             if (location == null) {
                 throw new BadRequestException("Must specify a community");
@@ -402,13 +402,19 @@ public class SamesiesApi {
             users.add(new User(e, User.Relation.STRANGER));
         }
         Collections.shuffle(users);
-        return new UserGroup(name, users);
+        if (users.size() > 100) {
+            // only return 100 users max
+            // need this out here for randomization reasons
+            return new Community(name, users.subList(0, 100));
+        } else {
+            return new Community(name, users);
+        }
     }
 
     @ApiMethod(name = "samesiesApi.getNearBy",
             path = "nearby/{latitude}/{longitude}",
             httpMethod = ApiMethod.HttpMethod.GET)
-    public UserGroup getNearBy(@Named("latitude") float latitude, @Named("longitude") float longitude) throws ServiceException {
+    public Community getNearBy(@Named("latitude") float latitude, @Named("longitude") float longitude) throws ServiceException {
         DatastoreService ds = getDS();
         GeoPt location = new GeoPt(latitude, longitude);
         Query query = new Query("User").setFilter(new Query.FilterPredicate("isBanned", Query.FilterOperator.EQUAL, false));
@@ -421,7 +427,7 @@ public class SamesiesApi {
             }
         }
         Collections.shuffle(users);
-        return new UserGroup("Near By", users);
+        return new Community("Near By", users);
     }
 
     @ApiMethod(name = "samesiesApi.getUserCommunities",
@@ -478,13 +484,13 @@ public class SamesiesApi {
         CommunityUser cu = getCommunityUser(ds, cid, myUid);
         if (cu == null) {
             // CommunityUser does not exist, make new one
-            switch (community.getValidation()) {
-                case NONE:
+            switch (community.getType()) {
+                case OPEN:
                     EntityUtils.put(ds, new CommunityUser(community.getId(), myUid, true));
                     return community;
                 case EMAIL:
-                    // validation string is an email domain
-                    if (string != null && string.contains(community.getValidationString())) {
+                    // utility string is an email domain
+                    if (string != null && string.contains(community.getUtilityString())) {
                         cu = new CommunityUser(community.getId(), myUid);
                         EntityUtils.put(ds, cu);
                         sendEmail(string, "Join " + community.getName(),
@@ -495,11 +501,14 @@ public class SamesiesApi {
                     }
                     break;
                 case PASSWORD:
-                    // validation string is a password
-                    if (string != null && BCrypt.checkpw(string, community.getValidationString())) {
+                    // utility string is a password
+                    if (string != null && BCrypt.checkpw(string, community.getUtilityString())) {
                         EntityUtils.put(ds, new CommunityUser(community.getId(), myUid, true));
                         return community;
                     }
+                    break;
+                case EXCLUSIVE:
+                    EntityUtils.put(ds, new CommunityUser(community.getId(), myUid));
                     break;
             }
         } else {
@@ -523,7 +532,7 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.POST)
     public void createEmailCommunity(@Named("name") String name, @Named("emailSuffix") String emailSuffix,
                                      @Nullable@Named("description") String description) throws ServiceException {
-        EntityUtils.put(getDS(), new Community(name, description, Community.Validation.EMAIL, emailSuffix));
+        EntityUtils.put(getDS(), new Community(name, description, Community.Type.EMAIL, emailSuffix));
     }
 
     @ApiMethod(name = "samesiesApi.createPasswordCommunity",
@@ -531,8 +540,17 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.POST)
     public void createPasswordCommunity(@Named("name") String name, @Named("password") String password,
                                         @Nullable@Named("description") String description) throws ServiceException {
-        EntityUtils.put(getDS(), new Community(name, description, Community.Validation.PASSWORD,
+        EntityUtils.put(getDS(), new Community(name, description, Community.Type.PASSWORD,
                 BCrypt.hashpw(password, BCrypt.gensalt())));
+    }
+
+    @ApiMethod(name = "samesiesApi.createExclusiveCommunity",
+            path = "communities/create/exclusive/{name}/{password}",
+            httpMethod = ApiMethod.HttpMethod.POST)
+    public void createExclusiveCommunity(@Named("name") String name, @Named("password") String adminPassword,
+                                        @Nullable@Named("description") String description) throws ServiceException {
+        EntityUtils.put(getDS(), new Community(name, description, Community.Type.EXCLUSIVE,
+                BCrypt.hashpw(adminPassword, BCrypt.gensalt())));
     }
 
     //----------------------------
@@ -871,7 +889,7 @@ public class SamesiesApi {
             path = "chat/messages/{chatId}/{after}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Message> getMessages(@Named("chatId") long cid, @Named("after") Date after, @Nullable@Named("myId") Long myUid) throws ServiceException {
-        // TODO: eventually remove the @Nullable to the myUid parameter
+        // **v1.0.0** TODO: eventually remove the @Nullable to the myUid parameter
         // For now we need it for backwards compatibility
         DatastoreService ds = getDS();
         if (myUid != null) {
