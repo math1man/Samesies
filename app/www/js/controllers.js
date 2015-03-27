@@ -732,6 +732,9 @@
 
     app.controller('CommunitiesCtrl', function($scope, $ionicPopover, $ionicPopup, API, Data) {
 
+        // for the selector popup, do not remove
+        $scope.selected = Data.community.name;
+
         $scope.loadCommunity = function(community) {
             if ($scope.selectPopup) {
                 $scope.selectPopup.hide();
