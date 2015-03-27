@@ -35,6 +35,10 @@ public class User extends Storable {
     private Boolean isActivated;
     private Boolean isBanned;
 
+    // **Low-Priority** TODO: remove community and location eventually, needed for compatibility
+    private String community;
+    private String location;
+
     public User() {
     }
 
@@ -48,7 +52,9 @@ public class User extends Storable {
         // public
         this.alias = (String) e.getProperty("alias");
         this.avatar = (Text) e.getProperty("avatar");
-        setLocation((GeoPt) e.getProperty("location"));
+        this.community = (String) e.getProperty("community");
+        this.location = community;
+        setGeoPt((GeoPt) e.getProperty("location"));
         this.isBanned = (Boolean) e.getProperty("isBanned");
         // protected
         if (ordinal >= Relation.FRIEND.ordinal()) {
@@ -113,6 +119,22 @@ public class User extends Storable {
         return avatar.getValue();
     }
 
+    public String getCommunity() {
+        return community;
+    }
+
+    public void setCommunity(String community) {
+        this.community = community;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
     public Float getLatitude() {
         return latitude;
     }
@@ -129,19 +151,19 @@ public class User extends Storable {
         this.longitude = longitude;
     }
 
-    public boolean hasLocation() {
+    public boolean hasGeoPt() {
         return latitude != null && longitude != null;
     }
 
-    public GeoPt getLocation() {
-        if (hasLocation()) {
+    public GeoPt getGeoPt() {
+        if (hasGeoPt()) {
             return new GeoPt(latitude, longitude);
         } else {
             return null;
         }
     }
 
-    public void setLocation(GeoPt location) {
+    public void setGeoPt(GeoPt location) {
         if (location != null) {
             this.latitude = location.getLatitude();
             this.longitude = location.getLongitude();
@@ -251,7 +273,7 @@ public class User extends Storable {
         e.setUnindexedProperty("hashedPw", hashedPw);
         e.setProperty("alias", alias);
         e.setUnindexedProperty("avatar", avatar);
-        e.setUnindexedProperty("location", getLocation());
+        e.setUnindexedProperty("location", getGeoPt());
         e.setProperty("name", name);
         e.setProperty("age", age);
         e.setProperty("gender", gender);

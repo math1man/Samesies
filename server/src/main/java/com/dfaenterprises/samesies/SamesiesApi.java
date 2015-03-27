@@ -407,7 +407,7 @@ public class SamesiesApi {
         List<User> users = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
             User user = new User(e, User.Relation.STRANGER);
-            if (user.hasLocation() && distance(user.getLocation(), location) <= 10) {
+            if (user.hasGeoPt() && distance(user.getGeoPt(), location) <= 10) {
                 users.add(user);
             }
         }

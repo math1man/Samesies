@@ -8,9 +8,10 @@ import java.util.List;
 public class UserGroup {
 
     private String name;
+    private List<User> users;
+
     // **Low-Priority** TODO: remove location eventually, needed for compatibility
     private String location;
-    private List<User> users;
 
     public UserGroup() {
     }
