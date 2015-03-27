@@ -659,7 +659,6 @@ public class SamesiesApi {
         }
         Settings settings = new Settings(mode, matchMale, matchFemale, matchOther, location, cid);
 
-        // TODO: only 1 persistent random matches per person per mode
         Query query = new Query("Episode").setFilter(Query.CompositeFilterOperator.and(
                 new Query.FilterPredicate("status", Query.FilterOperator.EQUAL, Episode.Status.MATCHING.name()),
                 new Query.FilterPredicate("isPersistent", Query.FilterOperator.EQUAL, isPersistent),
