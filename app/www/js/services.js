@@ -73,10 +73,10 @@
             getModes: function() {
                 return API.getModes();
             },
-            findEpisode: function(myId, isPersistent, settings, params) {
+            findEpisode: function(myId, settings, params) {
                 return API.findEpisode({
                     myId: myId,
-                    isPersistent: isPersistent,
+                    isPersistent: !settings.isNotPersistent,
                     mode: settings.mode.mode,
                     matchMale: settings.matchMale,
                     matchFemale: settings.matchFemale,
@@ -266,6 +266,7 @@
         };
         this.settings = {
             mode: 'Random',
+            isNotPersistent: false,
             matchMale: true,
             matchFemale: true,
             matchOther: true

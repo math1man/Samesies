@@ -24,7 +24,7 @@
 				<div class="item item-avatar" ng-click="play(cxn)">
 					<img ng-src="{{cxn.user.avatar}}">
 					{{dispName(cxn.user)}}
-					<span class="item-note">Stage {{cxn.data.stage}}</span>
+					<span class="item-note">{{dispStage(cxn)}}</span>
 					<p>Mode: {{cxn.settings.mode}}</p>
 				</div>
 			</div>
@@ -43,7 +43,7 @@
 				<div class="item item-avatar">
 					<img ng-src="{{cxn.user.avatar}}">
 					{{dispName(cxn.user)}}
-					<span class="item-note">Pending</span>
+					<span class="item-note">{{dispStage(cxn)}}</span>
 					<p>Mode: {{cxn.settings.mode}}</p>
 				</div>
 			</div>
@@ -58,7 +58,7 @@
 				<div class="item item-avatar" ng-click="play(cxn)">
 					<img ng-src="{{cxn.user.avatar}}">
 					{{dispName(cxn.user)}}
-					<span class="item-note">Stage {{cxn.data.stage}}</span>
+					<span class="item-note">{{dispStage(cxn)}}</span>
 					<p>Mode: {{cxn.settings.mode}}</p>
 				</div>
 			</div>

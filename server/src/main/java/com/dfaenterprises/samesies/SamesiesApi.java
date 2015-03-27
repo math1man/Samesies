@@ -678,11 +678,13 @@ public class SamesiesApi {
         Episode episode = null;
         while (episode == null && iter.hasNext()) {
             Episode temp = new Episode(iter.next());
-            if (isPersistent && temp.getUid1() == myUid) {
-                return temp; // only 1 persistent random match per person per mode
-            }
-            if (temp.getUid2() == null && isMatch(ds, myUid, settings, temp.getUid1(), temp.getSettings())) {
-                episode = temp;
+            if (temp.getUid2() == null) {
+                if (isPersistent && temp.getUid1() == myUid) {
+                    return temp; // only 1 persistent random match per person per mode
+                }
+                if (isMatch(ds, myUid, settings, temp.getUid1(), temp.getSettings())) {
+                    episode = temp;
+                }
             }
         }
         if (episode == null) {
@@ -786,10 +788,15 @@ public class SamesiesApi {
         for (Entity e : pq.asIterable()) {
             Episode episode = new Episode(e);
             if (episode.getStatus() == Episode.Status.MATCHING || episode.getStatus() == Episode.Status.IN_PROGRESS) {
-                User user = getUser(ds, episode.getOtherUid(uid), User.Relation.STRANGER);
-                if (!user.getIsBanned()) {
-                    episode.setUser(user);
+                Long otherUid = episode.getOtherUid(uid);
+                if (otherUid == null) {
                     connections.add(episode);
+                } else {
+                    User user = getUser(ds, episode.getOtherUid(uid), User.Relation.STRANGER);
+                    if (!user.getIsBanned()) {
+                        episode.setUser(user);
+                        connections.add(episode);
+                    }
                 }
             }
         }

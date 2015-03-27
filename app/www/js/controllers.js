@@ -171,9 +171,16 @@
                             if (cxns && cxns.length) {
                                 for (var i = 0; i < cxns.length; i++) {
                                     cxns[i].data = Utils.getData(cxns[i]);
-                                    var index = Utils.indexOfById(Data.friends, cxns[i].user, 'user');
-                                    if (index > -1) {
-                                        cxns[i].user = Data.friends[index].user;
+                                    if (cxns[i].user) {
+                                        var index = Utils.indexOfById(Data.friends, cxns[i].user, 'user');
+                                        if (index > -1) {
+                                            cxns[i].user = Data.friends[index].user;
+                                        }
+                                    } else {
+                                        cxns[i].user = {
+                                            name: 'Matching...',
+                                            avatar: 'img/lone_icon.png'
+                                        }
                                     }
                                 }
                                 Data.connections = cxns;
@@ -452,15 +459,15 @@
 
     app.controller('SettingsCtrl', function($scope, $ionicPopup, Data, Utils) {
 
+        $scope.$on('modal.shown', function() {
+            $scope.settings = Data.settings;
+        });
+
         var isShowModes = false;
 
         $scope.isShowModes = function() {
             return isShowModes;
         };
-
-        $scope.$on('modal.shown', function() {
-            $scope.settings = Data.settings;
-        });
 
         $scope.showModes = function() {
             isShowModes = true;
@@ -559,7 +566,7 @@
                 }
                 // **Eventually** TODO: location
                 // TODO: handle isPersistent
-                API.findEpisode(Data.user.id, false, Data.settings, params).then(function (resp) {
+                API.findEpisode(Data.user.id, Data.settings, params).then(function (resp) {
                     Data.episode = resp.result;
                     if (Data.episode.status === "MATCHING") {
                         Utils.interval(function () {
@@ -1239,6 +1246,18 @@
                     $scope.reject(cxn);
                 }
             })
+        };
+
+        $scope.dispStage = function(cxn) {
+            if (cxn.status === 'MATCHING') {
+                if (cxn.uid2) {
+                    return 'Pending';
+                } else {
+                    return 'Matching';
+                }
+            } else {
+                return 'Stage ' + cxn.data.stage;
+            }
         };
 
         var removeCxn = function(cxn) {
