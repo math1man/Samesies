@@ -73,9 +73,10 @@
             getModes: function() {
                 return API.getModes();
             },
-            findEpisode: function(myId, settings, params) {
+            findEpisode: function(myId, isPersistent, settings, params) {
                 return API.findEpisode({
                     myId: myId,
+                    isPersistent: isPersistent,
                     mode: settings.mode.mode,
                     matchMale: settings.matchMale,
                     matchFemale: settings.matchFemale,

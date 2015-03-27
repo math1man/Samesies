@@ -51,10 +51,10 @@ public class Episode extends Pairing {
      * (Random match mode)
      * @param uid1
      */
-    public Episode(Long uid1, Settings settings) {
+    public Episode(Long uid1, boolean isPersistent, Settings settings) {
         super(uid1, null);
         this.startDate = new Date();
-        this.isPersistent = false;
+        this.isPersistent = isPersistent;
         this.settings = settings;
         this.status = Status.MATCHING;
         this.lastModified = startDate;

@@ -646,18 +646,23 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.POST)
     public Episode findEpisode(@Named("myId") long myUid, @Named("mode") String mode, @Named("matchMale") boolean matchMale,
                                @Named("matchFemale") boolean matchFemale, @Named("matchOther") boolean matchOther,
-                               @Nullable@Named("latitude") Float latitude, @Nullable@Named("longitude") Float longitude,
-                               @Nullable@Named("cid") Long cid) throws ServiceException {
+                               @Nullable@Named("isPersistent") Boolean isPersistent, @Nullable@Named("cid") Long cid,
+                               @Nullable@Named("latitude") Float latitude, @Nullable@Named("longitude") Float longitude) throws ServiceException {
         DatastoreService ds = getDS();
+        // **Eventually** TODO: make isPersistent not Nullable
+        if (isPersistent == null) {
+            isPersistent = false;
+        }
         GeoPt location = null;
         if (latitude != null && longitude != null) {
             location = new GeoPt(latitude, longitude);
         }
         Settings settings = new Settings(mode, matchMale, matchFemale, matchOther, location, cid);
 
+        // TODO: only 1 persistent random matches per person per mode
         Query query = new Query("Episode").setFilter(Query.CompositeFilterOperator.and(
                 new Query.FilterPredicate("status", Query.FilterOperator.EQUAL, Episode.Status.MATCHING.name()),
-                new Query.FilterPredicate("isPersistent", Query.FilterOperator.EQUAL, false),
+                new Query.FilterPredicate("isPersistent", Query.FilterOperator.EQUAL, isPersistent),
                 new Query.FilterPredicate("mode", Query.FilterOperator.EQUAL, mode)))
                 .addSort("startDate", Query.SortDirection.ASCENDING);
         PreparedQuery pq = ds.prepare(query);
@@ -666,12 +671,15 @@ public class SamesiesApi {
         Episode episode = null;
         while (episode == null && iter.hasNext()) {
             Episode temp = new Episode(iter.next());
-            if (isMatch(ds, myUid, settings, temp.getUid1(), temp.getSettings())) {
+            if (isPersistent && temp.getUid1() == myUid) {
+                return temp; // only 1 persistent random match per person per mode
+            }
+            if (temp.getUid2() == null && isMatch(ds, myUid, settings, temp.getUid1(), temp.getSettings())) {
                 episode = temp;
             }
         }
         if (episode == null) {
-            episode = new Episode(myUid, settings);
+            episode = new Episode(myUid, isPersistent, settings);
         } else {
             episode.setStatus(Episode.Status.IN_PROGRESS);
             episode.setUid2(myUid);

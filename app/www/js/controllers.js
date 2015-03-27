@@ -557,7 +557,8 @@
                     params.cid = Data.community.id;
                 }
                 // **Post-Beta** TODO: location
-                API.findEpisode(Data.user.id, Data.settings, params).then(function (resp) {
+                // TODO: handle isPersistent
+                API.findEpisode(Data.user.id, false, Data.settings, params).then(function (resp) {
                     Data.episode = resp.result;
                     if (Data.episode.status === "MATCHING") {
                         Utils.interval(function () {
@@ -918,7 +919,7 @@
 
     app.controller('ChatCtrl', function($scope, $window, $timeout, $ionicPopup, $ionicScrollDelegate, API, Data, Utils) {
 
-        // TODO: the focusInput/scrollBottom interactions are really awkward, so we aren't using focusInput atm
+        // **Low-Priority** TODO: the focusInput/scrollBottom interactions are really awkward, so we aren't using focusInput atm
 
         $scope.buffer = '';
         $scope.history = [];
