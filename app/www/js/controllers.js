@@ -404,7 +404,8 @@
             if (Data.connections && Data.connections.length) {
                 for (var i = 0; i < Data.connections.length; i++) {
                     var item = Data.connections[i];
-                    if (item.data) { // Connections pending your approval
+                    if (item.data) {
+                        // Connections pending your approval
                         if (item.status === 'MATCHING' && !item.data.is1) {
                             count++;
                         }
@@ -420,7 +421,7 @@
 
         $scope.getChatCount = function() {
             var count = 0;
-            if (Data.chats && Data.chats.length) {
+            if (Data.user && Data.chats && Data.chats.length) {
                 for (var i = 0; i < Data.chats.length; i++) {
                     if (Utils.isUpdated(Data.chats[i])) {
                         count++;
@@ -859,7 +860,7 @@
         $scope.loadCommunity = function(community) {
             Data.community = community;
             $scope.hideSelect();
-            API.getCommunity(community.name).then(function(resp) {
+            API.getCommunity(community.id).then(function(resp) {
                 Data.community = resp.result;
                 $scope.$apply();
             });

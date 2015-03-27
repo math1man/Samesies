@@ -43,8 +43,8 @@
             removeFriend: function(id, myId) {
                 API.removeFriend({id: id, myId: myId}).then();
             },
-            getCommunity: function(name) {
-                return API.getCommunity({name: name});
+            getCommunity: function(id) {
+                return API.getCommunity({id: id});
             },
             getUserCommunities: function(id) {
                 return API.getUserCommunities({id: id});

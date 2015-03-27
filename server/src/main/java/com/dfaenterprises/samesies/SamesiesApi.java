@@ -101,7 +101,7 @@ public class SamesiesApi {
         if (email == null) {
             throw new BadRequestException("Invalid Email");
         }
-        User dsUser = getUserByEmail(ds, email, User.Relation.SELF);
+        User dsUser = getUser(ds, email, User.Relation.SELF);
         if (dsUser == null) {
             throw new NotFoundException("Email not found");
         } else if (dsUser.getIsBanned()) {
@@ -128,7 +128,7 @@ public class SamesiesApi {
         if (newUser.getPassword() == null) {
             throw new BadRequestException("Invalid Password");
         }
-        if (getUserByEmail(ds, email, User.Relation.STRANGER) == null) {
+        if (getUser(ds, email, User.Relation.STRANGER) == null) {
             newUser.initNewUser();
             EntityUtils.put(ds, newUser);
             EntityUtils.put(ds, new CommunityUser(EVERYONE_CID, newUser.getId(), true));
@@ -148,7 +148,7 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void recoverUser(@Named("email") String email) throws ServiceException {
         DatastoreService ds = getDS();
-        User user = getUserByEmail(ds, email, User.Relation.ADMIN);
+        User user = getUser(ds, email, User.Relation.ADMIN);
         if (user == null) {
             throw new NotFoundException("Email not found");
         } else {
@@ -167,7 +167,7 @@ public class SamesiesApi {
             path = "user/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public User getUser(@Named("id") long uid) throws ServiceException {
-        return getUserById(getDS(), uid, User.Relation.STRANGER);
+        return getUser(getDS(), uid, User.Relation.STRANGER);
     }
 
     @ApiMethod(name = "samesiesApi.getUsers",
@@ -195,7 +195,7 @@ public class SamesiesApi {
             throw new BadRequestException("User ID not specified");
         }
         String newPassword = user.getNewPassword();
-        User dsUser = getUserById(ds, user.getId(), User.Relation.SELF);
+        User dsUser = getUser(ds, user.getId(), User.Relation.SELF);
         if (dsUser == null) {
             throw new NotFoundException("User not found");
         } else if (newPassword != null) {
@@ -216,7 +216,7 @@ public class SamesiesApi {
             path = "user/find/{email}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public User findUser(@Named("email") String email) throws ServiceException {
-        User user = getUserByEmail(getDS(), email, User.Relation.STRANGER);
+        User user = getUser(getDS(), email, User.Relation.STRANGER);
         if (user == null || user.getIsBanned()) { // ignore banned users
             return null;
         } else {
@@ -230,7 +230,7 @@ public class SamesiesApi {
     public List<User> searchUsers(@Named("string") String string) throws ServiceException {
         DatastoreService ds = getDS();
         // first, lets check if they straight entered an email
-        User user = getUserByEmail(getDS(), string, User.Relation.STRANGER);
+        User user = getUser(getDS(), string, User.Relation.STRANGER);
         if (user != null && !user.getIsBanned()) { // ignore banned users
             return Collections.singletonList(user);
         } else {
@@ -271,7 +271,7 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void banUser(@Named("id") long uid, @Nullable @Named("isBanned") Boolean isBanned) throws ServiceException {
         DatastoreService ds = getDS();
-        User user = getUserById(ds, uid, User.Relation.ADMIN);
+        User user = getUser(ds, uid, User.Relation.ADMIN);
         if (isBanned == null) {
             isBanned = true;
         }
@@ -304,7 +304,7 @@ public class SamesiesApi {
             if (!friend.getStatus().isDeleted()) {
                 long theirUid = friend.getOtherUid(uid);
                 User.Relation relation = friend.getStatus().getRelation();
-                User user = getUserById(ds, theirUid, relation);
+                User user = getUser(ds, theirUid, relation);
                 if (!user.getIsBanned()) {
                     friend.setUser(user);
                     friends.add(friend);
@@ -356,7 +356,7 @@ public class SamesiesApi {
             return null;
         } else {
             EntityUtils.put(ds, friend); // update the friend in case it changed
-            friend.setUser(getUserById(ds, theirId, friend.getStatus().getRelation()));
+            friend.setUser(getUser(ds, theirId, friend.getStatus().getRelation()));
             return friend;
         }
     }
@@ -386,23 +386,35 @@ public class SamesiesApi {
     @ApiMethod(name = "samesiesApi.getCommunity",
             path = "community",
             httpMethod = ApiMethod.HttpMethod.GET)
-    public Community getCommunity(@Nullable@Named("location") String location, @Nullable@Named("name") String name) throws ServiceException {
+    public Community getCommunity(@Nullable@Named("location") String location, @Nullable@Named("name") String name, @Nullable@Named("id") Long cid) throws ServiceException {
+        // **Eventually** TODO: eventually remove name and make cid not Nullable, but needed for compatibility
         DatastoreService ds = getDS();
-        // **v1.0.0** TODO: eventually remove location, but needed for compatibility
-        if (name == null) {
-            if (location == null) {
-                throw new BadRequestException("Must specify a community");
-            } else {
-                name = location;
-            }
-        }
-        Query query = new Query("User").setFilter(Query.CompositeFilterOperator.and(
-                new Query.FilterPredicate("community", Query.FilterOperator.EQUAL, name),
-                new Query.FilterPredicate("isBanned", Query.FilterOperator.EQUAL, false)));
-        PreparedQuery pq = ds.prepare(query);
         List<User> users = new ArrayList<>();
-        for (Entity e : pq.asIterable()) {
-            users.add(new User(e, User.Relation.STRANGER));
+        if (cid == null) {
+            // **v1.0.0** TODO: eventually remove location, but needed for compatibility
+            if (name == null) {
+                if (location == null) {
+                    throw new BadRequestException("Must specify a community");
+                } else {
+                    name = location;
+                }
+            }
+            Query query = new Query("User").setFilter(Query.CompositeFilterOperator.and(
+                    new Query.FilterPredicate("community", Query.FilterOperator.EQUAL, name),
+                    new Query.FilterPredicate("isBanned", Query.FilterOperator.EQUAL, false)));
+            PreparedQuery pq = ds.prepare(query);
+            for (Entity e : pq.asIterable()) {
+                users.add(new User(e, User.Relation.STRANGER));
+            }
+        } else {
+            name = getCommunity(ds, cid).getName();
+            Query query = new Query("CommunityUser").setFilter(Query.CompositeFilterOperator.and(
+                    new Query.FilterPredicate("cid", Query.FilterOperator.EQUAL, cid),
+                    new Query.FilterPredicate("isValidated", Query.FilterOperator.EQUAL, true)));
+            PreparedQuery pq = ds.prepare(query);
+            for (Entity e : pq.asIterable()) {
+                users.add(getUser(ds, new CommunityUser(e).getUid(), User.Relation.STRANGER));
+            }
         }
         Collections.shuffle(users);
         if (users.size() > 100) {
@@ -457,7 +469,8 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Community> searchCommunities(@Named("string") String string) throws ServiceException {
         DatastoreService ds = getDS();
-        Query query = new Query("Community");
+        Query query = new Query("Community").setFilter(new Query.FilterPredicate(
+                "state", Query.FilterOperator.EQUAL, Community.State.ACTIVE.name()));
         PreparedQuery pq = ds.prepare(query);
         List<Community> communities = new ArrayList<>();
         Pattern pattern = getSearchPattern(string);
@@ -478,12 +491,7 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.POST)
     public Community joinCommunity(@Named("id") long cid, @Named("myId") long myUid, @Nullable@Named("string") String string) throws ServiceException {
         DatastoreService ds = getDS();
-        Community community; // need community no matter what because it gets returned
-        try {
-            community = new Community(ds.get(KeyFactory.createKey("Community", cid)));
-        } catch (EntityNotFoundException e) {
-            throw new NotFoundException("Community not found", e);
-        }
+        Community community = getCommunity(ds, cid);
         CommunityUser cu = getCommunityUser(ds, cid, myUid);
         if (cu == null) {
             // CommunityUser does not exist, make new one
@@ -683,7 +691,7 @@ public class SamesiesApi {
             episode.setStatus(Episode.Status.IN_PROGRESS);
             episode.setUid2(myUid);
             episode.setQids(getQids(ds, mode));
-            episode.setUser(getUserById(ds, episode.getUid1(), User.Relation.STRANGER));
+            episode.setUser(getUser(ds, episode.getUid1(), User.Relation.STRANGER));
             episode.modify();
         }
         EntityUtils.put(ds, episode);
@@ -778,7 +786,7 @@ public class SamesiesApi {
         for (Entity e : pq.asIterable()) {
             Episode episode = new Episode(e);
             if (episode.getStatus() == Episode.Status.MATCHING || episode.getStatus() == Episode.Status.IN_PROGRESS) {
-                User user = getUserById(ds, episode.getOtherUid(uid), User.Relation.STRANGER);
+                User user = getUser(ds, episode.getOtherUid(uid), User.Relation.STRANGER);
                 if (!user.getIsBanned()) {
                     episode.setUser(user);
                     connections.add(episode);
@@ -796,8 +804,8 @@ public class SamesiesApi {
         Episode episode = getEpisode(ds, eid);
         List<Question> questions = new ArrayList<>();
         if (episode.isPersonal()) {
-            User u1 = getUserById(ds, episode.getUid1(), User.Relation.ADMIN);
-            User u2 = getUserById(ds, episode.getUid2(), User.Relation.ADMIN);
+            User u1 = getUser(ds, episode.getUid1(), User.Relation.ADMIN);
+            User u2 = getUser(ds, episode.getUid2(), User.Relation.ADMIN);
             for (int i=0; i<5; i++) {
                 questions.add(new Question(u1.getQuestions().get(i)));
                 questions.add(new Question(u2.getQuestions().get(i)));
@@ -852,7 +860,7 @@ public class SamesiesApi {
         List<Chat> chats = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
             Chat chat = new Chat(e);
-            User user = getUserById(ds, chat.getOtherUid(myUid), User.Relation.STRANGER);
+            User user = getUser(ds, chat.getOtherUid(myUid), User.Relation.STRANGER);
             if (!user.getIsBanned()) {
                 chat.setUser(user);
                 chats.add(chat);
@@ -986,8 +994,8 @@ public class SamesiesApi {
         }
 
         // finally check that genders are acceptable to each other
-        return checkGender(getUserById(ds, uid1, User.Relation.ADMIN).getGender(), settings2)
-                && checkGender(getUserById(ds, uid2, User.Relation.ADMIN).getGender(), settings1);
+        return checkGender(getUser(ds, uid1, User.Relation.ADMIN).getGender(), settings2)
+                && checkGender(getUser(ds, uid2, User.Relation.ADMIN).getGender(), settings1);
     }
 
     private static boolean checkGender(String gender, Settings settings) {
@@ -1028,7 +1036,7 @@ public class SamesiesApi {
         return Pattern.compile(".*" + Pattern.quote(string.toLowerCase()) + ".*");
     }
 
-    private static User getUserById(DatastoreService ds, long id, User.Relation relation) throws NotFoundException {
+    private static User getUser(DatastoreService ds, long id, User.Relation relation) throws NotFoundException {
         try {
             return new User(ds.get(KeyFactory.createKey("User", id)), relation);
         } catch (EntityNotFoundException e) {
@@ -1036,7 +1044,7 @@ public class SamesiesApi {
         }
     }
 
-    private static User getUserByEmail(DatastoreService ds, String email, User.Relation relation) {
+    private static User getUser(DatastoreService ds, String email, User.Relation relation) {
         Query query = new Query("User").setFilter(new Query.FilterPredicate(
                 "email", Query.FilterOperator.EQUAL, email));
         PreparedQuery pq = ds.prepare(query);

@@ -14,20 +14,22 @@ public class Community extends Storable {
         OPEN, EMAIL, PASSWORD, EXCLUSIVE
     }
 
+    public static enum State {
+        ACTIVE, PENDING, INACTIVE
+    }
+
     // Database fields
     private String name;
     private String description;
     private Type type;
     private String utilityString;
-
-    // TODO: add a status, which could be among ACTIVATED, PENDING, DEACTIVATED, maybe others?
+    private State state;
 
     // Front end fields
     private List<User> users;
 
     // **v1.0.0** TODO: remove location eventually, needed for compatibility
     private String location;
-
 
     public Community() {
     }
@@ -39,6 +41,7 @@ public class Community extends Storable {
         this.description = (String) e.getProperty("description");
         this.type = EntityUtils.getEnumProp(e, "type", Type.class);
         this.utilityString = (String) e.getProperty("utilityString");
+        this.state = EntityUtils.getEnumProp(e, "state", State.class);
     }
 
     public Community(String name, String description) {
@@ -51,6 +54,7 @@ public class Community extends Storable {
         setDescription(description);
         this.type = type;
         this.utilityString = utilityString;
+        this.state = State.ACTIVE;
     }
 
     public Community(String name, List<User> users) {
@@ -114,6 +118,7 @@ public class Community extends Storable {
         e.setUnindexedProperty("description", description);
         e.setUnindexedProperty("type", type.name());
         e.setUnindexedProperty("utilityString", utilityString);
+        e.setProperty("state", state.name());
         return e;
     }
 }
