@@ -131,14 +131,8 @@
         };
 
         $scope.refresh = function() {
+            $scope.refreshCommunities();
             if (Data.user) {
-                API.getUserCommunities(Data.user.id).then(function(resp) {
-                    var communities = resp.result.items;
-                    if (communities && communities.length) {
-                        Data.communities = communities;
-                        $scope.$apply();
-                    }
-                });
                 API.getFriends(Data.user.id).then(function(resp) {
                     var friends = resp.result.items;
                     if (friends && friends.length) {
@@ -149,48 +143,70 @@
                     }
                     $scope.$apply();
                     // nested so that it can pull from friends
-                    if (Data.user) { // need to add a second check in case they immediately log out
-                        API.getChats(Data.user.id).then(function (resp) {
-                            var chats = resp.result.items;
-                            if (chats && chats.length) {
-                                for (var i = 0; i < chats.length; i++) {
-                                    var index = Utils.indexOfById(Data.friends, chats[i].user, 'user');
-                                    if (index > -1) {
-                                        chats[i].user = Data.friends[index].user;
-                                    }
-                                }
-                                Data.chats = chats;
-                            }
-                            if (Data.isLoading) {
-                                Data.isLoading--;
-                            }
-                            $scope.$apply();
-                        });
-                        API.getConnections(Data.user.id).then(function (resp) {
-                            var cxns = resp.result.items;
-                            if (cxns && cxns.length) {
-                                for (var i = 0; i < cxns.length; i++) {
-                                    cxns[i].data = Utils.getData(cxns[i]);
-                                    if (cxns[i].user) {
-                                        var index = Utils.indexOfById(Data.friends, cxns[i].user, 'user');
-                                        if (index > -1) {
-                                            cxns[i].user = Data.friends[index].user;
-                                        }
-                                    } else {
-                                        cxns[i].user = {
-                                            name: 'Matching...',
-                                            avatar: 'img/lone_icon.png'
-                                        }
-                                    }
-                                }
-                                Data.connections = cxns;
-                            }
-                            if (Data.isLoading) {
-                                Data.isLoading--;
-                            }
-                            $scope.$apply();
-                        });
+                    $scope.refreshChats();
+                    $scope.refreshCxns();
+                });
+            }
+        };
+
+        $scope.refreshCommunities = function() {
+            if (Data.user) {
+                API.getUserCommunities(Data.user.id).then(function(resp) {
+                    var communities = resp.result.items;
+                    if (communities && communities.length) {
+                        Data.communities = communities;
+                        $scope.$apply();
                     }
+                });
+            }
+        };
+
+        $scope.refreshChats = function() {
+            if (Data.user) { // need to add a second check in case they immediately log out
+                API.getChats(Data.user.id).then(function (resp) {
+                    var chats = resp.result.items;
+                    if (chats && chats.length) {
+                        for (var i = 0; i < chats.length; i++) {
+                            var index = Utils.indexOfById(Data.friends, chats[i].user, 'user');
+                            if (index > -1) {
+                                chats[i].user = Data.friends[index].user;
+                            }
+                        }
+                        Data.chats = chats;
+                    }
+                    if (Data.isLoading) {
+                        Data.isLoading--;
+                    }
+                    $scope.$apply();
+                });
+            }
+        };
+
+        $scope.refreshCxns = function() {
+            if (Data.user) { // need to add a second check in case they immediately log out
+                API.getConnections(Data.user.id).then(function (resp) {
+                    var cxns = resp.result.items;
+                    if (cxns && cxns.length) {
+                        for (var i = 0; i < cxns.length; i++) {
+                            cxns[i].data = Utils.getData(cxns[i]);
+                            if (cxns[i].user) {
+                                var index = Utils.indexOfById(Data.friends, cxns[i].user, 'user');
+                                if (index > -1) {
+                                    cxns[i].user = Data.friends[index].user;
+                                }
+                            } else {
+                                cxns[i].user = {
+                                    name: 'Matching...',
+                                    avatar: 'img/lone_icon.png'
+                                }
+                            }
+                        }
+                        Data.connections = cxns;
+                    }
+                    if (Data.isLoading) {
+                        Data.isLoading--;
+                    }
+                    $scope.$apply();
                 });
             }
         };
@@ -503,6 +519,100 @@
 
     });
 
+    app.controller('SelectComCtrl', function($scope, API, Data, Utils) {
+
+        $scope.selected = Data.community;
+        $scope.search = '';
+        $scope.searched = [];
+
+        $scope.searchCommunities = function(string) {
+            API.searchCommunities(string).then(function(resp) {
+                var list = resp.result.items;
+                if (list && list.length) {
+                    for (var i=0; i<Data.communities.length; i++) {
+                        Utils.removeById(list, Data.communities[i]);
+                    }
+                    $scope.searched = list;
+                    $scope.$apply();
+                }
+            })
+        };
+
+        $scope.join = function(community) {
+            if (community.type === 'EMAIL') {
+                $scope.tempData = [''];
+                $ionicPopup.show({
+                    scope: $scope,
+                    title: 'Enter a valid ' + community.name + ' email',
+                    template: '<label class="item item-input"><input type="email" placeholder="johndoe@community.org" ng-model="tempData[0]"></label>',
+                    buttons: [{
+                        text: 'Cancel',
+                        type: 'button-stable'
+                    },{
+                        text: 'Submit',
+                        type: 'button-royal',
+                        onTap: function() {
+                            return $scope.tempData[0];
+                        }
+                    }]
+                }).then(function(email) {
+                    if (angular.isDefined(email)) {
+                        API.joinCommunity(community.id, Data.user.id, email).then();
+                        $scope.hideSelect();
+                    }
+                });
+            } else if (community.type === 'PASSWORD') {
+                $scope.tempData = [''];
+                $ionicPopup.show({
+                    scope: $scope,
+                    title: "Enter " + community.name + "'s access password",
+                    template: '<label class="item item-input"><input type="password" placeholder="••••••••" ng-model="tempData[0]"></label>',
+                    buttons: [{
+                        text: 'Cancel',
+                        type: 'button-stable'
+                    },{
+                        text: 'Submit',
+                        type: 'button-royal',
+                        onTap: function() {
+                            return $scope.tempData[0];
+                        }
+                    }]
+                }).then(function(password) {
+                    if (angular.isDefined(password)) {
+                        API.joinCommunity(community.id, Data.user.id, password).then(function (resp) {
+                            if (resp.result) {
+                                Data.communities.push(resp.result);
+                                $scope.loadCommunity(resp.result);
+                            }
+                        });
+                    }
+                });
+            } else { // handle OPEN and EXCLUSIVE together
+                API.joinCommunity(community.id, Data.user.id).then(function (resp) {
+                    if (resp.result) {
+                        Data.communities.push(resp.result);
+                        $scope.loadCommunity(resp.result);
+                    }
+                });
+            }
+        };
+
+        $scope.loadCommunity = function(community) {
+            Data.community = community;
+            $scope.hideSelect();
+            API.getCommunity(community.id).then(function(resp) {
+                Data.community = resp.result;
+                $scope.$apply();
+            });
+        };
+
+        $scope.$on('modal.hidden', function() {
+            $scope.search = '';
+            $scope.searched = [];
+        });
+
+    });
+
     app.controller('EpisodeCtrl', function($scope, $state, $window, $cordovaKeyboard, $ionicPopup, $ionicModal, API, Utils, Data) {
 
         $ionicModal.fromTemplateUrl('templates/help.html', {
@@ -630,8 +740,6 @@
                                     Data.chat.user = friend.user;
                                     Utils.addById(Data.chats, Data.chat);
                                     $state.go('chat');
-                                }, function (reason) {
-                                    console.log(reason);
                                 });
                             } else if ($scope.isPersistent()) {
                                 $scope.back();
@@ -654,8 +762,6 @@
                                         $scope.find();
                                     }
                                 }
-                            }, function (reason) {
-                                console.log(reason);
                             });
                         }
                     });
@@ -682,8 +788,6 @@
             go('waiting');
             API.answerEpisode(Data.episode.id, Data.user.id, $scope.episodeData.myAnswer).then(function(resp) {
                 updateEpisode(resp.result);
-            }, function(reason) {
-                console.log(reason);
             });
         };
 
@@ -764,6 +868,10 @@
 
     app.controller('CommunitiesCtrl', function($scope, $ionicPopup, API, Data) {
 
+        $scope.$on('$ionicView.beforeEnter', function() {
+            $scope.refreshCommunities();
+        });
+
         $scope.flag = function(user) {
             $scope.reason = [''];
             $ionicPopup.show({
@@ -789,98 +897,59 @@
 
     });
 
-    app.controller('SelectComCtrl', function($scope, API, Data, Utils) {
+    app.controller('ConnectionsCtrl', function($scope, $state, $ionicPopup, Data, API, Utils) {
 
-        $scope.selected = Data.community;
-        $scope.search = '';
-        $scope.searched = [];
+        $scope.$on('$ionicView.beforeEnter', function() {
+            $scope.refreshCxns();
+        });
 
-        $scope.searchCommunities = function(string) {
-            API.searchCommunities(string).then(function(resp) {
-                var list = resp.result.items;
-                if (list && list.length) {
-                    for (var i=0; i<Data.communities.length; i++) {
-                        Utils.removeById(list, Data.communities[i]);
-                    }
-                    $scope.searched = list;
-                    $scope.$apply();
+        $scope.accept = function(cxn) {
+            cxn.status = "IN_PROGRESS";
+            API.acceptEpisode(cxn.id);
+            $scope.play(cxn);
+        };
+
+        $scope.reject = function(cxn) {
+            API.endEpisode(cxn.id);
+            removeCxn(cxn);
+        };
+
+        $scope.play = function(cxn) {
+            Data.episode = cxn;
+            removeCxn(cxn);
+            $state.go('play');
+        };
+
+        $scope.remove = function(cxn) {
+            $ionicPopup.confirm({
+                title: 'Abandon Connection',
+                template: 'Are you sure you want to abandon your connection with ' + $scope.dispName(cxn.user) + '?',
+                okText: 'Abandon',
+                okType: 'button-assertive',
+                cancelText: 'Cancel',
+                cancelType: 'button-stable'
+            }).then(function(resp) {
+                if (resp) {
+                    $scope.reject(cxn);
                 }
             })
         };
 
-        $scope.join = function(community) {
-            if (community.type === 'EMAIL') {
-                $scope.tempData = [''];
-                $ionicPopup.show({
-                    scope: $scope,
-                    title: 'Enter a valid ' + community.name + ' email',
-                    template: '<label class="item item-input"><input type="email" placeholder="johndoe@community.org" ng-model="tempData[0]"></label>',
-                    buttons: [{
-                        text: 'Cancel',
-                        type: 'button-stable'
-                    },{
-                        text: 'Submit',
-                        type: 'button-royal',
-                        onTap: function() {
-                            return $scope.tempData[0];
-                        }
-                    }]
-                }).then(function(email) {
-                    if (angular.isDefined(email)) {
-                        API.joinCommunity(community.id, Data.user.id, email).then();
-                        $scope.hideSelect();
-                    }
-                });
-            } else if (community.type === 'PASSWORD') {
-                $scope.tempData = [''];
-                $ionicPopup.show({
-                    scope: $scope,
-                    title: "Enter " + community.name + "'s access password",
-                    template: '<label class="item item-input"><input type="password" placeholder="••••••••" ng-model="tempData[0]"></label>',
-                    buttons: [{
-                        text: 'Cancel',
-                        type: 'button-stable'
-                    },{
-                        text: 'Submit',
-                        type: 'button-royal',
-                        onTap: function() {
-                            return $scope.tempData[0];
-                        }
-                    }]
-                }).then(function(password) {
-                    if (angular.isDefined(password)) {
-                        API.joinCommunity(community.id, Data.user.id, password).then(function (resp) {
-                            if (resp.result) {
-                                Data.communities.push(resp.result);
-                                $scope.loadCommunity(resp.result);
-                            }
-                        });
-                    }
-                });
-            } else { // handle OPEN and EXCLUSIVE together
-                API.joinCommunity(community.id, Data.user.id).then(function (resp) {
-                    if (resp.result) {
-                        Data.communities.push(resp.result);
-                        $scope.loadCommunity(resp.result);
-                    }
-                });
+        $scope.dispStage = function(cxn) {
+            if (cxn.status === 'MATCHING') {
+                if (cxn.uid2) {
+                    return 'Pending';
+                } else {
+                    return 'Matching';
+                }
+            } else {
+                return 'Stage ' + cxn.data.stage;
             }
         };
 
-        $scope.loadCommunity = function(community) {
-            Data.community = community;
-            $scope.hideSelect();
-            API.getCommunity(community.id).then(function(resp) {
-                Data.community = resp.result;
-                $scope.$apply();
-            });
+        var removeCxn = function(cxn) {
+            Utils.removeById(Data.connections, cxn);
         };
-
-        $scope.$on('modal.hidden', function() {
-            $scope.search = '';
-            $scope.searched = [];
-        });
-
     });
 
     app.controller('MessagesCtrl', function($scope, $state, API, Data, Utils) {
@@ -930,6 +999,10 @@
 
     app.controller('ChatCtrl', function($scope, $window, $timeout, $ionicPopup, $ionicScrollDelegate, API, Data, Utils) {
 
+        $scope.$on('$ionicView.beforeEnter', function() {
+            $scope.refreshChats();
+        });
+
         // **Low-Priority** TODO: the focusInput/scrollBottom interactions are really awkward, so we aren't using focusInput atm
 
         $scope.buffer = '';
@@ -948,8 +1021,6 @@
                 Utils.interval(function () {
                     checkChat();
                 }, PING_INTERVAL);
-            }, function (reason) {
-                console.log(reason);
             });
         }
 
@@ -1102,13 +1173,10 @@
 
         if (ionic.Platform.isIOS()) {
             $window.addEventListener('native.keyboardshow', function (e) {
-                console.log("Keyboard shown!");
-                console.log(e.keyboardHeight);
                 document.getElementById("inputBar").style.marginBottom = e.keyboardHeight + "px";
             });
 
             $window.addEventListener('native.keyboardhide', function () {
-                console.log("Keyboard hidden!");
                 document.getElementById("inputBar").style.marginBottom = "0";
             });
         }
@@ -1152,7 +1220,7 @@
                 var friend = resp.result;
                 if (friend) {
                     Utils.addById(Data.friends, friend);
-                    $scope.profile(friend.user);
+                    $scope.profile(friend);
                 }
             });
         };
@@ -1217,54 +1285,19 @@
 
     });
 
-    app.controller('ConnectionsCtrl', function($scope, $state, $ionicPopup, Data, API, Utils) {
+    app.controller('ProfileCtrl', function($scope, $state, API, Data) {
 
-        $scope.accept = function(cxn) {
-            cxn.status = "IN_PROGRESS";
-            API.acceptEpisode(cxn.id);
-            $scope.play(cxn);
+        $scope.isMe = function() {
+            return Data.user.id === Data.tempUser.id;
         };
 
-        $scope.reject = function(cxn) {
-            API.endEpisode(cxn.id);
-            removeCxn(cxn);
-        };
-
-        $scope.play = function(cxn) {
-            Data.episode = cxn;
-            removeCxn(cxn);
-            $state.go('play');
-        };
-
-        $scope.remove = function(cxn) {
-            $ionicPopup.confirm({
-                title: 'Abandon Connection',
-                template: 'Are you sure you want to abandon your connection with ' + $scope.dispName(cxn.user) + '?',
-                okText: 'Abandon',
-                okType: 'button-assertive',
-                cancelText: 'Cancel',
-                cancelType: 'button-stable'
-            }).then(function(resp) {
-                if (resp) {
-                    $scope.reject(cxn);
-                }
-            })
-        };
-
-        $scope.dispStage = function(cxn) {
-            if (cxn.status === 'MATCHING') {
-                if (cxn.uid2) {
-                    return 'Pending';
-                } else {
-                    return 'Matching';
-                }
-            } else {
-                return 'Stage ' + cxn.data.stage;
-            }
-        };
-
-        var removeCxn = function(cxn) {
-            Utils.removeById(Data.connections, cxn);
+        $scope.message = function() {
+            API.startChat(Data.friend.id, false, Data.user.id, Data.tempUser.id).then(function (resp) {
+                Data.chat = resp.result;
+                Data.chat.user = Data.tempUser;
+                Data.chats.push(Data.chat);
+                $state.go('chat');
+            });
         };
     });
 
@@ -1531,27 +1564,23 @@
         fileInput.addEventListener('change', function() {
             var file = fileInput.files[0];
             var imageType = /image.*/;
-
             if (file.type.match(imageType)) {
-
                 var orientation;
-
                 loadImage.parseMetaData(file, function (data) {
                     if (data.exif) {
                         orientation = data.exif.get('Orientation');
                     }
                 });
-
                 loadImage(
                     file,
                     function (image) {
                         var canvas = document.createElement('canvas');
-                        if (!orientation || orientation < 5) { // image is fine or upside down
-                            canvas.width = image.width;
-                            canvas.height = image.height;
-                        } else {                               // image is sideways
+                        if (orientation && orientation > 4) { // image is sideways
                             canvas.width = image.height;
                             canvas.height = image.width;
+                        } else {                              // image is fine or upside down
+                            canvas.width = image.width;
+                            canvas.height = image.height;
                         }
                         var ctx = canvas.getContext('2d');
                         if (orientation && orientation > 2) { // image is rotated
@@ -1566,14 +1595,10 @@
                             ctx.translate(image.width * -0.5, image.height * -0.5);
                         }
                         ctx.drawImage(image, 0, 0);
-
                         $scope.tempData.image = canvas.toDataURL('image/jpeg');
                         $scope.$apply();
                     }
                 );
-
-            } else {
-                console.log("Bad file type");
             }
         });
 
@@ -1581,24 +1606,6 @@
             fileInput.click();
         }
 
-    });
-
-    app.controller('ProfileCtrl', function($scope, $state, API, Data) {
-
-        $scope.isMe = function() {
-            return Data.user.id === Data.tempUser.id;
-        };
-
-        $scope.message = function() {
-            API.startChat(Data.friend.id, false, Data.user.id, Data.tempUser.id).then(function (resp) {
-                Data.chat = resp.result;
-                Data.chat.user = Data.tempUser;
-                Data.chats.push(Data.chat);
-                $state.go('chat');
-            }, function (reason) {
-                console.log(reason);
-            });
-        };
     });
 
     app.controller('FeedbackCtrl', function($scope, $ionicPopup, API) {

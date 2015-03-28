@@ -183,6 +183,7 @@
                         myAnswer = myAnswers[stage - 1];
                         if (!theirAnswers || theirAnswers.length < stage) {
                             state = 'waiting';
+                            theirAnswer = "Waiting for your partner to answer...";
                         } else {
                             state = 'continue';
                             theirAnswer = theirAnswers[stage - 1];

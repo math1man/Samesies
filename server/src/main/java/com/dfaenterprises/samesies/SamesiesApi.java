@@ -101,10 +101,8 @@ public class SamesiesApi {
         if (email == null) {
             throw new BadRequestException("Invalid Email");
         }
-        User dsUser = getUser(ds, email, User.Relation.SELF);
-        if (dsUser == null) {
-            throw new NotFoundException("Email not found");
-        } else if (dsUser.getIsBanned()) {
+        User dsUser = getUser(ds, email, User.Relation.SELF, false);
+        if (dsUser.getIsBanned()) {
             throw new ForbiddenException("Account has been banned");
         } else if (!dsUser.getIsActivated()) {
             throw new ForbiddenException("Account has not been activated");
@@ -128,7 +126,7 @@ public class SamesiesApi {
         if (newUser.getPassword() == null) {
             throw new BadRequestException("Invalid Password");
         }
-        if (getUser(ds, email, User.Relation.STRANGER) == null) {
+        if (getUser(ds, email, User.Relation.STRANGER, true) == null) {
             newUser.initNewUser();
             EntityUtils.put(ds, newUser);
             EntityUtils.put(ds, new CommunityUser(EVERYONE_CID, newUser.getId(), true));
@@ -148,26 +146,22 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void recoverUser(@Named("email") String email) throws ServiceException {
         DatastoreService ds = getDS();
-        User user = getUser(ds, email, User.Relation.ADMIN);
-        if (user == null) {
-            throw new NotFoundException("Email not found");
-        } else {
-            String tempPass = EntityUtils.randomString(8);
-            user.setPassword(tempPass);
-            EntityUtils.put(ds, user);
-            sendEmail(user, "Samesies Password Reset",
-                    "Your password has been reset.  Your new temporary password is " + tempPass + ".  " +
-                    "We recommend you change this password immediately once you log in to Samesies.\n\n" +
-                    "All the best,\n" +
-                    "The Samesies Team");
-        }
+        User user = getUser(ds, email, User.Relation.ADMIN, false);
+        String tempPass = EntityUtils.randomString(8);
+        user.setPassword(tempPass);
+        EntityUtils.put(ds, user);
+        sendEmail(user, "Samesies Password Reset",
+                "Your password has been reset.  Your new temporary password is " + tempPass + ".  " +
+                        "We recommend you change this password immediately once you log in to Samesies.\n\n" +
+                        "All the best,\n" +
+                        "The Samesies Team");
     }
 
     @ApiMethod(name = "samesiesApi.getUser",
             path = "user/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public User getUser(@Named("id") long uid) throws ServiceException {
-        return getUser(getDS(), uid, User.Relation.STRANGER);
+        return getUser(getDS(), uid, User.Relation.STRANGER, false);
     }
 
     @ApiMethod(name = "samesiesApi.getUsers",
@@ -195,10 +189,8 @@ public class SamesiesApi {
             throw new BadRequestException("User ID not specified");
         }
         String newPassword = user.getNewPassword();
-        User dsUser = getUser(ds, user.getId(), User.Relation.SELF);
-        if (dsUser == null) {
-            throw new NotFoundException("User not found");
-        } else if (newPassword != null) {
+        User dsUser = getUser(ds, user.getId(), User.Relation.SELF, false);
+        if (newPassword != null) {
             // password is being changed
             if (BCrypt.checkpw(user.getPassword(), dsUser.getHashedPw())) {
                 user.setPassword(newPassword);
@@ -216,11 +208,11 @@ public class SamesiesApi {
             path = "user/find/{email}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public User findUser(@Named("email") String email) throws ServiceException {
-        User user = getUser(getDS(), email, User.Relation.STRANGER);
-        if (user == null || user.getIsBanned()) { // ignore banned users
-            return null;
-        } else {
+        User user = getUser(getDS(), email, User.Relation.STRANGER, true);
+        if (isValid(user)) {
             return user;
+        } else {
+            return null;
         }
     }
 
@@ -230,8 +222,8 @@ public class SamesiesApi {
     public List<User> searchUsers(@Named("string") String string) throws ServiceException {
         DatastoreService ds = getDS();
         // first, lets check if they straight entered an email
-        User user = getUser(getDS(), string, User.Relation.STRANGER);
-        if (user != null && !user.getIsBanned()) { // ignore banned users
+        User user = getUser(getDS(), string, User.Relation.STRANGER, true);
+        if (isValid(user)) { // ignore banned users
             return Collections.singletonList(user);
         } else {
             Query query = new Query("User");
@@ -271,10 +263,10 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void banUser(@Named("id") long uid, @Nullable @Named("isBanned") Boolean isBanned) throws ServiceException {
         DatastoreService ds = getDS();
-        User user = getUser(ds, uid, User.Relation.ADMIN);
         if (isBanned == null) {
             isBanned = true;
         }
+        User user = getUser(ds, uid, User.Relation.ADMIN, false);
         user.setIsBanned(isBanned);
         EntityUtils.put(ds, user);
         sendEmail(user, "Samesies Account Banned",
@@ -304,8 +296,8 @@ public class SamesiesApi {
             if (!friend.getStatus().isDeleted()) {
                 long theirUid = friend.getOtherUid(uid);
                 User.Relation relation = friend.getStatus().getRelation();
-                User user = getUser(ds, theirUid, relation);
-                if (!user.getIsBanned()) {
+                User user = getUser(ds, theirUid, relation, true);
+                if (isValid(user)) {
                     friend.setUser(user);
                     friends.add(friend);
                 }
@@ -356,7 +348,7 @@ public class SamesiesApi {
             return null;
         } else {
             EntityUtils.put(ds, friend); // update the friend in case it changed
-            friend.setUser(getUser(ds, theirId, friend.getStatus().getRelation()));
+            friend.setUser(getUser(ds, theirId, friend.getStatus().getRelation(), true));
             return friend;
         }
     }
@@ -413,7 +405,10 @@ public class SamesiesApi {
                     new Query.FilterPredicate("isValidated", Query.FilterOperator.EQUAL, true)));
             PreparedQuery pq = ds.prepare(query);
             for (Entity e : pq.asIterable()) {
-                users.add(getUser(ds, new CommunityUser(e).getUid(), User.Relation.STRANGER));
+                User user = getUser(ds, new CommunityUser(e).getUid(), User.Relation.STRANGER, true);
+                if (isValid(user)) {
+                    users.add(user);
+                }
             }
         }
         Collections.shuffle(users);
@@ -693,7 +688,7 @@ public class SamesiesApi {
             episode.setStatus(Episode.Status.IN_PROGRESS);
             episode.setUid2(myUid);
             episode.setQids(getQids(ds, mode));
-            episode.setUser(getUser(ds, episode.getUid1(), User.Relation.STRANGER));
+            episode.setUser(getUser(ds, episode.getUid1(), User.Relation.STRANGER, true));
             episode.modify();
         }
         EntityUtils.put(ds, episode);
@@ -792,8 +787,8 @@ public class SamesiesApi {
                 if (otherUid == null) {
                     connections.add(episode);
                 } else {
-                    User user = getUser(ds, episode.getOtherUid(uid), User.Relation.STRANGER);
-                    if (!user.getIsBanned()) {
+                    User user = getUser(ds, episode.getOtherUid(uid), User.Relation.STRANGER, true);
+                    if (isValid(user)) {
                         episode.setUser(user);
                         connections.add(episode);
                     }
@@ -811,11 +806,15 @@ public class SamesiesApi {
         Episode episode = getEpisode(ds, eid);
         List<Question> questions = new ArrayList<>();
         if (episode.isPersonal()) {
-            User u1 = getUser(ds, episode.getUid1(), User.Relation.ADMIN);
-            User u2 = getUser(ds, episode.getUid2(), User.Relation.ADMIN);
-            for (int i=0; i<5; i++) {
-                questions.add(new Question(u1.getQuestions().get(i)));
-                questions.add(new Question(u2.getQuestions().get(i)));
+            User u1 = getUser(ds, episode.getUid1(), User.Relation.ADMIN, false);
+            User u2 = getUser(ds, episode.getUid2(), User.Relation.ADMIN, false);
+            try {
+                for (int i=0; i<5; i++) {
+                    questions.add(new Question(u1.getQuestions().get(i)));
+                    questions.add(new Question(u2.getQuestions().get(i)));
+                }
+            } catch (IndexOutOfBoundsException e) {
+                throw new NotFoundException("One or more of the users is missing questions");
             }
         } else {
             for (long qid : episode.getQids()) {
@@ -867,8 +866,8 @@ public class SamesiesApi {
         List<Chat> chats = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
             Chat chat = new Chat(e);
-            User user = getUser(ds, chat.getOtherUid(myUid), User.Relation.STRANGER);
-            if (!user.getIsBanned()) {
+            User user = getUser(ds, chat.getOtherUid(myUid), User.Relation.STRANGER, true);
+            if (isValid(user)) {
                 chat.setUser(user);
                 chats.add(chat);
             }
@@ -957,7 +956,7 @@ public class SamesiesApi {
         for (String s : messageLines) {
             sb.append(s).append('\n');
         }
-        sendEmail(getUser(getDS(), uid, User.Relation.ADMIN), subject, sb.toString());
+        sendEmail(getUser(getDS(), uid, User.Relation.ADMIN, false), subject, sb.toString());
     }
 
     //----------------------------
@@ -1012,8 +1011,8 @@ public class SamesiesApi {
         }
 
         // finally check that genders are acceptable to each other
-        return checkGender(getUser(ds, uid1, User.Relation.ADMIN).getGender(), settings2)
-                && checkGender(getUser(ds, uid2, User.Relation.ADMIN).getGender(), settings1);
+        return checkGender(getUser(ds, uid1, User.Relation.ADMIN, false).getGender(), settings2)
+                && checkGender(getUser(ds, uid2, User.Relation.ADMIN, false).getGender(), settings1);
     }
 
     private static boolean checkGender(String gender, Settings settings) {
@@ -1054,22 +1053,34 @@ public class SamesiesApi {
         return Pattern.compile(".*" + Pattern.quote(string.toLowerCase()) + ".*");
     }
 
-    private static User getUser(DatastoreService ds, long id, User.Relation relation) throws NotFoundException {
+    private static boolean isValid(User user) {
+        return user != null && !user.getIsBanned();
+    }
+
+    private static User getUser(DatastoreService ds, long id, User.Relation relation, boolean returnNull) throws NotFoundException {
         try {
             return new User(ds.get(KeyFactory.createKey("User", id)), relation);
         } catch (EntityNotFoundException e) {
-            throw new NotFoundException("Email not found", e);
+            if (returnNull) {
+                return null;
+            } else {
+                throw new NotFoundException("User not found", e);
+            }
         }
     }
 
-    private static User getUser(DatastoreService ds, String email, User.Relation relation) {
+    private static User getUser(DatastoreService ds, String email, User.Relation relation, boolean returnNull) throws NotFoundException {
         Query query = new Query("User").setFilter(new Query.FilterPredicate(
                 "email", Query.FilterOperator.EQUAL, email));
         PreparedQuery pq = ds.prepare(query);
 
         Entity e = pq.asSingleEntity();
         if (e == null) {
-            return null;
+            if (returnNull) {
+                return null;
+            } else {
+                throw new NotFoundException("Email not found");
+            }
         } else {
             return new User(e, relation);
         }
