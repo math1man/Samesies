@@ -274,6 +274,7 @@ public class User extends Storable {
         e.setUnindexedProperty("hashedPw", hashedPw);
         e.setProperty("alias", alias);
         e.setUnindexedProperty("avatar", avatar);
+        e.setProperty("community", community);
         e.setUnindexedProperty("location", getGeoPt());
         e.setProperty("name", name);
         e.setProperty("age", age);
