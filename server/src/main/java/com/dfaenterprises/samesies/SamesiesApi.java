@@ -677,8 +677,15 @@ public class SamesiesApi {
                 if (isPersistent && temp.getUid1() == myUid) {
                     return temp; // only 1 persistent random match per person per mode
                 }
-                if (isMatch(ds, myUid, settings, temp.getUid1(), temp.getSettings())) {
-                    episode = temp;
+                // check that the episode was last modified less than a minutes ago
+                if (isPersistent || new Date().getTime() - temp.getLastModified().getTime() < 1000 * 60) {
+                    if (isMatch(ds, myUid, settings, temp.getUid1(), temp.getSettings())) {
+                        episode = temp;
+                    }
+                } else {
+                    // if it hasn't been modified in 10 minutes, the person is not there
+                    temp.setStatus(Episode.Status.ABANDONED);
+                    EntityUtils.put(ds, temp);
                 }
             }
         }
@@ -721,7 +728,14 @@ public class SamesiesApi {
             path = "episode/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public Episode getEpisode(@Named("id") long eid) throws ServiceException {
-        return getEpisode(getDS(), eid);
+        DatastoreService ds = getDS();
+        Episode episode = getEpisode(ds, eid);
+        if (!episode.getIsPersistent() && episode.getStatus() == Episode.Status.MATCHING) {
+            // update it for matching purposes so that the matching system can discard old episodes
+            episode.setLastModified(new Date());
+            EntityUtils.put(ds, episode);
+        }
+        return episode;
     }
 
     @ApiMethod(name = "samesiesApi.answerEpisode",
