@@ -683,8 +683,8 @@ public class SamesiesApi {
                         episode = temp;
                     }
                 } else {
-                    // if it hasn't been modified in 10 minutes, the person is not there
-                    temp.setStatus(Episode.Status.ABANDONED);
+                    // if it hasn't been modified in over a minute, the person is not there
+                    temp.setStatus(Episode.Status.UNMATCHED);
                     EntityUtils.put(ds, temp);
                 }
             }
