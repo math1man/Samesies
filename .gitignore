@@ -1,6 +1,7 @@
 server/target
 app/platforms
 app/node_modules
+app/private
 .idea
 
 */.DS_Store
