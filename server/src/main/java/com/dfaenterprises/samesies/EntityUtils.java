@@ -6,6 +6,7 @@ import com.google.appengine.api.datastore.EmbeddedEntity;
 import com.google.appengine.api.datastore.Entity;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -50,6 +51,10 @@ public class EntityUtils {
     }
 
     public static void put(DatastoreService ds, Storable... ss) {
+        put(ds, Arrays.asList(ss));
+    }
+
+    public static void put(DatastoreService ds, List<? extends Storable> ss) {
         List<Entity> es = new ArrayList<>();
         for (Storable s : ss) {
             if (s != null) {
@@ -58,7 +63,7 @@ public class EntityUtils {
         }
         ds.put(es);
         for (int i=0; i<es.size(); i++) {
-            ss[i].setId(es.get(i).getKey().getId());
+            ss.get(i).setId(es.get(i).getKey().getId());
         }
     }
 

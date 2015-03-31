@@ -22,14 +22,11 @@
             getUser: function(id) {
                 return API.getUser({id: id});
             },
-            getUsers: function(ids) {
-                return API.getUsers({ids: ids});
-            },
             updateUser: function(user) {
                 return API.updateUser(user);
             },
-            findUser: function(email) {
-                return API.findUser({email: email});
+            searchUsers: function(string) {
+                return API.searchUsers({string: string});
             },
             flagUser: function(flaggedId, flaggerId, reason) {
                 API.flagUser({flaggedId: flaggedId, flaggerId: flaggerId, reason: reason}).then();
@@ -46,8 +43,17 @@
             removeFriend: function(id, myId) {
                 API.removeFriend({id: id, myId: myId}).then();
             },
-            getCommunity: function(name) {
-                return API.getCommunity({name: name});
+            getCommunity: function(id) {
+                return API.getCommunity({id: id});
+            },
+            getUserCommunities: function(id) {
+                return API.getUserCommunities({id: id});
+            },
+            searchCommunities: function(string) {
+                return API.searchCommunities({string: string});
+            },
+            joinCommunity: function(id, myId, string) {
+                return API.joinCommunity({id: id, myId: myId, string: string});
             },
             getQuestion: function(id) {
                 return API.getQuestion({id: id});
@@ -67,34 +73,17 @@
             getModes: function() {
                 return API.getModes();
             },
-            findEpisode: function(myId, settings) {
+            findEpisode: function(myId, settings, params) {
                 return API.findEpisode({
                     myId: myId,
-                    mode: settings.mode.mode,
-                    matchMale: settings.matchMale,
-                    matchFemale: settings.matchFemale,
-                    matchOther: settings.matchOther
-                });
-            },
-            findLocationEpisode: function(myId, settings, latitude, longitude) {
-                return API.findEpisode({
-                    myId: myId,
+                    isPersistent: !settings.isNotPersistent,
                     mode: settings.mode.mode,
                     matchMale: settings.matchMale,
                     matchFemale: settings.matchFemale,
                     matchOther: settings.matchOther,
-                    latitude: latitude,
-                    longitude: longitude
-                });
-            },
-            findCommunityEpisode: function(myId, settings, community) {
-                return API.findEpisode({
-                    myId: myId,
-                    mode: settings.mode.mode,
-                    matchMale: settings.matchMale,
-                    matchFemale: settings.matchFemale,
-                    matchOther: settings.matchOther,
-                    community: community
+                    cid: params.cid,
+                    latitude: params.latitude,
+                    longitude: params.longitude
                 });
             },
             connectEpisode: function(myId, theirId, settings) {
@@ -197,6 +186,7 @@
                         myAnswer = myAnswers[stage - 1];
                         if (!theirAnswers || theirAnswers.length < stage) {
                             state = 'waiting';
+                            theirAnswer = "Waiting for your partner to answer...";
                         } else {
                             state = 'continue';
                             theirAnswer = theirAnswers[stage - 1];
@@ -272,14 +262,15 @@
         this.categories = [];
         this.modes = [];
         this.defaultMode = null;
-        this.communities = ['Macalester College'];
+        this.communities = [];
         // global dynamic data
         this.community = {
-            name: this.communities[0],
+            name: 'Click to select a Community',
             users: []
         };
         this.settings = {
             mode: 'Random',
+            isNotPersistent: false,
             matchMale: true,
             matchFemale: true,
             matchOther: true

@@ -4,8 +4,12 @@
         <h1 class="title">Game Settings</h1>
     </ion-header-bar>
     <ion-content>
+        <div class="item" ng-click="showSelect($event)">
+            Search from: <span class="float-right">{{data('community').name}}</span>
+        </div>
+        <ion-checkbox class="item item-checkbox-right checkbox-royal" ng-model="settings.isNotPersistent">Find Real-Time Match</ion-checkbox>
         <div class="item" ng-click="showModes()">
-            Game mode: {{settings.mode.mode}} (click to change)
+            Game mode: (click to change) <span class="float-right">{{settings.mode.mode}}</span>
         </div>
         <div class="item" ng-show="isShowModes()">
             <ion-radio ng-model="settings.mode" ng-value="mode" ng-repeat="mode in data('modes')" ng-click="selectMode()">{{mode.mode}}</ion-radio>

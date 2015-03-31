@@ -2,10 +2,11 @@
 
     const URL = 'https://samesies-app.appspot.com/_ah/api';
     const PING_INTERVAL = 1000; // ms
+    const EVERYONE_CID = '5686812383117312'; // ID for the "Everyone" community
 
     var app = angular.module('samesies.controllers', []);
 
-    app.controller('IndexCtrl', function($scope, $window, $state, $ionicHistory, $ionicPopup, $ionicModal, API, Data, Utils) {
+    app.controller('IndexCtrl', function($scope, $window, $state, $ionicHistory, $ionicPopup, $ionicPopover, $ionicModal, API, Data, Utils) {
 
         $window.init = function() {
             if (!$state.is('menu')) {
@@ -42,6 +43,8 @@
             animation: 'slide-in-left'
         }).then(function(modal) {
             $scope.settingsPopup = modal;
+            $scope.showSettings();
+            $scope.closeSettings();
         });
 
         $scope.showSettings = function() {
@@ -59,6 +62,20 @@
                 Data.settings.matchOther = true;
             }
             $scope.settingsPopup.hide();
+        };
+
+        $ionicPopover.fromTemplateUrl('templates/select-community.html', {
+            scope: $scope
+        }).then(function(popover) {
+            $scope.selectPopup = popover;
+        });
+
+        $scope.showSelect = function($event) {
+            $scope.selectPopup.show($event);
+        };
+
+        $scope.hideSelect = function() {
+            $scope.selectPopup.hide();
         };
 
         $scope.dispName = function(user) {
@@ -113,11 +130,8 @@
         };
 
         $scope.refresh = function() {
+            $scope.refreshCommunities();
             if (Data.user) {
-                API.getCommunity(Data.user.community).then(function(resp) {
-                    Data.community = resp.result;
-                    $scope.$apply();
-                });
                 API.getFriends(Data.user.id).then(function(resp) {
                     var friends = resp.result.items;
                     if (friends && friends.length) {
@@ -128,47 +142,77 @@
                     }
                     $scope.$apply();
                     // nested so that it can pull from friends
-                    if (Data.user) { // need to add a second check in case they immediately log out
-                        API.getChats(Data.user.id).then(function (resp) {
-                            var chats = resp.result.items;
-                            if (chats && chats.length) {
-                                for (var i = 0; i < chats.length; i++) {
-                                    var index = Utils.indexOfById(Data.friends, chats[i].user, 'user');
-                                    if (index > -1) {
-                                        chats[i].user = Data.friends[index].user;
-                                    }
-                                }
-                                Data.chats = chats;
-                            }
-                            if (Data.isLoading) {
-                                Data.isLoading--;
-                            }
-                            $scope.$apply();
-                        });
-                        API.getConnections(Data.user.id).then(function (resp) {
-                            var cxns = resp.result.items;
-                            if (cxns && cxns.length) {
-                                for (var i = 0; i < cxns.length; i++) {
-                                    cxns[i].data = Utils.getData(cxns[i]);
-                                    var index = Utils.indexOfById(Data.friends, cxns[i].user, 'user');
-                                    if (index > -1) {
-                                        cxns[i].user = Data.friends[index].user;
-                                    }
-                                }
-                                Data.connections = cxns;
-                            }
-                            if (Data.isLoading) {
-                                Data.isLoading--;
-                            }
-                            $scope.$apply();
-                        });
+                    $scope.refreshChats();
+                    $scope.refreshCxns();
+                });
+            }
+        };
+
+        $scope.refreshCommunities = function() {
+            if (Data.user) {
+                API.getUserCommunities(Data.user.id).then(function(resp) {
+                    var communities = resp.result.items;
+                    if (communities && communities.length) {
+                        Data.communities = communities;
+                        $scope.$apply();
                     }
+                });
+            }
+        };
+
+        $scope.refreshChats = function() {
+            if (Data.user) { // need to add a second check in case they immediately log out
+                API.getChats(Data.user.id).then(function (resp) {
+                    var chats = resp.result.items;
+                    if (chats && chats.length) {
+                        for (var i = 0; i < chats.length; i++) {
+                            var index = Utils.indexOfById(Data.friends, chats[i].user, 'user');
+                            if (index > -1) {
+                                chats[i].user = Data.friends[index].user;
+                            }
+                        }
+                        Data.chats = chats;
+                    }
+                    if (Data.isLoading) {
+                        Data.isLoading--;
+                    }
+                    $scope.$apply();
+                });
+            }
+        };
+
+        $scope.refreshCxns = function() {
+            if (Data.user) { // need to add a second check in case they immediately log out
+                API.getConnections(Data.user.id).then(function (resp) {
+                    var cxns = resp.result.items;
+                    if (cxns && cxns.length) {
+                        for (var i = 0; i < cxns.length; i++) {
+                            cxns[i].data = Utils.getData(cxns[i]);
+                            if (cxns[i].user) {
+                                var index = Utils.indexOfById(Data.friends, cxns[i].user, 'user');
+                                if (index > -1) {
+                                    cxns[i].user = Data.friends[index].user;
+                                }
+                            } else {
+                                cxns[i].user = {
+                                    name: 'Matching...',
+                                    avatar: 'img/lone_icon.png'
+                                }
+                            }
+                        }
+                        Data.connections = cxns;
+                    }
+                    if (Data.isLoading) {
+                        Data.isLoading--;
+                    }
+                    $scope.$apply();
                 });
             }
         };
 
         $scope.$on('$destroy', function() {
             $scope.settingsPopup.remove();
+            $scope.selectPopup.remove();
         });
 
     });
@@ -179,7 +223,7 @@
             $scope.loginData = {
                 error: false,
                 email: $window.localStorage['email'],
-                community: 'Macalester College'
+                avatar: 'img/lone_icon.png'
             };
             $scope.loginCheck = {};
             $scope.isLoading = false;
@@ -240,14 +284,13 @@
                 $scope.loginData.error = "Password too short";
             } else if ($scope.loginData.password != $scope.loginData.confirmPassword) {
                 $scope.loginData.error = "Passwords don't match";
-            } else if (!$scope.loginData.community) {
-                $scope.loginData.error = "Invalid community";
-            } else if (!$scope.loginCheck.key || $scope.loginCheck.key.toLowerCase() != 'macalester') {
-                $scope.loginData.error = "Invalid login key";
             } else if (!$scope.loginCheck.accept) {
                 $scope.loginData.error = "Accept Terms and Conditions";
             } else {
                 $scope.loginData.error = "";
+            }
+            if (!/\S/.test($scope.loginData.alias)) {
+                $scope.loginData.alias = null;
             }
             if (!$scope.loginData.error) {
                 $scope.isLoading = true;
@@ -265,6 +308,34 @@
                     });
                 });
             }
+        };
+
+        $scope.selectAvatar = function() {
+            $scope.tempData = {
+                image: $scope.loginData.avatar
+            };
+            $ionicPopup.show({
+                scope: $scope,
+                title: 'Update Profile Picture',
+                templateUrl: 'templates/upload-avatar.html',
+                buttons: [
+                    {
+                        text: 'Cancel',
+                        type: 'button-stable'
+                    }, {
+                        text: 'Okay',
+                        type: 'button-royal',
+                        onTap: function() {
+                            return $scope.tempData.image;
+                        }
+                    }
+                ]
+            }).then(function(image) {
+                if (angular.isDefined(image)) {
+                    $scope.loginData.avatar = image;
+                }
+                $scope.tempData = null;
+            });
         };
 
         $scope.recoverPassword = function() {
@@ -361,7 +432,8 @@
             if (Data.connections && Data.connections.length) {
                 for (var i = 0; i < Data.connections.length; i++) {
                     var item = Data.connections[i];
-                    if (item.data) { // Connections pending your approval
+                    if (item.data) {
+                        // Connections pending your approval
                         if (item.status === 'MATCHING' && !item.data.is1) {
                             count++;
                         }
@@ -377,7 +449,7 @@
 
         $scope.getChatCount = function() {
             var count = 0;
-            if (Data.chats && Data.chats.length) {
+            if (Data.user && Data.chats && Data.chats.length) {
                 for (var i = 0; i < Data.chats.length; i++) {
                     if (Utils.isUpdated(Data.chats[i])) {
                         count++;
@@ -408,15 +480,15 @@
 
     app.controller('SettingsCtrl', function($scope, $ionicPopup, Data, Utils) {
 
+        $scope.$on('modal.shown', function() {
+            $scope.settings = Data.settings;
+        });
+
         var isShowModes = false;
 
         $scope.isShowModes = function() {
             return isShowModes;
         };
-
-        $scope.$on('modal.shown', function() {
-            $scope.settings = Data.settings;
-        });
 
         $scope.showModes = function() {
             isShowModes = true;
@@ -449,7 +521,101 @@
 
     });
 
-    app.controller('EpisodeCtrl', function($scope, $state, $window, $ionicPopup, $ionicModal, API, Utils, Data) {
+    app.controller('SelectComCtrl', function($scope, API, Data, Utils) {
+
+        $scope.selected = Data.community;
+        $scope.search = '';
+        $scope.searched = [];
+
+        $scope.searchCommunities = function(string) {
+            API.searchCommunities(string).then(function(resp) {
+                var list = resp.result.items;
+                if (list && list.length) {
+                    for (var i=0; i<Data.communities.length; i++) {
+                        Utils.removeById(list, Data.communities[i]);
+                    }
+                    $scope.searched = list;
+                    $scope.$apply();
+                }
+            })
+        };
+
+        $scope.join = function(community) {
+            if (community.type === 'EMAIL') {
+                $scope.tempData = [''];
+                $ionicPopup.show({
+                    scope: $scope,
+                    title: 'Enter a valid ' + community.name + ' email',
+                    template: '<label class="item item-input"><input type="email" placeholder="johndoe@community.org" ng-model="tempData[0]"></label>',
+                    buttons: [{
+                        text: 'Cancel',
+                        type: 'button-stable'
+                    },{
+                        text: 'Submit',
+                        type: 'button-royal',
+                        onTap: function() {
+                            return $scope.tempData[0];
+                        }
+                    }]
+                }).then(function(email) {
+                    if (angular.isDefined(email)) {
+                        API.joinCommunity(community.id, Data.user.id, email).then();
+                        $scope.hideSelect();
+                    }
+                });
+            } else if (community.type === 'PASSWORD') {
+                $scope.tempData = [''];
+                $ionicPopup.show({
+                    scope: $scope,
+                    title: "Enter " + community.name + "'s access password",
+                    template: '<label class="item item-input"><input type="password" placeholder="••••••••" ng-model="tempData[0]"></label>',
+                    buttons: [{
+                        text: 'Cancel',
+                        type: 'button-stable'
+                    },{
+                        text: 'Submit',
+                        type: 'button-royal',
+                        onTap: function() {
+                            return $scope.tempData[0];
+                        }
+                    }]
+                }).then(function(password) {
+                    if (angular.isDefined(password)) {
+                        API.joinCommunity(community.id, Data.user.id, password).then(function (resp) {
+                            if (resp.result) {
+                                Data.communities.push(resp.result);
+                                $scope.loadCommunity(resp.result);
+                            }
+                        });
+                    }
+                });
+            } else { // handle OPEN and EXCLUSIVE together
+                API.joinCommunity(community.id, Data.user.id).then(function (resp) {
+                    if (resp.result) {
+                        Data.communities.push(resp.result);
+                        $scope.loadCommunity(resp.result);
+                    }
+                });
+            }
+        };
+
+        $scope.loadCommunity = function(community) {
+            Data.community = community;
+            $scope.hideSelect();
+            API.getCommunity(community.id).then(function(resp) {
+                Data.community = resp.result;
+                $scope.$apply();
+            });
+        };
+
+        $scope.$on('modal.hidden', function() {
+            $scope.search = '';
+            $scope.searched = [];
+        });
+
+    });
+
+    app.controller('EpisodeCtrl', function($scope, $state, $window, $cordovaKeyboard, $ionicPopup, $ionicModal, API, Utils, Data) {
 
         $ionicModal.fromTemplateUrl('templates/help.html', {
             scope: $scope,
@@ -509,8 +675,13 @@
                     state: 'matching',
                     stage: 0
                 };
-                // TODO: location/community
-                API.findCommunityEpisode(Data.user.id, Data.settings, Data.user.community).then(function (resp) {
+                var params = {};
+                if (Data.community.id != EVERYONE_CID) {
+                    params.cid = Data.community.id;
+                }
+                // **Eventually** TODO: location
+                // TODO: handle isPersistent
+                API.findEpisode(Data.user.id, Data.settings, params).then(function (resp) {
                     Data.episode = resp.result;
                     if (Data.episode.status === "MATCHING") {
                         Utils.interval(function () {
@@ -571,8 +742,6 @@
                                     Data.chat.user = friend.user;
                                     Utils.addById(Data.chats, Data.chat);
                                     $state.go('chat');
-                                }, function (reason) {
-                                    console.log(reason);
                                 });
                             } else if ($scope.isPersistent()) {
                                 $scope.back();
@@ -595,8 +764,6 @@
                                         $scope.find();
                                     }
                                 }
-                            }, function (reason) {
-                                console.log(reason);
                             });
                         }
                     });
@@ -616,12 +783,13 @@
         };
 
         $scope.answer = function() {
+            if (ionic.Platform.isIOS()) {
+                $cordovaKeyboard.close();
+            }
             $scope.episodeData.theirAnswer = "Waiting for your partner to answer...";
             go('waiting');
             API.answerEpisode(Data.episode.id, Data.user.id, $scope.episodeData.myAnswer).then(function(resp) {
                 updateEpisode(resp.result);
-            }, function(reason) {
-                console.log(reason);
             });
         };
 
@@ -700,27 +868,11 @@
 
     });
 
-    app.controller('CommunitiesCtrl', function($scope, $ionicPopover, $ionicPopup, API, Data) {
+    app.controller('CommunitiesCtrl', function($scope, $ionicPopup, API, Data) {
 
-        $scope.loadCommunity = function(community) {
-            if ($scope.selectPopup) {
-                $scope.selectPopup.hide();
-            }
-            API.getCommunity(community).then(function(resp) {
-                Data.community = resp.result;
-                $scope.$apply();
-            });
-        };
-
-        $ionicPopover.fromTemplateUrl('templates/select-community.html', {
-            scope: $scope
-        }).then(function(popover) {
-            $scope.selectPopup = popover;
+        $scope.$on('$ionicView.beforeEnter', function() {
+            $scope.refreshCommunities();
         });
-
-        $scope.showSelect = function($event) {
-            $scope.selectPopup.show($event);
-        };
 
         $scope.flag = function(user) {
             $scope.reason = [''];
@@ -742,13 +894,64 @@
                 if (angular.isDefined(reason)) {
                     API.flagUser(user.id, Data.user.id, reason);
                 }
+            });
+        };
+
+    });
+
+    app.controller('ConnectionsCtrl', function($scope, $state, $ionicPopup, Data, API, Utils) {
+
+        $scope.$on('$ionicView.beforeEnter', function() {
+            $scope.refreshCxns();
+        });
+
+        $scope.accept = function(cxn) {
+            cxn.status = "IN_PROGRESS";
+            API.acceptEpisode(cxn.id);
+            $scope.play(cxn);
+        };
+
+        $scope.reject = function(cxn) {
+            API.endEpisode(cxn.id);
+            removeCxn(cxn);
+        };
+
+        $scope.play = function(cxn) {
+            Data.episode = cxn;
+            removeCxn(cxn);
+            $state.go('play');
+        };
+
+        $scope.remove = function(cxn) {
+            $ionicPopup.confirm({
+                title: 'Abandon Connection',
+                template: 'Are you sure you want to abandon your connection with ' + $scope.dispName(cxn.user) + '?',
+                okText: 'Abandon',
+                okType: 'button-assertive',
+                cancelText: 'Cancel',
+                cancelType: 'button-stable'
+            }).then(function(resp) {
+                if (resp) {
+                    $scope.reject(cxn);
+                }
             })
         };
 
-        $scope.$on('$destroy', function() {
-            $scope.selectPopup.remove();
-        });
+        $scope.dispStage = function(cxn) {
+            if (cxn.status === 'MATCHING') {
+                if (cxn.uid2) {
+                    return 'Pending';
+                } else {
+                    return 'Matching';
+                }
+            } else {
+                return 'Stage ' + cxn.data.stage;
+            }
+        };
 
+        var removeCxn = function(cxn) {
+            Utils.removeById(Data.connections, cxn);
+        };
     });
 
     app.controller('MessagesCtrl', function($scope, $state, API, Data, Utils) {
@@ -798,7 +1001,11 @@
 
     app.controller('ChatCtrl', function($scope, $window, $timeout, $ionicPopup, $ionicScrollDelegate, API, Data, Utils) {
 
-        // TODO: the focusInput/scrollBottom interactions are really awkward, so we aren't using focusInput atm
+        $scope.$on('$ionicView.beforeEnter', function() {
+            $scope.refreshChats();
+        });
+
+        // **Low-Priority** TODO: the focusInput/scrollBottom interactions are really awkward, so we aren't using focusInput atm
 
         $scope.buffer = '';
         $scope.history = [];
@@ -816,8 +1023,6 @@
                 Utils.interval(function () {
                     checkChat();
                 }, PING_INTERVAL);
-            }, function (reason) {
-                console.log(reason);
             });
         }
 
@@ -968,16 +1173,15 @@
             });
         };
 
-        $window.addEventListener('native.keyboardshow', function (e) {
-            console.log("Keyboard shown!");
-            console.log(e.keyboardHeight);
-            document.getElementById("inputBar").style.marginBottom = e.keyboardHeight + "px";
-        });
+        if (ionic.Platform.isIOS()) {
+            $window.addEventListener('native.keyboardshow', function (e) {
+                document.getElementById("inputBar").style.marginBottom = e.keyboardHeight + "px";
+            });
 
-        $window.addEventListener('native.keyboardhide', function () {
-            console.log("Keyboard hidden!");
-            document.getElementById("inputBar").style.marginBottom = "0";
-        });
+            $window.addEventListener('native.keyboardhide', function () {
+                document.getElementById("inputBar").style.marginBottom = "0";
+            });
+        }
 
         $scope.$on('$ionicView.beforeLeave', function() {
             Utils.interruptAll();
@@ -1018,7 +1222,7 @@
                 var friend = resp.result;
                 if (friend) {
                     Utils.addById(Data.friends, friend);
-                    $scope.profile(friend.user);
+                    $scope.profile(friend);
                 }
             });
         };
@@ -1050,19 +1254,22 @@
     });
 
     app.controller('FindFriendCtrl', function($scope, API, Data, Utils) {
-        $scope.tempUser = null;
-        $scope.email = [''];
+        $scope.list = [];
+        $scope.search = '';
 
-        $scope.findFriend = function() {
-            API.findUser($scope.email[0]).then(function(resp) {
-                $scope.tempUser = resp.result;
-                $scope.$apply();
+        $scope.findFriend = function(string) {
+            API.searchUsers(string).then(function(resp) {
+                var list = resp.result.items;
+                if (list && list.length) {
+                    $scope.list = list;
+                    $scope.$apply();
+                }
             });
         };
 
-        $scope.add = function() {
-            if ($scope.tempUser) {
-                API.addFriend(Data.user.id, $scope.tempUser.id).then(function(resp) {
+        $scope.add = function(user) {
+            if (user) {
+                API.addFriend(Data.user.id, user.id).then(function(resp) {
                     var friend = resp.result;
                     if (friend && !Utils.containsById(Data.friends, friend)) {
                         Data.friends.push(friend);
@@ -1074,48 +1281,25 @@
         };
 
         $scope.$on('popover.hidden', function() {
-            $scope.tempUser = null;
-            $scope.email = [''];
+            $scope.list = [];
+            $scope.search = '';
         });
 
     });
 
-    app.controller('ConnectionsCtrl', function($scope, $state, $ionicPopup, Data, API, Utils) {
+    app.controller('ProfileCtrl', function($scope, $state, API, Data) {
 
-        $scope.accept = function(cxn) {
-            cxn.status = "IN_PROGRESS";
-            API.acceptEpisode(cxn.id);
-            $scope.play(cxn);
+        $scope.isMe = function() {
+            return Data.user.id === Data.tempUser.id;
         };
 
-        $scope.reject = function(cxn) {
-            API.endEpisode(cxn.id);
-            removeCxn(cxn);
-        };
-
-        $scope.play = function(cxn) {
-            Data.episode = cxn;
-            removeCxn(cxn);
-            $state.go('play');
-        };
-
-        $scope.remove = function(cxn) {
-            $ionicPopup.confirm({
-                title: 'Abandon Connection',
-                template: 'Are you sure you want to abandon your connection with ' + $scope.dispName(cxn.user) + '?',
-                okText: 'Abandon',
-                okType: 'button-assertive',
-                cancelText: 'Cancel',
-                cancelType: 'button-stable'
-            }).then(function(resp) {
-                if (resp) {
-                    $scope.reject(cxn);
-                }
-            })
-        };
-
-        var removeCxn = function(cxn) {
-            Utils.removeById(Data.connections, cxn);
+        $scope.message = function() {
+            API.startChat(Data.friend.id, false, Data.user.id, Data.tempUser.id).then(function (resp) {
+                Data.chat = resp.result;
+                Data.chat.user = Data.tempUser;
+                Data.chats.push(Data.chat);
+                $state.go('chat');
+            });
         };
     });
 
@@ -1195,7 +1379,7 @@
                         text: 'Okay',
                         type: 'button-royal',
                         onTap: function(e) {
-                            if (!required || $scope.tempData.value) {
+                            if (!required || ($scope.tempData.value && /\S/.test($scope.tempData.value))) {
                                 return $scope.tempData.value;
                             } else {
                                 e.preventDefault();
@@ -1382,27 +1566,23 @@
         fileInput.addEventListener('change', function() {
             var file = fileInput.files[0];
             var imageType = /image.*/;
-
             if (file.type.match(imageType)) {
-
                 var orientation;
-
                 loadImage.parseMetaData(file, function (data) {
                     if (data.exif) {
                         orientation = data.exif.get('Orientation');
                     }
                 });
-
                 loadImage(
                     file,
                     function (image) {
                         var canvas = document.createElement('canvas');
-                        if (!orientation || orientation < 5) { // image is fine or upside down
-                            canvas.width = image.width;
-                            canvas.height = image.height;
-                        } else {                               // image is sideways
+                        if (orientation && orientation > 4) { // image is sideways
                             canvas.width = image.height;
                             canvas.height = image.width;
+                        } else {                              // image is fine or upside down
+                            canvas.width = image.width;
+                            canvas.height = image.height;
                         }
                         var ctx = canvas.getContext('2d');
                         if (orientation && orientation > 2) { // image is rotated
@@ -1417,14 +1597,10 @@
                             ctx.translate(image.width * -0.5, image.height * -0.5);
                         }
                         ctx.drawImage(image, 0, 0);
-
                         $scope.tempData.image = canvas.toDataURL('image/jpeg');
                         $scope.$apply();
                     }
                 );
-
-            } else {
-                console.log("Bad file type");
             }
         });
 
@@ -1432,24 +1608,6 @@
             fileInput.click();
         }
 
-    });
-
-    app.controller('ProfileCtrl', function($scope, $state, API, Data) {
-
-        $scope.isMe = function() {
-            return Data.user.id === Data.tempUser.id;
-        };
-
-        $scope.message = function() {
-            API.startChat(Data.friend.id, false, Data.user.id, Data.tempUser.id).then(function (resp) {
-                Data.chat = resp.result;
-                Data.chat.user = Data.tempUser;
-                Data.chats.push(Data.chat);
-                $state.go('chat');
-            }, function (reason) {
-                console.log(reason);
-            });
-        };
     });
 
     app.controller('FeedbackCtrl', function($scope, $ionicPopup, API) {

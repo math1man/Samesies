@@ -17,16 +17,12 @@
                 <input type="password" ng-model="loginData.confirmPassword" placeholder="••••••••">
             </label>
             <label class="item item-input">
-                <span class="input-label">Community</span>
-                <input type="text" ng-model="loginData.community" placeholder="Community" readonly>
-            </label>
-            <label class="item item-input">
                 <span class="input-label">Nickname</span>
                 <input type="text" ng-model="loginData.alias" placeholder="Nickname">
             </label>
-            <label class="item item-input">
-                <span class="input-label">Login Key</span>
-                <input type="text" ng-model="loginCheck.key" placeholder="Key">
+            <label class="item item-avatar-right" ng-click="selectAvatar()">
+                <img ng-src="{{loginData.avatar}}">
+                Profile Picture
             </label>
             <ion-checkbox ng-model="loginCheck.accept" class="item item-checkbox-right checkbox-royal">Accept Terms and Conditions</ion-checkbox>
             <div class="item item-text-wrap">

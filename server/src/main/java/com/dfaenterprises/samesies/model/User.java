@@ -2,6 +2,7 @@ package com.dfaenterprises.samesies.model;
 
 import com.dfaenterprises.samesies.EntityUtils;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.GeoPt;
 import com.google.appengine.api.datastore.Text;
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -21,11 +22,11 @@ public class User extends Storable {
     private String password;
     private String newPassword;
     private String hashedPw;
-    private String community;
-    // **Low-Priority** TODO: remove location eventually, needed for compatibility
-    private String location;
     private String alias;
     private Text avatar;
+    // **Eventually** TODO: maybe add a hasAvatar param?
+    private Float latitude;
+    private Float longitude;
     private String name;
     private Long age;
     private String gender;
@@ -34,6 +35,10 @@ public class User extends Storable {
 
     private Boolean isActivated;
     private Boolean isBanned;
+
+    // **v1.0.0** TODO: remove community and location eventually, needed for compatibility
+    private String community;
+    private String location;
 
     public User() {
     }
@@ -45,20 +50,13 @@ public class User extends Storable {
     public User(Entity e, Relation relation) {
         super(e);
         int ordinal = relation.ordinal();
-
         // public
-        this.community = (String) e.getProperty("community");
-        this.location = community;
         this.alias = (String) e.getProperty("alias");
         this.avatar = (Text) e.getProperty("avatar");
+        this.community = (String) e.getProperty("community");
+        this.location = community;
+        setGeoPt((GeoPt) e.getProperty("location"));
         this.isBanned = (Boolean) e.getProperty("isBanned");
-
-        // private
-        if (ordinal >= Relation.SELF.ordinal()) {
-            this.email = (String) e.getProperty("email");
-            this.hashedPw = (String) e.getProperty("hashedPw");
-            this.isActivated = (Boolean) e.getProperty("isActivated");
-        }
         // protected
         if (ordinal >= Relation.FRIEND.ordinal()) {
             this.name = (String) e.getProperty("name");
@@ -67,23 +65,12 @@ public class User extends Storable {
             this.aboutMe = (String) e.getProperty("aboutMe");
             this.questions = EntityUtils.getListProp(e, "questions", 5, String.class);
         }
-    }
-
-    public User(String email, String password, String community, String alias,
-                String name, Integer age, String gender, String aboutMe) {
-        this.email = email;
-        this.password = password;
-        this.community = community;
-        this.location = community;
-        this.alias = alias;
-        this.avatar = getDefaultAvatar();
-        this.name = name;
-        this.age = Long.valueOf(age);
-        this.gender = gender;
-        this.aboutMe = aboutMe;
-        this.questions = blankQuestions();
-        this.isActivated = true;
-        this.isBanned = false;
+        // private
+        if (ordinal >= Relation.SELF.ordinal()) {
+            this.email = (String) e.getProperty("email");
+            this.hashedPw = (String) e.getProperty("hashedPw");
+            this.isActivated = (Boolean) e.getProperty("isActivated");
+        }
     }
 
     public String getEmail() {
@@ -118,6 +105,21 @@ public class User extends Storable {
         this.hashedPw = hashedPw;
     }
 
+    public String getAlias() {
+        return alias;
+    }
+
+    public void setAlias(String alias) {
+        this.alias = alias;
+    }
+
+    public String getAvatar() {
+        if (avatar == null) {
+            setDefaultAvatar();
+        }
+        return avatar.getValue();
+    }
+
     public String getCommunity() {
         return community;
     }
@@ -134,19 +136,39 @@ public class User extends Storable {
         this.location = location;
     }
 
-    public String getAlias() {
-        return alias;
+    public Float getLatitude() {
+        return latitude;
     }
 
-    public void setAlias(String alias) {
-        this.alias = alias;
+    public void setLatitude(Float latitude) {
+        this.latitude = latitude;
     }
 
-    public String getAvatar() {
-        if (avatar == null) {
-            setDefaultAvatar();
+    public Float getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Float longitude) {
+        this.longitude = longitude;
+    }
+
+    public boolean hasGeoPt() {
+        return latitude != null && longitude != null;
+    }
+
+    public GeoPt getGeoPt() {
+        if (hasGeoPt()) {
+            return new GeoPt(latitude, longitude);
+        } else {
+            return null;
         }
-        return avatar.getValue();
+    }
+
+    public void setGeoPt(GeoPt location) {
+        if (location != null) {
+            this.latitude = location.getLatitude();
+            this.longitude = location.getLongitude();
+        }
     }
 
     public void setAvatar(String avatar) {
@@ -250,13 +272,10 @@ public class User extends Storable {
             hashedPw = BCrypt.hashpw(password, BCrypt.gensalt());
         }
         e.setUnindexedProperty("hashedPw", hashedPw);
-        String community = this.community;
-        if (community == null) {
-            community = this.location;
-        }
-        e.setProperty("community", community);
         e.setProperty("alias", alias);
         e.setUnindexedProperty("avatar", avatar);
+        e.setProperty("community", community);
+        e.setUnindexedProperty("location", getGeoPt());
         e.setProperty("name", name);
         e.setProperty("age", age);
         e.setProperty("gender", gender);

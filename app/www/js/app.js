@@ -4,9 +4,13 @@
 
     app.run(function ($window, $rootScope, $ionicPlatform, $cordovaKeyboard, $cordovaPush, $cordovaToast) {
         $ionicPlatform.ready(function () {
+            // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
+            // for form inputs)
             if ($window.cordova) {
                 $cordovaKeyboard.hideAccessoryBar(true);
-                $cordovaKeyboard.disableScroll(true);
+                if (ionic.Platform.isIOS()) {
+                    $cordovaKeyboard.disableScroll(true);
+                }
                 if (!$window.localStorage['pushId']) {
                     var config;
                     if ($ionicPlatform.isAndroid()) {
