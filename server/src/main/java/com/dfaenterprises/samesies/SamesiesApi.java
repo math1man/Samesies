@@ -977,7 +977,7 @@ public class SamesiesApi {
     //     Push Noficiations
     //----------------------------
 
-    @ApiMethod(name = "samesiesApi.sendFeedback",
+    @ApiMethod(name = "samesiesApi.registerPush",
             path = "push/{id}/{type}/{pushId}",
             httpMethod = ApiMethod.HttpMethod.POST)
     public void registerPush(@Named("id") long uid, @Named("type") String type, @Named("pushId") String pushId) throws ServiceException {
