@@ -974,7 +974,7 @@ public class SamesiesApi {
     }
 
     //----------------------------
-    //     Push Noficiations
+    //     Push Notifications
     //----------------------------
 
     @ApiMethod(name = "samesiesApi.registerPush",
