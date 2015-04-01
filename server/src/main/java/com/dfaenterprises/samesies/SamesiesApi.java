@@ -1003,6 +1003,32 @@ public class SamesiesApi {
         sendPush(push, title, message);
     }
 
+    @ApiMethod(name = "samesiesApi.pushApnFeedback",
+            path = "push/apnFeedback",
+            httpMethod = ApiMethod.HttpMethod.POST)
+    public void pushApnFeedback() throws ServiceException {
+        // TODO: test me
+        // TODO: schedule me to happen daily(?)
+        DatastoreService ds = getDS();
+        List<FailedDeviceToken> failedTokens;
+        try {
+            if (factory == null) {
+                buildFactory(true);
+            }
+            FeedbackService fs = new DefaultFeedbackService();
+            failedTokens = fs.read(factory.openFeedbackConnection());
+        } catch (ApnsException e) {
+            throw new InternalServerErrorException("Communication Error", e);
+        } catch (IOException e) {
+            throw new InternalServerErrorException("Internal Server Error", e);
+        }
+        List<Key> pushKeys = new ArrayList<>();
+        for (FailedDeviceToken token : failedTokens) {
+            pushKeys.add(getPush(ds, "ios", token.getDeviceToken()).toEntity().getKey());
+        }
+        ds.delete(pushKeys);
+    }
+
     //----------------------------
     //   Static Helper Methods
     //----------------------------
@@ -1340,7 +1366,7 @@ public class SamesiesApi {
 
     private static ApnsConnection getConnection() throws ApnsException, IOException {
         if (factory == null) {
-            buildFactory(false);
+            buildFactory(true);
         }
         return factory.openPushConnection();
     }
