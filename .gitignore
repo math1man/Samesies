@@ -9,7 +9,8 @@ server/target
 *.iml
 *.keystore
 *.apk
-*.p12
+
+apn_password.txt
 
 Letter of Understanding.docx
 

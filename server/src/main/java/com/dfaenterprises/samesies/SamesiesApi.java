@@ -23,8 +23,7 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -39,9 +38,7 @@ import java.util.regex.Pattern;
         audiences = {Constants.ANDROID_AUDIENCE})
 public class SamesiesApi {
 
-    // TODO: somehow hide this password?
-    public static final char[] APN_CERTIFICATE_PASSWORD = null;
-    public static final String GCM_API_KEY = null;
+    public static final String GCM_API_KEY = "340151147956";
     public static final long EVERYONE_CID = 5686812383117312L;
 
     public void initQuestions() throws ServiceException {
@@ -1113,6 +1110,8 @@ public class SamesiesApi {
                 pns.send(pn, getConnection());
             } catch (ApnsException e) {
                 throw new InternalServerErrorException("Communication error", e);
+            } catch (IOException e) {
+                throw new InternalServerErrorException("File IO error", e);
             }
         } else if (push.getType().equals("android")) {
             Sender sender = new Sender(GCM_API_KEY);
@@ -1327,23 +1326,42 @@ public class SamesiesApi {
 
     public static ApnsConnectionFactory factory = null;
 
-    private static void buildFactory(boolean isProd) throws ApnsException {
+    private static void buildFactory(boolean isProd) throws ApnsException, IOException {
         DefaultApnsConnectionFactory.Builder builder = DefaultApnsConnectionFactory.Builder.get();
         if (isProd) {
-            KeyStoreProvider ksp = new ClassPathResourceKeyStoreProvider("SamesiesProdAPN.p12", KeyStoreType.PKCS12, APN_CERTIFICATE_PASSWORD);
+            KeyStoreProvider ksp = new ClassPathResourceKeyStoreProvider("SamesiesProdAPN.p12", KeyStoreType.PKCS12, getApnCertificatePassword());
             builder.setProductionKeyStoreProvider(ksp);
         } else {
-            KeyStoreProvider ksp = new ClassPathResourceKeyStoreProvider("SamesiesDevAPN.p12", KeyStoreType.PKCS12, APN_CERTIFICATE_PASSWORD);
+            KeyStoreProvider ksp = new ClassPathResourceKeyStoreProvider("SamesiesDevAPN.p12", KeyStoreType.PKCS12, getApnCertificatePassword());
             builder.setSandboxKeyStoreProvider(ksp);
         }
         factory = builder.build();
     }
 
-    private static ApnsConnection getConnection() throws ApnsException {
+    private static ApnsConnection getConnection() throws ApnsException, IOException {
         if (factory == null) {
             buildFactory(false);
         }
         return factory.openPushConnection();
+    }
+
+    public static char[] apnCertificatePassword = null;
+
+    public static char[] getApnCertificatePassword() throws IOException {
+        if (apnCertificatePassword == null) {
+            BufferedReader br = new BufferedReader(new FileReader("WEB-INF/apn_password.txt"));
+            char[] password = new char[100];
+            int i = br.read();
+            int count = 0;
+            while (i > -1) {
+                password[count] = (char) i;
+                count++;
+                i = br.read();
+            }
+            apnCertificatePassword = new char[count];
+            System.arraycopy(password, 0, apnCertificatePassword, 0, count);
+        }
+        return apnCertificatePassword;
     }
 
 }
