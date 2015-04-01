@@ -9,7 +9,7 @@ public class Push extends Storable {
 
     private Long uid;
     private String type;
-    private String pushId;
+    private String deviceToken;
 
     public Push() {
     }
@@ -18,13 +18,13 @@ public class Push extends Storable {
         super(e);
         this.uid = (Long) e.getProperty("uid");
         this.type = (String) e.getProperty("type");
-        this.pushId = (String) e.getProperty("pushId");
+        this.deviceToken = (String) e.getProperty("deviceToken");
     }
 
-    public Push(Long uid, String type, String pushId) {
+    public Push(Long uid, String type, String deviceToken) {
         this.uid = uid;
         this.type = type;
-        this.pushId = pushId;
+        this.deviceToken = deviceToken;
     }
 
     public Long getUid() {
@@ -43,12 +43,12 @@ public class Push extends Storable {
         this.type = type;
     }
 
-    public String getPushId() {
-        return pushId;
+    public String getDeviceToken() {
+        return deviceToken;
     }
 
-    public void setPushId(String pushId) {
-        this.pushId = pushId;
+    public void setDeviceToken(String deviceToken) {
+        this.deviceToken = deviceToken;
     }
 
     @Override
@@ -56,7 +56,7 @@ public class Push extends Storable {
         Entity e = getEntity("Push");
         e.setProperty("uid", uid);
         e.setUnindexedProperty("type", type);
-        e.setUnindexedProperty("pushId", pushId);
+        e.setUnindexedProperty("deviceToken", deviceToken);
         return e;
     }
 }

@@ -1,6 +1,11 @@
 package com.dfaenterprises.samesies;
 
+import apns.*;
+import apns.keystore.ClassPathResourceKeyStoreProvider;
+import apns.keystore.KeyStoreProvider;
+import apns.keystore.KeyStoreType;
 import com.dfaenterprises.samesies.model.*;
+import com.google.android.gcm.server.Sender;
 import com.google.api.server.spi.ServiceException;
 import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
@@ -18,6 +23,7 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -33,6 +39,9 @@ import java.util.regex.Pattern;
         audiences = {Constants.ANDROID_AUDIENCE})
 public class SamesiesApi {
 
+    // TODO: somehow hide this password?
+    public static final char[] APN_CERTIFICATE_PASSWORD = null;
+    public static final String GCM_API_KEY = null;
     public static final long EVERYONE_CID = 5686812383117312L;
 
     public void initQuestions() throws ServiceException {
@@ -973,15 +982,28 @@ public class SamesiesApi {
         sendEmail(getUser(getDS(), uid, User.Relation.ADMIN, false), subject, sb.toString());
     }
 
-    //----------------------------
-    //     Push Notifications
-    //----------------------------
-
     @ApiMethod(name = "samesiesApi.registerPush",
-            path = "push/{id}/{type}/{pushId}",
+            path = "push/register/{id}/{type}/{deviceToken}",
             httpMethod = ApiMethod.HttpMethod.POST)
-    public void registerPush(@Named("id") long uid, @Named("type") String type, @Named("pushId") String pushId) throws ServiceException {
-        EntityUtils.put(getDS(), new Push(uid, type, pushId));
+    public void registerPush(@Named("id") long uid, @Named("type") String type, @Named("deviceToken") String deviceToken) throws ServiceException {
+        DatastoreService ds = getDS();
+        type = type.toLowerCase();
+        Push push = getPush(ds, type, deviceToken);
+        if (push == null) {
+            push = new Push(uid, type.toLowerCase(), deviceToken);
+        } else {
+            push.setUid(uid);
+        }
+        EntityUtils.put(getDS(), push);
+    }
+
+    @ApiMethod(name = "samesiesApi.sendPush",
+            path = "push/send/{id}/{title}/{message}",
+            httpMethod = ApiMethod.HttpMethod.POST)
+    public void sendPush(@Named("id") long pid, @Named("title") String title, @Named("message") String message) throws ServiceException {
+        DatastoreService ds = getDS();
+        Push push = getPush(ds, pid);
+        sendPush(push, title, message);
     }
 
     //----------------------------
@@ -1080,6 +1102,27 @@ public class SamesiesApi {
 
     private static boolean isValid(User user) {
         return user != null && !user.getIsBanned();
+    }
+
+    private static void sendPush(Push push, String title, String message) throws InternalServerErrorException {
+        if (push.getType().equals("ios")) {
+            // TODO: This won't work until we enable billing on GAE
+            PushNotification pn = new PushNotification().setAlert(message).setDeviceTokens(push.getDeviceToken());
+            PushNotificationService pns = new DefaultPushNotificationService();
+            try {
+                pns.send(pn, getConnection());
+            } catch (ApnsException e) {
+                throw new InternalServerErrorException("Communication error", e);
+            }
+        } else if (push.getType().equals("android")) {
+            Sender sender = new Sender(GCM_API_KEY);
+            try {
+                sender.send(new com.google.android.gcm.server.Message.Builder().addData("title", title)
+                        .addData("message", message).build(), push.getDeviceToken(), 3);
+            } catch (IOException e) {
+                throw new InternalServerErrorException("Communication error", e);
+            }
+        }
     }
 
     private static User getUser(DatastoreService ds, long id, User.Relation relation, boolean returnNull) throws NotFoundException {
@@ -1233,6 +1276,27 @@ public class SamesiesApi {
         }
     }
 
+    private static Push getPush(DatastoreService ds, long pid) throws NotFoundException {
+        try {
+            return new Push(ds.get(KeyFactory.createKey("Push", pid)));
+        } catch (EntityNotFoundException e) {
+            throw new NotFoundException("Push not found", e);
+        }
+    }
+
+    private static Push getPush(DatastoreService ds, String type, String deviceToken) {
+        Query query = new Query("Push").setFilter(Query.CompositeFilterOperator.and(
+                new Query.FilterPredicate("type", Query.FilterOperator.EQUAL, type),
+                new Query.FilterPredicate("deviceToken", Query.FilterOperator.EQUAL, deviceToken)));
+        PreparedQuery pq = ds.prepare(query);
+        Entity e = pq.asSingleEntity();
+        if (e == null) {
+            return null;
+        } else {
+            return new Push(e);
+        }
+    }
+
     private static void sendEmail(User user, String subject, String message) throws InternalServerErrorException {
         sendEmail(user.getEmail(), user.getName(), subject, message);
     }
@@ -1260,4 +1324,26 @@ public class SamesiesApi {
             throw new InternalServerErrorException(e);
         }
     }
+
+    public static ApnsConnectionFactory factory = null;
+
+    private static void buildFactory(boolean isProd) throws ApnsException {
+        DefaultApnsConnectionFactory.Builder builder = DefaultApnsConnectionFactory.Builder.get();
+        if (isProd) {
+            KeyStoreProvider ksp = new ClassPathResourceKeyStoreProvider("SamesiesProdAPN.p12", KeyStoreType.PKCS12, APN_CERTIFICATE_PASSWORD);
+            builder.setProductionKeyStoreProvider(ksp);
+        } else {
+            KeyStoreProvider ksp = new ClassPathResourceKeyStoreProvider("SamesiesDevAPN.p12", KeyStoreType.PKCS12, APN_CERTIFICATE_PASSWORD);
+            builder.setSandboxKeyStoreProvider(ksp);
+        }
+        factory = builder.build();
+    }
+
+    private static ApnsConnection getConnection() throws ApnsException {
+        if (factory == null) {
+            buildFactory(false);
+        }
+        return factory.openPushConnection();
+    }
+
 }

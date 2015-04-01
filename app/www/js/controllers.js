@@ -217,7 +217,7 @@
 
     });
 
-    app.controller('LoginCtrl', function($scope, $window, $ionicPlatform, $ionicPopup, API, Data) {
+    app.controller('LoginCtrl', function($scope, $window, $ionicPopup, API, Data) {
 
         $scope.$on('modal.shown', function() {
             $scope.loginData = {
@@ -230,8 +230,8 @@
         });
 
         $scope.login = function(user) {
-            if ($window.localStorage['pushId']) {
-                API.registerPush(user.id, $ionicPlatform.platform().toLowerCase(), $window.localStorage['pushId']);
+            if ($window.localStorage['deviceToken']) {
+                API.registerPush(user.id, ionic.Platform.platform(), $window.localStorage['deviceToken']);
             }
             $window.localStorage['email'] = $scope.loginData.email;
             $scope.loginData = null;

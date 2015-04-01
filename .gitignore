@@ -1,7 +1,7 @@
-server/target
 app/platforms
 app/node_modules
 app/private
+server/target
 .idea
 
 */.DS_Store
@@ -9,6 +9,7 @@ app/private
 *.iml
 *.keystore
 *.apk
+*.p12
 
 Letter of Understanding.docx
 
