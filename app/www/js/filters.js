@@ -108,7 +108,7 @@
         };
     });
 
-    app.filter('friends', function (Data) {
+    app.filter('friends', function () {
         return function (items) {
             var filtered = [];
             if (items) {

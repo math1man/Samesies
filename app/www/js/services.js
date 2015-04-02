@@ -58,11 +58,8 @@
             getQuestion: function(id) {
                 return API.getQuestion({id: id});
             },
-            getQuestions: function(ids) {
-                return API.getQuestions({ids: ids});
-            },
-            getAllQuestions: function() {
-                return API.getAllQuestions();
+            getQuestions: function() {
+                return API.getQuestions();
             },
             getCategories: function() {
                 return API.getCategories();

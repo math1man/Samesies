@@ -17,6 +17,10 @@
 
     app.config(function ($stateProvider, $urlRouterProvider) {
         $stateProvider
+            .state('login', {
+                url: "/login",
+                templateUrl: "templates/views/login.html"
+            })
             .state('menu', {
                 url: "/menu",
                 templateUrl: "templates/views/menu.html"
@@ -76,7 +80,7 @@
             });
 
         // if none of the above states are matched, use this as the fallback
-        $urlRouterProvider.otherwise('/menu');
+        $urlRouterProvider.otherwise('/login');
 
     });
 

@@ -573,21 +573,8 @@ public class SamesiesApi {
     @ApiMethod(name = "samesiesApi.getQuestions",
             path = "questions",
             httpMethod = ApiMethod.HttpMethod.GET)
-    public List<Question> getQuestions(@Named("ids") long[] qids) throws ServiceException {
+    public List<Question> getQuestions() throws ServiceException {
         DatastoreService ds = getDS();
-        List<Question> questions = new ArrayList<>();
-        for (long qid : qids) {
-            questions.add(getQuestion(ds, qid));
-        }
-        return questions;
-    }
-
-    @ApiMethod(name = "samesiesApi.getAllQuestions",
-            path = "questions/all",
-            httpMethod = ApiMethod.HttpMethod.GET)
-    public List<Question> getAllQuestions() throws ServiceException {
-        DatastoreService ds = getDS();
-
         Query query = new Query("Question")
                 .addProjection(new PropertyProjection("q", String.class))
                 .addProjection(new PropertyProjection("category", String.class));
@@ -600,6 +587,14 @@ public class SamesiesApi {
             }
         }
         return questions;
+    }
+
+    @ApiMethod(name = "samesiesApi.getAllQuestions",
+            path = "questions/all",
+            httpMethod = ApiMethod.HttpMethod.GET)
+    public List<Question> getAllQuestions() throws ServiceException {
+        // **1.1.0** TODO: remove this method, needed for compatibility
+        return getQuestions();
     }
 
     @ApiMethod(name = "samesiesApi.getCategories",
@@ -634,7 +629,6 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Mode> getModes() throws ServiceException {
         DatastoreService ds = getDS();
-
         Query query = new Query("Mode");
         PreparedQuery pq = ds.prepare(query);
         List<Mode> modes = new ArrayList<>();
