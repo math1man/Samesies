@@ -1,0 +1,24 @@
+<ion-view view-title="Communities" ng-controller="CommunitiesCtrl">
+    <ion-nav-buttons side="right">
+        <button class="button button-icon icon ion-plus-round" ng-click="showAddComm($event)"></button>
+    </ion-nav-buttons>
+    <ion-content scroll="false">
+        <ion-content>
+            <ss-loading ng-show="data('isLoading')>2"></ss-loading>
+            <div class="row hidden-grid" ng-repeat="com in data('communities') | orderBy:'name'">
+                <div class="col col-90">
+                    <!--TODO: community profile?-->
+                    <div class="item item-text-wrap">
+                        {{com.name}}
+                        <p ng-show="com.description">{{com.description}}</p>
+                    </div>
+                </div>
+                <div class="col col-10">
+                    <div class="item" ng-click="remove(com)">
+                        <button class="button button-clear button-small button-icon small-icon ion-close-round"></button>
+                    </div>
+                </div>
+            </div>
+        </ion-content>
+    </ion-content>
+</ion-view>

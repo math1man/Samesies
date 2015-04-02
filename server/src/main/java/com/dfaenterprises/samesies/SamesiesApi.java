@@ -579,11 +579,18 @@ public class SamesiesApi {
     @ApiMethod(name = "samesiesApi.getQuestions",
             path = "questions",
             httpMethod = ApiMethod.HttpMethod.GET)
-    public List<Question> getQuestions(@Named("ids") long[] qids) throws ServiceException {
+    public List<Question> getQuestions() throws ServiceException {
         DatastoreService ds = getDS();
+        Query query = new Query("Question")
+                .addProjection(new PropertyProjection("q", String.class))
+                .addProjection(new PropertyProjection("category", String.class));
+        PreparedQuery pq = ds.prepare(query);
         List<Question> questions = new ArrayList<>();
-        for (long qid : qids) {
-            questions.add(getQuestion(ds, qid));
+        for (Entity e : pq.asIterable()) {
+            Question question = new Question(e);
+            if (!question.getCategory().equals("Suggestion")) {
+                questions.add(question);
+            }
         }
         return questions;
     }
@@ -592,20 +599,8 @@ public class SamesiesApi {
             path = "questions/all",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Question> getAllQuestions() throws ServiceException {
-        DatastoreService ds = getDS();
-
-        Query query = new Query("Question")
-                .addProjection(new PropertyProjection("q", String.class))
-                .addProjection(new PropertyProjection("category", String.class));
-        PreparedQuery pq = ds.prepare(query);
-        List<Question> questions = new ArrayList<>();
-        for (Entity e : pq.asIterable()) {
-            Question question = new Question(e);
-            if (!question.getCategory().equals("suggestion")) {
-                questions.add(question);
-            }
-        }
-        return questions;
+        // **1.1.0** TODO: remove this method, needed for compatibility
+        return getQuestions();
     }
 
     @ApiMethod(name = "samesiesApi.getCategories",
@@ -640,7 +635,6 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Mode> getModes() throws ServiceException {
         DatastoreService ds = getDS();
-
         Query query = new Query("Mode");
         PreparedQuery pq = ds.prepare(query);
         List<Mode> modes = new ArrayList<>();
