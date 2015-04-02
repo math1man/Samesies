@@ -26,9 +26,9 @@
                 url: "/play",
                 templateUrl: "templates/episode.html"
             })
-            .state('communities', {
-                url: "/communities",
-                templateUrl: "templates/communities.html"
+            .state('browse', {
+                url: "/browse",
+                templateUrl: "templates/browse.html"
             })
             .state('chats', {
                 url: "/chats",
