@@ -39,7 +39,7 @@
             }, URL);
         };
 
-        $ionicModal.fromTemplateUrl('templates/game-settings.html', {
+        $ionicModal.fromTemplateUrl('templates/modals/settings.html', {
             scope: $scope,
             animation: 'slide-in-left'
         }).then(function(modal) {
@@ -65,7 +65,7 @@
             $scope.settingsPopup.hide();
         };
 
-        $ionicPopover.fromTemplateUrl('templates/select-community.html', {
+        $ionicPopover.fromTemplateUrl('templates/popovers/select-community.html', {
             scope: $scope
         }).then(function(popover) {
             $scope.selectPopup = popover;
@@ -235,7 +235,7 @@
             $scope.loginData = null;
             $scope.loginCheck = {};
             Data.user = user;
-            Data.isLoading = 3;
+            Data.isLoading = 3; // TODO: add an isLoading increment for communities
             $scope.refresh();
             $scope.resetToggle();
             $scope.closeLogin();
@@ -315,7 +315,7 @@
             $ionicPopup.show({
                 scope: $scope,
                 title: 'Update Profile Picture',
-                templateUrl: 'templates/upload-avatar.html',
+                templateUrl: 'templates/popups/upload-avatar.html',
                 buttons: [
                     {
                         text: 'Cancel',
@@ -403,7 +403,8 @@
             Data.tempUser = null;
         });
 
-        $ionicModal.fromTemplateUrl('templates/login.html', {
+        // TODO: make login its own view
+        $ionicModal.fromTemplateUrl('templates/modals/login.html', {
             scope: $scope,
             animation: 'slide-in-up',
             backdropClickToClose: false,
@@ -519,7 +520,7 @@
 
     });
 
-    app.controller('SelectComCtrl', function($scope, API, Data, Utils) {
+    app.controller('SelectComCtrl', function($scope, $ionicPopup, API, Data, Utils) {
 
         $scope.selected = Data.community;
         $scope.search = '';
@@ -600,13 +601,16 @@
         $scope.loadCommunity = function(community) {
             Data.community = community;
             $scope.hideSelect();
+            if ($scope.addCommPopup) {
+                $scope.addCommPopup.hide();
+            }
             API.getCommunity(community.id).then(function(resp) {
                 Data.community = resp.result;
                 $scope.$apply();
             });
         };
 
-        $scope.$on('modal.hidden', function() {
+        $scope.$on('popover.hidden', function() {
             $scope.search = '';
             $scope.searched = [];
         });
@@ -615,7 +619,7 @@
 
     app.controller('EpisodeCtrl', function($scope, $state, $window, $cordovaKeyboard, $ionicPopup, $ionicModal, API, Utils, Data) {
 
-        $ionicModal.fromTemplateUrl('templates/help.html', {
+        $ionicModal.fromTemplateUrl('templates/modals/help.html', {
             scope: $scope,
             animation: 'slide-in-left'
         }).then(function(modal) {
@@ -866,7 +870,7 @@
 
     });
 
-    app.controller('CommunitiesCtrl', function($scope, $ionicPopup, API, Data) {
+    app.controller('BrowseCtrl', function($scope, $ionicPopup, API, Data) {
 
         $scope.$on('$ionicView.beforeEnter', function() {
             $scope.refreshCommunities();
@@ -1190,7 +1194,7 @@
 
     app.controller('FriendsCtrl', function($scope, $state, $ionicPopover, $ionicPopup, Data, API, Utils) {
 
-        $ionicPopover.fromTemplateUrl('templates/find-friends.html', {
+        $ionicPopover.fromTemplateUrl('templates/popovers/find-friends.html', {
             scope: $scope,
             focusFirstInput: true
         }).then(function(popover) {
@@ -1301,12 +1305,30 @@
         };
     });
 
+    app.controller('CommunitiesCtrl', function($scope, $ionicPopover) {
+
+        $ionicPopover.fromTemplateUrl('templates/popovers/add-community.html', {
+            scope: $scope
+        }).then(function(popover) {
+            $scope.addCommPopup = popover;
+        });
+
+        $scope.showAddComm = function($event) {
+            $scope.addCommPopup.show($event);
+        };
+
+        $scope.$on('$destroy', function() {
+            $scope.addCommPopup.remove();
+        });
+
+    });
+
     app.controller('QuestionsCtrl', function($scope, $ionicPopover, $ionicScrollDelegate) {
 
         $scope.category = ['All'];
         $scope.search = '';
 
-        $ionicPopover.fromTemplateUrl('templates/select-category.html', {
+        $ionicPopover.fromTemplateUrl('templates/popovers/select-category.html', {
             scope: $scope
         }).then(function(popover) {
             $scope.categoryPopup = popover;
@@ -1321,7 +1343,7 @@
             $ionicScrollDelegate.scrollTop(true);
         };
 
-        $ionicPopover.fromTemplateUrl('templates/suggest-question.html', {
+        $ionicPopover.fromTemplateUrl('templates/popovers/suggest-question.html', {
             scope: $scope
         }).then(function(popover) {
             $scope.suggestPopup = popover;
@@ -1368,7 +1390,7 @@
             $ionicPopup.show({
                 scope: $scope,
                 title: 'Edit ' + property,
-                templateUrl: 'templates/edit.html',
+                templateUrl: 'templates/popups/edit.html',
                 buttons: [
                     {
                         text: 'Cancel',
@@ -1412,7 +1434,7 @@
             $ionicPopup.show({
                 scope: $scope,
                 title: 'Change Password',
-                templateUrl: 'templates/edit-password.html',
+                templateUrl: 'templates/popups/edit-password.html',
                 buttons: [
                     {
                         text: 'Cancel',
@@ -1463,7 +1485,7 @@
             $ionicPopup.show({
                 scope: $scope,
                 title: 'Edit Gender',
-                templateUrl: 'templates/edit-gender.html',
+                templateUrl: 'templates/popups/edit-gender.html',
                 buttons: [
                     {
                         text: 'Cancel',
@@ -1494,7 +1516,7 @@
             $ionicPopup.show({
                 scope: $scope,
                 title: 'Edit Question',
-                templateUrl: 'templates/edit.html',
+                templateUrl: 'templates/popups/edit.html',
                 buttons: [
                     {
                         text: 'Cancel',
@@ -1521,7 +1543,7 @@
             $ionicPopup.show({
                 scope: $scope,
                 title: 'Update Profile Picture',
-                templateUrl: 'templates/upload-avatar.html',
+                templateUrl: 'templates/popups/upload-avatar.html',
                 buttons: [
                     {
                         text: 'Cancel',

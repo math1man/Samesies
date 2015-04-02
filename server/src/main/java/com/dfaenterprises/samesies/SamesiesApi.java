@@ -595,7 +595,7 @@ public class SamesiesApi {
         List<Question> questions = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
             Question question = new Question(e);
-            if (!question.getCategory().equals("suggestion")) {
+            if (!question.getCategory().equals("Suggestion")) {
                 questions.add(question);
             }
         }
