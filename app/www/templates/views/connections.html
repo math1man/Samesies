@@ -3,7 +3,7 @@
 		<div class="item item-divider">
 			Requests
 		</div>
-		<ss-loading ng-show="data('isLoading')"></ss-loading>
+		<ss-loading ng-show="isLoading()"></ss-loading>
 		<div class="item item-avatar item-button-right" ng-repeat="cxn in data('connections') | requestConnections | orderBy:'lastModified':true"
 			 ng-click="accept(cxn)">
 			<img ng-src="{{cxn.user.avatar}}">
@@ -18,7 +18,7 @@
 		<div class="item item-divider">
 			Your Turn
 		</div>
-		<ss-loading ng-show="data('isLoading')"></ss-loading>
+		<ss-loading ng-show="isLoading()"></ss-loading>
 		<div class="row hidden-grid" ng-repeat="cxn in data('connections') | yourTurnConnections | orderBy:'lastModified':true">
 			<div class="col col-90">
 				<div class="item item-avatar" ng-click="play(cxn)">
@@ -37,7 +37,7 @@
 		<div class="item item-divider">
 			Their Turn
 		</div>
-		<ss-loading ng-show="data('isLoading')"></ss-loading>
+		<ss-loading ng-show="isLoading()"></ss-loading>
 		<div class="row hidden-grid" ng-repeat="cxn in data('connections') | pendingConnections | orderBy:'lastModified':true">
 			<div class="col col-90">
 				<div class="item item-avatar">

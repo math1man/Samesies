@@ -161,6 +161,9 @@
                         Data.communities = communities;
                         $scope.$apply();
                     }
+                    if (Data.isLoading) {
+                        Data.isLoading--;
+                    }
                 });
             }
         };
@@ -239,7 +242,7 @@
             $scope.loginData = null;
             $scope.loginCheck = {};
             Data.user = user;
-            Data.isLoading = 3; // TODO: add an isLoading increment for communities
+            Data.isLoading = 4;
             $scope.refresh();
             $scope.resetToggle();
             $scope.go('menu', true);
@@ -891,6 +894,10 @@
             $scope.refreshCxns();
         });
 
+        $scope.isLoading = function() {
+            return Data.isLoading && Data.connections.length === 0;
+        };
+
         $scope.accept = function(cxn) {
             cxn.status = "IN_PROGRESS";
             API.acceptEpisode(cxn.id);
@@ -943,6 +950,10 @@
     app.controller('MessagesCtrl', function($scope, API, Data, Utils) {
 
         $scope.search = '';
+
+        $scope.isLoading = function() {
+            return Data.isLoading && Data.chats.length === 0;
+        };
 
         $scope.goChat = function(chat) {
             if (chat.uid1 === Data.user.id) {
@@ -1194,6 +1205,10 @@
             $scope.findPopup.hide();
         };
 
+        $scope.isLoading = function() {
+            return Data.isLoading && Data.friends.length === 0;
+        };
+
         $scope.search = '';
 
         $scope.profile = function(friend) {
@@ -1288,7 +1303,7 @@
         };
     });
 
-    app.controller('CommunitiesCtrl', function($scope, $ionicPopover) {
+    app.controller('CommunitiesCtrl', function($scope, $ionicPopover, Data) {
 
         $ionicPopover.fromTemplateUrl('templates/popovers/add-community.html', {
             scope: $scope
@@ -1303,6 +1318,12 @@
         $scope.$on('$destroy', function() {
             $scope.addCommPopup.remove();
         });
+
+        $scope.isLoading = function() {
+            return Data.isLoading && Data.communities.length === 0;
+        };
+
+        // TODO: remove community
 
     });
 
