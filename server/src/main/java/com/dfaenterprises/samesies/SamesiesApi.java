@@ -1132,12 +1132,20 @@ public class SamesiesApi {
             // TODO: This won't work until we enable billing on GAE
             PushNotification pn = new PushNotification().setAlert(message).setDeviceTokens(push.getDeviceToken());
             PushNotificationService pns = new DefaultPushNotificationService();
+            ApnsConnection conn = null;
             try {
-                pns.send(pn, getConnection());
+                conn = getConnection();
+                pns.send(pn, conn);
             } catch (ApnsException e) {
                 throw new InternalServerErrorException("Communication error", e);
             } catch (IOException e) {
                 throw new InternalServerErrorException("File IO error", e);
+            } finally {
+                if (conn != null && !conn.getSocket().isClosed()) {
+                    try {
+                        conn.getSocket().close();
+                    } catch (IOException ignored) {}
+                }
             }
         } else if (push.getType().equals("android")) {
             Sender sender = new Sender(GCM_API_KEY);
@@ -1350,7 +1358,7 @@ public class SamesiesApi {
         }
     }
 
-    public static ApnsConnectionFactory factory = null;
+    private static ApnsConnectionFactory factory = null;
 
     private static void buildFactory(boolean isProd) throws ApnsException, IOException {
         DefaultApnsConnectionFactory.Builder builder = DefaultApnsConnectionFactory.Builder.get();
@@ -1371,9 +1379,9 @@ public class SamesiesApi {
         return factory.openPushConnection();
     }
 
-    public static char[] apnCertificatePassword = null;
+    private static char[] apnCertificatePassword = null;
 
-    public static char[] getApnCertificatePassword() throws IOException {
+    private static char[] getApnCertificatePassword() throws IOException {
         if (apnCertificatePassword == null) {
             BufferedReader br = new BufferedReader(new FileReader("WEB-INF/apn_password.txt"));
             char[] password = new char[100];
