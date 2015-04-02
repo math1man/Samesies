@@ -983,6 +983,7 @@ public class SamesiesApi {
             path = "push/register/{id}/{type}/{deviceToken}",
             httpMethod = ApiMethod.HttpMethod.POST)
     public void registerPush(@Named("id") long uid, @Named("type") String type, @Named("deviceToken") String deviceToken) throws ServiceException {
+        // TODO: should a user only be allowed one registered device?
         DatastoreService ds = getDS();
         type = type.toLowerCase();
         Push push = getPush(ds, type, deviceToken);
