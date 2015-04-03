@@ -329,6 +329,7 @@ public class SamesiesApi {
             throw new ForbiddenException("Cannot add oneself as a friend");
         }
 
+        // TODO: send push notification
         Friend friend = getFriend(ds, myId, theirId);
         if (friend == null) {
             friend = new Friend(myId, theirId);
@@ -729,6 +730,7 @@ public class SamesiesApi {
             path = "episode/connect/{myId}/{theirId}/{mode}",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public Episode connectEpisode(@Named("myId") long myUid, @Named("theirId") long theirUid, @Named("mode") String mode) throws ServiceException {
+        // TODO: send push notification
         DatastoreService ds = getDS();
         Episode episode = new Episode(myUid, theirUid, new Settings(mode));
         episode.setQids(getQids(ds, mode));
@@ -740,6 +742,7 @@ public class SamesiesApi {
             path = "episode/accept/{id}",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void acceptEpisode(@Named("id") long eid) throws ServiceException {
+        // TODO: send push notification?
         DatastoreService ds = getDS();
         Episode episode = getEpisode(ds, eid);
         episode.setStatus(Episode.Status.IN_PROGRESS);
@@ -766,6 +769,7 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.PUT)
     public Episode answerEpisode(@Named("id") long eid, @Named("myId") long myUid,
                                  @Named("answer") String answer) throws ServiceException {
+        // TODO: send push notification
         DatastoreService ds = getDS();
         Episode episode = getEpisode(ds, eid);
         List<String> answers = episode.getAnswers(myUid);
@@ -873,6 +877,7 @@ public class SamesiesApi {
         DatastoreService ds = getDS();
         Chat chat = getChat(ds, eofid, isEpisode);
         if (chat == null) {
+            // TODO: send push notification?
             chat = new Chat(eofid, isEpisode, myUid, theirUid);
         } else {
             chat.setIsClosed(false);
@@ -938,6 +943,7 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.POST)
     public Message sendMessage(@Named("chatId") long cid, @Named("myId") long myUid, @Named("message") String message,
                                @Named("random") @Nullable String random) throws ServiceException {
+        // TODO: send push notification
         DatastoreService ds = getDS();
         Chat chat = getChat(ds, cid);
         Message m = new Message(cid, myUid, message, random);
@@ -1000,16 +1006,17 @@ public class SamesiesApi {
             path = "push/register/{id}/{type}/{deviceToken}",
             httpMethod = ApiMethod.HttpMethod.POST)
     public void registerPush(@Named("id") long uid, @Named("type") String type, @Named("deviceToken") String deviceToken) throws ServiceException {
-        // TODO: should a user only be allowed one registered device?
         DatastoreService ds = getDS();
         type = type.toLowerCase();
-        Push push = getPush(ds, type, deviceToken);
-        if (push == null) {
-            push = new Push(uid, type.toLowerCase(), deviceToken);
-        } else {
-            push.setUid(uid);
+        Push userPush = getPush(ds, uid);
+        Push devicePush = getPush(ds, type, deviceToken);
+        if (userPush != null) {
+            ds.delete(userPush.toEntity().getKey());
         }
-        EntityUtils.put(getDS(), push);
+        if (devicePush != null) {
+            ds.delete(devicePush.toEntity().getKey());
+        }
+        EntityUtils.put(ds, new Push(uid, type, deviceToken));
     }
 
     @ApiMethod(name = "samesiesApi.sendPush",
@@ -1017,7 +1024,7 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.POST)
     public void sendPush(@Named("id") long pid, @Named("title") String title, @Named("message") String message) throws ServiceException {
         DatastoreService ds = getDS();
-        Push push = getPush(ds, pid);
+        Push push = getPushById(ds, pid);
         sendPush(push, title, message);
     }
 
@@ -1327,11 +1334,22 @@ public class SamesiesApi {
         }
     }
 
-    private static Push getPush(DatastoreService ds, long pid) throws NotFoundException {
+    private static Push getPushById(DatastoreService ds, long pid) throws NotFoundException {
         try {
             return new Push(ds.get(KeyFactory.createKey("Push", pid)));
         } catch (EntityNotFoundException e) {
             throw new NotFoundException("Push not found", e);
+        }
+    }
+
+    private static Push getPush(DatastoreService ds, long uid) {
+        Query query = new Query("Push").setFilter(new Query.FilterPredicate("uid", Query.FilterOperator.EQUAL, uid));
+        PreparedQuery pq = ds.prepare(query);
+        Entity e = pq.asSingleEntity();
+        if (e == null) {
+            return null;
+        } else {
+            return new Push(e);
         }
     }
 
