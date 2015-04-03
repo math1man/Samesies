@@ -55,6 +55,9 @@
             joinCommunity: function(id, myId, string) {
                 return API.joinCommunity({id: id, myId: myId, string: string});
             },
+            leaveCommunity: function(id, myId) {
+                API.leaveCommunity({id: id, myId: myId}).then();
+            },
             getQuestion: function(id) {
                 return API.getQuestion({id: id});
             },

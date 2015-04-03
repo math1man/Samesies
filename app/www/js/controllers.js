@@ -7,7 +7,7 @@
     var app = angular.module('samesies.controllers', []);
 
     app.controller('IndexCtrl', function($scope, $window, $state, $ionicHistory, $ionicViewSwitcher,
-                                         $ionicPopup, $ionicPopover, $ionicModal, API, Data, Utils) {
+                                         $ionicPopup, $ionicModal, API, Data, Utils) {
 
         $window.init = function() {
             if (!$state.is('login')) {
@@ -60,19 +60,6 @@
                 Data.settings.matchOther = true;
             }
             $scope.settingsPopup.hide();
-        };
-
-        $scope.showSelect = function($event) {
-            $ionicPopover.fromTemplateUrl('templates/popovers/select-community.html', {
-                scope: $scope
-            }).then(function(popover) {
-                $scope.selectPopup = popover;
-                $scope.selectPopup.show($event);
-            });
-        };
-
-        $scope.hideSelect = function() {
-            $scope.selectPopup.remove();
         };
 
         $scope.dispName = function(user) {
@@ -220,7 +207,6 @@
 
         $scope.$on('$destroy', function() {
             $scope.settingsPopup.remove();
-            $scope.selectPopup.remove();
         });
 
     });
@@ -465,11 +451,25 @@
 
     });
 
-    app.controller('SettingsCtrl', function($scope, $ionicPopup, Data, Utils) {
+    app.controller('SettingsCtrl', function($scope, $ionicPopup, $ionicPopover, Data, Utils) {
 
         $scope.$on('modal.shown', function() {
             $scope.settings = Data.settings;
         });
+
+        $ionicPopover.fromTemplateUrl('templates/popovers/select-community.html', {
+            scope: $scope
+        }).then(function(popover) {
+            $scope.selectPopup = popover;
+        });
+
+        $scope.showSelect = function($event) {
+            $scope.selectPopup.show($event);
+        };
+
+        $scope.hideSelect = function() {
+            $scope.selectPopup.hide();
+        };
 
         var isShowModes = false;
 
@@ -510,9 +510,11 @@
 
     app.controller('SelectComCtrl', function($scope, $ionicPopup, API, Data, Utils) {
 
-        $scope.selected = Data.community;
-        $scope.search = '';
-        $scope.searched = [];
+        $scope.$on('popover.shown', function() {
+            $scope.selected = Data.community;
+            $scope.search = '';
+            $scope.searched = [];
+        });
 
         $scope.searchCommunities = function(string) {
             API.searchCommunities(string).then(function(resp) {
@@ -546,8 +548,14 @@
                     }]
                 }).then(function(email) {
                     if (angular.isDefined(email)) {
-                        API.joinCommunity(community.id, Data.user.id, email).then();
-                        $scope.hideSelect();
+                        API.joinCommunity(community.id, Data.user.id, email).then(function (resp) {
+                            if (resp.result) {
+                                Data.communities.push(resp.result);
+                                $scope.loadCommunity(resp.result);
+                            } else {
+                                $scope.hideSelect();
+                            }
+                        });
                     }
                 });
             } else if (community.type === 'PASSWORD') {
@@ -597,11 +605,6 @@
                 $scope.$apply();
             });
         };
-
-        $scope.$on('popover.hidden', function() {
-            $scope.search = '';
-            $scope.searched = [];
-        });
 
     });
 
@@ -857,11 +860,25 @@
 
     });
 
-    app.controller('BrowseCtrl', function($scope, $ionicPopup, API, Data) {
+    app.controller('BrowseCtrl', function($scope, $ionicPopup, $ionicPopover, API, Data) {
 
         $scope.$on('$ionicView.beforeEnter', function() {
             $scope.refreshCommunities();
         });
+
+        $ionicPopover.fromTemplateUrl('templates/popovers/select-community.html', {
+            scope: $scope
+        }).then(function(popover) {
+            $scope.selectPopup = popover;
+        });
+
+        $scope.showSelect = function($event) {
+            $scope.selectPopup.show($event);
+        };
+
+        $scope.hideSelect = function() {
+            $scope.selectPopup.hide();
+        };
 
         $scope.flag = function(user) {
             $scope.reason = [''];
@@ -1303,7 +1320,7 @@
         };
     });
 
-    app.controller('CommunitiesCtrl', function($scope, $ionicPopover, Data) {
+    app.controller('CommunitiesCtrl', function($scope, $ionicPopover, API, Data, Utils) {
 
         $ionicPopover.fromTemplateUrl('templates/popovers/add-community.html', {
             scope: $scope
@@ -1323,7 +1340,10 @@
             return Data.isLoading && Data.communities.length === 0;
         };
 
-        // TODO: remove community
+        $scope.leave = function(community) {
+            API.leaveCommunity(community.id, Data.user.id);
+            Utils.removeById(Data.communities, community);
+        }
 
     });
 

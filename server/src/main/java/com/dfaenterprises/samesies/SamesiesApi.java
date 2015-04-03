@@ -92,7 +92,7 @@ public class SamesiesApi {
 
     @ApiMethod(name = "samesiesApi.login",
             path = "user/login",
-            httpMethod = ApiMethod.HttpMethod.POST)
+            httpMethod = ApiMethod.HttpMethod.PUT)
     public User login(User user) throws ServiceException {
         DatastoreService ds = getDS();
 
@@ -447,6 +447,7 @@ public class SamesiesApi {
         DatastoreService ds = getDS();
         Query query = new Query("CommunityUser").setFilter(Query.CompositeFilterOperator.and(
                 new Query.FilterPredicate("uid", Query.FilterOperator.EQUAL, uid),
+                new Query.FilterPredicate("isActive", Query.FilterOperator.EQUAL, true),
                 new Query.FilterPredicate("isValidated", Query.FilterOperator.EQUAL, true)));
         PreparedQuery pq = ds.prepare(query);
         List<Community> communities = new ArrayList<>();
@@ -488,42 +489,64 @@ public class SamesiesApi {
         DatastoreService ds = getDS();
         Community community = getCommunity(ds, cid);
         CommunityUser cu = getCommunityUser(ds, cid, myUid);
+        boolean returnNull = true;
         if (cu == null) {
             // CommunityUser does not exist, make new one
             switch (community.getType()) {
                 case OPEN:
-                    EntityUtils.put(ds, new CommunityUser(community.getId(), myUid, true));
-                    return community;
+                    cu = new CommunityUser(community.getId(), myUid, true);
+                    returnNull = false;
+                    break;
                 case EMAIL:
                     // utility string is an email domain
                     if (string != null && string.contains(community.getUtilityString())) {
                         cu = new CommunityUser(community.getId(), myUid);
-                        EntityUtils.put(ds, cu);
                         sendEmail(string, "Join " + community.getName(),
                                 "Click the link below to join the Samesies community for " + community.getName() + ":\n" +
-                                "https://samesies-app.appspot.com/_ah/spi/communities/join?community_user_id=" + cu.getId() + "\n\n" +
-                                "Have fun,\n" +
-                                "The Samesies Team");
+                                        "https://samesies-app.appspot.com/_ah/spi/communities/join?community_user_id=" + cu.getId() + "\n\n" +
+                                        "Have fun,\n" +
+                                        "The Samesies Team");
+                        returnNull = false;
                     }
                     break;
                 case PASSWORD:
                     // utility string is a password
                     if (string != null && BCrypt.checkpw(string, community.getUtilityString())) {
-                        EntityUtils.put(ds, new CommunityUser(community.getId(), myUid, true));
-                        return community;
+                        cu = new CommunityUser(community.getId(), myUid, true);
+                        returnNull = false;
                     }
                     break;
                 case EXCLUSIVE:
-                    EntityUtils.put(ds, new CommunityUser(community.getId(), myUid));
+                    cu = new CommunityUser(community.getId(), myUid);
                     break;
             }
         } else {
             // CommunityUser already exists, return community if validated
-            if (cu.getIsValidated()) {
-                return community;
-            }
+            cu.setIsActive(true);
+            returnNull = !cu.getIsValidated();
         }
-        return null;
+        if (cu != null) {
+            EntityUtils.put(ds, cu);
+        }
+        if (returnNull) {
+            return null;
+        } else {
+            return community;
+        }
+    }
+
+    @ApiMethod(name = "samesiesApi.leaveCommunity",
+            path = "communities/leave/{id}/{myId}",
+            httpMethod = ApiMethod.HttpMethod.PUT)
+    public void leaveCommunity(@Named("id") long cid, @Named("myId") long myUid) throws ServiceException {
+        DatastoreService ds = getDS();
+        CommunityUser cu = getCommunityUser(ds, cid, myUid);
+        if (cu == null) {
+            throw new NotFoundException("User is not member of that community");
+        } else {
+            cu.setIsActive(false);
+            EntityUtils.put(ds, cu);
+        }
     }
 
     @ApiMethod(name = "samesiesApi.createOpenCommunity",
@@ -698,7 +721,7 @@ public class SamesiesApi {
 
     @ApiMethod(name = "samesiesApi.connectEpisode",
             path = "episode/connect/{myId}/{theirId}/{mode}",
-            httpMethod = ApiMethod.HttpMethod.POST)
+            httpMethod = ApiMethod.HttpMethod.PUT)
     public Episode connectEpisode(@Named("myId") long myUid, @Named("theirId") long theirUid, @Named("mode") String mode) throws ServiceException {
         DatastoreService ds = getDS();
         Episode episode = new Episode(myUid, theirUid, new Settings(mode));
