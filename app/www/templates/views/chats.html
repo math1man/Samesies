@@ -7,7 +7,7 @@
             </label>
         </ion-header-bar>
         <ion-content>
-            <ss-loading ng-show="data('isLoading')"></ss-loading>
+            <ss-loading ng-show="isLoading()"></ss-loading>
             <div class="row hidden-grid" ng-repeat="chat in data('chats') | checkName:search | orderBy:'lastModified':true">
                 <div class="col col-90">
                     <div class="item item-avatar" ng-click="goChat(chat)">

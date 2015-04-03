@@ -7,7 +7,7 @@
     var app = angular.module('samesies.controllers', []);
 
     app.controller('IndexCtrl', function($scope, $window, $state, $ionicHistory, $ionicViewSwitcher,
-                                         $ionicPopup, $ionicPopover, $ionicModal, API, Data, Utils) {
+                                         $ionicPopup, $ionicModal, API, Data, Utils) {
 
         $window.init = function() {
             if (!$state.is('login')) {
@@ -59,19 +59,6 @@
                 Data.settings.matchOther = true;
             }
             $scope.settingsPopup.hide();
-        };
-
-        $scope.showSelect = function($event) {
-            $ionicPopover.fromTemplateUrl('templates/popovers/select-community.html', {
-                scope: $scope
-            }).then(function(popover) {
-                $scope.selectPopup = popover;
-                $scope.selectPopup.show($event);
-            });
-        };
-
-        $scope.hideSelect = function() {
-            $scope.selectPopup.remove();
         };
 
         $scope.dispName = function(user) {
@@ -160,6 +147,9 @@
                         Data.communities = communities;
                         $scope.$apply();
                     }
+                    if (Data.isLoading) {
+                        Data.isLoading--;
+                    }
                 });
             }
         };
@@ -216,7 +206,6 @@
 
         $scope.$on('$destroy', function() {
             $scope.settingsPopup.remove();
-            $scope.selectPopup.remove();
         });
 
     });
@@ -241,7 +230,7 @@
             $scope.loginData = null;
             $scope.loginCheck = {};
             Data.user = user;
-            Data.isLoading = 3; // TODO: add an isLoading increment for communities
+            Data.isLoading = 4;
             $scope.refresh();
             $scope.resetToggle();
             $scope.go('menu', true);
@@ -464,11 +453,25 @@
 
     });
 
-    app.controller('SettingsCtrl', function($scope, $ionicPopup, Data, Utils) {
+    app.controller('SettingsCtrl', function($scope, $ionicPopup, $ionicPopover, Data, Utils) {
 
         $scope.$on('modal.shown', function() {
             $scope.settings = Data.settings;
         });
+
+        $ionicPopover.fromTemplateUrl('templates/popovers/select-community.html', {
+            scope: $scope
+        }).then(function(popover) {
+            $scope.selectPopup = popover;
+        });
+
+        $scope.showSelect = function($event) {
+            $scope.selectPopup.show($event);
+        };
+
+        $scope.hideSelect = function() {
+            $scope.selectPopup.hide();
+        };
 
         var isShowModes = false;
 
@@ -509,9 +512,11 @@
 
     app.controller('SelectComCtrl', function($scope, $ionicPopup, API, Data, Utils) {
 
-        $scope.selected = Data.community;
-        $scope.search = '';
-        $scope.searched = [];
+        $scope.$on('popover.shown', function() {
+            $scope.selected = Data.community;
+            $scope.search = '';
+            $scope.searched = [];
+        });
 
         $scope.searchCommunities = function(string) {
             API.searchCommunities(string).then(function(resp) {
@@ -545,8 +550,14 @@
                     }]
                 }).then(function(email) {
                     if (angular.isDefined(email)) {
-                        API.joinCommunity(community.id, Data.user.id, email).then();
-                        $scope.hideSelect();
+                        API.joinCommunity(community.id, Data.user.id, email).then(function (resp) {
+                            if (resp.result) {
+                                Data.communities.push(resp.result);
+                                $scope.loadCommunity(resp.result);
+                            } else {
+                                $scope.hideSelect();
+                            }
+                        });
                     }
                 });
             } else if (community.type === 'PASSWORD') {
@@ -596,11 +607,6 @@
                 $scope.$apply();
             });
         };
-
-        $scope.$on('popover.hidden', function() {
-            $scope.search = '';
-            $scope.searched = [];
-        });
 
     });
 
@@ -856,11 +862,25 @@
 
     });
 
-    app.controller('BrowseCtrl', function($scope, $ionicPopup, API, Data) {
+    app.controller('BrowseCtrl', function($scope, $ionicPopup, $ionicPopover, API, Data) {
 
         $scope.$on('$ionicView.beforeEnter', function() {
             $scope.refreshCommunities();
         });
+
+        $ionicPopover.fromTemplateUrl('templates/popovers/select-community.html', {
+            scope: $scope
+        }).then(function(popover) {
+            $scope.selectPopup = popover;
+        });
+
+        $scope.showSelect = function($event) {
+            $scope.selectPopup.show($event);
+        };
+
+        $scope.hideSelect = function() {
+            $scope.selectPopup.hide();
+        };
 
         $scope.flag = function(user) {
             $scope.reason = [''];
@@ -892,6 +912,10 @@
         $scope.$on('$ionicView.beforeEnter', function() {
             $scope.refreshCxns();
         });
+
+        $scope.isLoading = function() {
+            return Data.isLoading && Data.connections.length === 0;
+        };
 
         $scope.accept = function(cxn) {
             cxn.status = "IN_PROGRESS";
@@ -945,6 +969,10 @@
     app.controller('MessagesCtrl', function($scope, API, Data, Utils) {
 
         $scope.search = '';
+
+        $scope.isLoading = function() {
+            return Data.isLoading && Data.chats.length === 0;
+        };
 
         $scope.goChat = function(chat) {
             if (chat.uid1 === Data.user.id) {
@@ -1196,6 +1224,10 @@
             $scope.findPopup.hide();
         };
 
+        $scope.isLoading = function() {
+            return Data.isLoading && Data.friends.length === 0;
+        };
+
         $scope.search = '';
 
         $scope.profile = function(friend) {
@@ -1290,7 +1322,7 @@
         };
     });
 
-    app.controller('CommunitiesCtrl', function($scope, $ionicPopover) {
+    app.controller('CommunitiesCtrl', function($scope, $ionicPopover, API, Data, Utils) {
 
         $ionicPopover.fromTemplateUrl('templates/popovers/add-community.html', {
             scope: $scope
@@ -1305,6 +1337,15 @@
         $scope.$on('$destroy', function() {
             $scope.addCommPopup.remove();
         });
+
+        $scope.isLoading = function() {
+            return Data.isLoading && Data.communities.length === 0;
+        };
+
+        $scope.leave = function(community) {
+            API.leaveCommunity(community.id, Data.user.id);
+            Utils.removeById(Data.communities, community);
+        }
 
     });
 

@@ -13,7 +13,7 @@
 			<div class="item item-divider">
 				Requests
 			</div>
-			<ss-loading ng-show="data('isLoading')>2"></ss-loading>
+			<ss-loading ng-show="isLoading()"></ss-loading>
 			<div class="item item-avatar item-button-right" ng-repeat="friend in data('friends') | friendRequests | checkName:search"
 				 ng-click="accept(friend)">
 				<img ng-src="{{friend.user.avatar}}">
@@ -31,7 +31,7 @@
 			<div class="item item-divider">
 				Friends
 			</div>
-			<ss-loading ng-show="data('isLoading')>2"></ss-loading>
+			<ss-loading ng-show="isLoading()"></ss-loading>
 			<div class="row hidden-grid" ng-repeat="friend in data('friends') | friends | checkName:search">
 				<div class="col col-90">
 					<div class="item item-avatar" ng-click="profile(friend)">
@@ -49,7 +49,7 @@
 			<div class="item item-divider">
 				Awaiting Response
 			</div>
-			<ss-loading ng-show="data('isLoading')>2"></ss-loading>
+			<ss-loading ng-show="isLoading()"></ss-loading>
 			<div class="row hidden-grid" ng-repeat="friend in data('friends') | pendingFriends | checkName:search">
 				<div class="col col-90">
 					<div class="item item-avatar" ng-click="profile(friend)">
