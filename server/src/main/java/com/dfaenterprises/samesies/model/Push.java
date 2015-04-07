@@ -55,8 +55,8 @@ public class Push extends Storable {
     public Entity toEntity() {
         Entity e = getEntity("Push");
         e.setProperty("uid", uid);
-        e.setUnindexedProperty("type", type);
-        e.setUnindexedProperty("deviceToken", deviceToken);
+        e.setProperty("type", type);
+        e.setProperty("deviceToken", deviceToken);
         return e;
     }
 }

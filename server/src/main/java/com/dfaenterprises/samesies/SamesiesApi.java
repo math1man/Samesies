@@ -23,7 +23,10 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -38,7 +41,7 @@ import java.util.regex.Pattern;
         audiences = {Constants.ANDROID_AUDIENCE})
 public class SamesiesApi {
 
-    public static final String GCM_API_KEY = "340151147956";
+    public static final String GCM_API_KEY = "AIzaSyDPn1pR_XC5VpMjmJzQZQucXa4Y_Kr-m-Q";
     public static final long EVERYONE_CID = 5686812383117312L;
 
     public void initQuestions() throws ServiceException {
@@ -1005,18 +1008,43 @@ public class SamesiesApi {
     @ApiMethod(name = "samesiesApi.registerPush",
             path = "push/register/{id}/{type}/{deviceToken}",
             httpMethod = ApiMethod.HttpMethod.POST)
-    public void registerPush(@Named("id") long uid, @Named("type") String type, @Named("deviceToken") String deviceToken) throws ServiceException {
+    public Push registerPush(@Named("id") long uid, @Named("type") String type, @Named("deviceToken") String deviceToken) throws ServiceException {
         DatastoreService ds = getDS();
         type = type.toLowerCase();
-        Push userPush = getPush(ds, uid);
         Push devicePush = getPush(ds, type, deviceToken);
-        if (userPush != null) {
+
+        // temporarily allow multiple devices, for debugging
+        if (devicePush == null) {
+            devicePush = new Push(uid, type, deviceToken);
+        } else {
+            devicePush.setUid(uid);
+        }
+
+        /* TODO: revert to this section of code
+        Push userPush = getPush(ds, uid);
+        if (devicePush == null && userPush == null) {
+            // neither device nor user is registered:
+            // create a new push
+            devicePush = new Push(uid, type, deviceToken);
+        } else if (devicePush == null) {
+            // device is not registered, user is:
+            // change the device token of the user push
+            userPush.setDeviceToken(deviceToken);
+            devicePush = userPush;
+        } else if (userPush == null) {
+            // user is not registered, device is:
+            // change the uid of the device push
+            devicePush.setUid(uid);
+        } else if (!userPush.equals(devicePush)) {
+            // both are registered separately:
+            // change the uid of the device push, delete the old user push
             ds.delete(userPush.toEntity().getKey());
-        }
-        if (devicePush != null) {
-            ds.delete(devicePush.toEntity().getKey());
-        }
-        EntityUtils.put(ds, new Push(uid, type, deviceToken));
+            devicePush.setUid(uid);
+        } // else user push and device push match: user-device combo is registered together
+        */
+
+        EntityUtils.put(ds, devicePush);
+        return devicePush;
     }
 
     @ApiMethod(name = "samesiesApi.sendPush",
@@ -1031,8 +1059,7 @@ public class SamesiesApi {
     @ApiMethod(name = "samesiesApi.pushApnFeedback",
             path = "push/apnFeedback",
             httpMethod = ApiMethod.HttpMethod.POST)
-    public void pushApnFeedback() throws ServiceException {
-        // TODO: test me
+    public List<String> pushApnFeedback() throws ServiceException {
         // TODO: schedule me to happen daily(?)
         DatastoreService ds = getDS();
         List<FailedDeviceToken> failedTokens;
@@ -1048,10 +1075,13 @@ public class SamesiesApi {
             throw new InternalServerErrorException("Internal Server Error", e);
         }
         List<Key> pushKeys = new ArrayList<>();
+        List<String> tokens = new ArrayList<>();
         for (FailedDeviceToken token : failedTokens) {
             pushKeys.add(getPush(ds, "ios", token.getDeviceToken()).toEntity().getKey());
+            tokens.add(token.getDeviceToken());
         }
         ds.delete(pushKeys);
+        return tokens;
     }
 
     //----------------------------
@@ -1154,31 +1184,24 @@ public class SamesiesApi {
 
     private static void sendPush(Push push, String title, String message) throws InternalServerErrorException {
         if (push.getType().equals("ios")) {
-            // TODO: This won't work until we enable billing on GAE
             PushNotification pn = new PushNotification().setAlert(message).setDeviceTokens(push.getDeviceToken());
             PushNotificationService pns = new DefaultPushNotificationService();
-            ApnsConnection conn = null;
+            ApnsConnection conn;
             try {
                 conn = getConnection();
                 pns.send(pn, conn);
             } catch (ApnsException e) {
-                throw new InternalServerErrorException("Communication error", e);
+                throw new InternalServerErrorException("Communication error: iOS", e);
             } catch (IOException e) {
                 throw new InternalServerErrorException("File IO error", e);
-            } finally {
-                if (conn != null && !conn.getSocket().isClosed()) {
-                    try {
-                        conn.getSocket().close();
-                    } catch (IOException ignored) {}
-                }
             }
         } else if (push.getType().equals("android")) {
             Sender sender = new Sender(GCM_API_KEY);
             try {
-                sender.send(new com.google.android.gcm.server.Message.Builder().addData("title", title)
-                        .addData("message", message).build(), push.getDeviceToken(), 3);
+                sender.sendNoRetry(new com.google.android.gcm.server.Message.Builder().addData("title", title)
+                        .addData("message", message).build(), push.getDeviceToken());
             } catch (IOException e) {
-                throw new InternalServerErrorException("Communication error", e);
+                throw new InternalServerErrorException("Communication error: Android", e);
             }
         }
     }
