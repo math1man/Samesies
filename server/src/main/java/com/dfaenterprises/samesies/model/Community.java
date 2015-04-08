@@ -28,7 +28,7 @@ public class Community extends Storable {
     // Front end fields
     private List<User> users;
 
-    // **v1.0.0** TODO: remove location eventually, needed for compatibility
+    // **v1.0.0** TODO: remove location, needed for compatibility
     private String location;
 
     public Community() {

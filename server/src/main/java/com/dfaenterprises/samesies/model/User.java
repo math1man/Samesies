@@ -35,7 +35,8 @@ public class User extends Storable {
     private Boolean isActivated;
     private Boolean isBanned;
 
-    // **v1.0.0** TODO: remove community and location eventually, needed for compatibility
+    // **v1.0.0** TODO: remove location and community, needed for compatibility
+    // after v1.0.0, user-community associations will be handled by the CommunityUser database
     private String community;
     private String location;
 

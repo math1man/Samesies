@@ -392,11 +392,11 @@ public class SamesiesApi {
             path = "community",
             httpMethod = ApiMethod.HttpMethod.GET)
     public Community getCommunity(@Nullable@Named("location") String location, @Nullable@Named("name") String name, @Nullable@Named("id") Long cid) throws ServiceException {
-        // **v1.1.0** TODO: eventually remove name and make cid not Nullable, but needed for compatibility
+        // **v1.0.0** TODO: remove name and location and make cid not Nullable
+        // after v1.0.0, the getCommunity by name/location will not be supported at all. Users must update to v1.0.0
         DatastoreService ds = DS.getDS();
         List<User> users = new ArrayList<>();
         if (cid == null) {
-            // **v1.0.0** TODO: eventually remove location, but needed for compatibility
             if (name == null) {
                 if (location == null) {
                     throw new BadRequestException("Must specify a community");
@@ -629,7 +629,8 @@ public class SamesiesApi {
             path = "questions/all",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Question> getAllQuestions() throws ServiceException {
-        // **v1.1.0** TODO: remove this method, needed for compatibility
+        // **v1.0.0** TODO: remove this method, needed for compatibility
+        // after v1.0.0, this method will not be completely replaced by getQuestions(). Users must update to v1.0.0
         return getQuestions();
     }
 
@@ -682,7 +683,7 @@ public class SamesiesApi {
                                @Nullable@Named("isPersistent") Boolean isPersistent, @Nullable@Named("cid") Long cid,
                                @Nullable@Named("latitude") Float latitude, @Nullable@Named("longitude") Float longitude) throws ServiceException {
         DatastoreService ds = DS.getDS();
-        // **v1.1.0** TODO: make isPersistent not Nullable
+        // **v1.0.0** TODO: make isPersistent not Nullable
         if (isPersistent == null) {
             isPersistent = false;
         }
@@ -960,8 +961,8 @@ public class SamesiesApi {
             path = "chat/messages/{chatId}/{after}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Message> getMessages(@Named("chatId") long cid, @Named("after") Date after, @Nullable@Named("myId") Long myUid) throws ServiceException {
-        // **v1.0.0** TODO: eventually remove the @Nullable to the myUid parameter
-        // For now we need it for backwards compatibility
+        // **v1.0.0** TODO: remove the @Nullable to the myId parameter
+        // after v1.0.0, this method will require the myId parameter. Users must update to v1.0.0
         DatastoreService ds = DS.getDS();
         if (myUid != null) {
             Chat chat = DS.getChat(ds, cid);
