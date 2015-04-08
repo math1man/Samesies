@@ -1173,7 +1173,7 @@ public class SamesiesApi {
     }
 
     private static void sendEmail(User user, String subject, String message) throws InternalServerErrorException {
-        sendEmail(user.getEmail(), user.getName(), subject, message);
+        sendEmail(user.getEmail(), user.getDisplayName(), subject, message);
     }
 
     private static void sendEmail(String email, String subject, String message) throws InternalServerErrorException {

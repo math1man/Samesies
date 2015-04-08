@@ -1021,10 +1021,10 @@
 
         $scope.buffer = '';
         $scope.history = [];
-        var friendPending = 0; // 0: they haven't clicked, 1: they clicked, 2: accepted
+        $scope.friendPending = 0; // 0: they haven't clicked, 1: you clicked, 2: they clicked, 3: both clicked
         if (Data.chat) {
             if (!Data.chat.isEpisode) {
-                friendPending = 2;
+                $scope.friendPending = 3;
             }
             API.getMessages(Data.chat.id, Data.chat.startDate, Data.user.id).then(function (resp) {
                 if (resp.result.items && resp.result.items.length) {
@@ -1110,15 +1110,15 @@
                         });
                     }
                 });
-                if (!friendPending) { // if its pending, it will stay that way until user accepts
+                if ($scope.friendPending < 2) { // if its pending, it will stay that way until user accepts
                     API.checkFriend(Data.user.id, Data.chat.user.id).then(function (resp) {
                         var friend = resp.result;
                         if (friend) {
                             Utils.addById(Data.friends, friend);
                             if (friend.status === 'ACCEPTED') {
-                                friendPending = 2;
+                                $scope.friendPending = 3;
                             } else if (friend.uid2 === Data.user.id) {
-                                friendPending = 1;
+                                $scope.friendPending = 2;
                             }
                         }
                     });
@@ -1160,22 +1160,15 @@
             }
         };
 
-        $scope.showAddFriend = function() {
-            return friendPending < 2;
-        };
-
-        $scope.showOtherAdded = function() {
-            return friendPending === 1;
-        };
-
         $scope.addFriend = function() {
+            $scope.friendPending = 1;
             API.addFriend(Data.user.id, Data.chat.user.id).then(function(resp) {
                 var friend = resp.result;
                 if (friend) {
                     Utils.addById(Data.friends, friend);
                     if (friend.status === 'ACCEPTED') {
                         API.updateChat(Data.chat.id, friend.id, false);
-                        friendPending = 2;
+                        $scope.friendPending = 3;
                     }
                 }
             });
