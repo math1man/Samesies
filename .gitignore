@@ -10,6 +10,8 @@ app/private
 *.keystore
 *.apk
 
+Constants.java
+
 Letter of Understanding.docx
 
 server/eclipse-launch-profiles
