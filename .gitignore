@@ -12,5 +12,6 @@ server/eclipse-launch-profiles
 *.apk
 
 Constants.java
+Constants1.java
 
 Letter of Understanding.docx
