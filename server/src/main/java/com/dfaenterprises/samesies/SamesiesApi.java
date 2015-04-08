@@ -629,7 +629,7 @@ public class SamesiesApi {
             path = "questions/all",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Question> getAllQuestions() throws ServiceException {
-        // **1.1.0** TODO: remove this method, needed for compatibility
+        // **v1.1.0** TODO: remove this method, needed for compatibility
         return getQuestions();
     }
 
