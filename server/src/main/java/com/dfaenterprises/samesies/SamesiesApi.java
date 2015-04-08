@@ -132,7 +132,7 @@ public class SamesiesApi {
             newUser.initNewUser();
             DS.put(ds, newUser);
             DS.put(ds, new CommunityUser(Constants.EVERYONE_CID, newUser.getId(), true));
-            sendEmail(email, "Activate your Samesies Account",
+            sendEmail(newUser, "Activate your Samesies Account",
                     "Click the link below to activate your account:\n" +
                             "https://samesies-app.appspot.com/_ah/spi/activate?user_id=" + newUser.getId() + "\n\n" +
                             "Have fun,\n" +
