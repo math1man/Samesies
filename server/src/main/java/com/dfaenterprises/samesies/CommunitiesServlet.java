@@ -19,7 +19,7 @@ public class CommunitiesServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        DatastoreService ds = DatastoreServiceFactory.getDatastoreService();
+        DatastoreService ds = DS.getDS();
         String param = req.getParameter("community_user_id");
         if (param == null) {
             resp.sendError(400, "Bad Request: Must specify a community_user_id");
@@ -28,7 +28,7 @@ public class CommunitiesServlet extends HttpServlet {
             try {
                 CommunityUser cu = new CommunityUser(ds.get(KeyFactory.createKey("CommunityUser", cuid)));
                 cu.setIsValidated(true);
-                EntityUtils.put(ds, cu);
+                DS.put(ds, cu);
                 resp.sendRedirect("http://samesies.org/joined.html");
             } catch (EntityNotFoundException e) {
                 resp.sendError(404, "CommunityUser " + cuid + " Not Found");

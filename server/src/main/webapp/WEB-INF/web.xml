@@ -19,6 +19,10 @@
         <servlet-name>CommunitiesServlet</servlet-name>
         <servlet-class>com.dfaenterprises.samesies.CommunitiesServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>ApnFeedbackServlet</servlet-name>
+        <servlet-class>com.dfaenterprises.samesies.apn.ApnFeedbackServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>SystemServiceServlet</servlet-name>
         <url-pattern>/_ah/spi/*</url-pattern>
@@ -30,6 +34,10 @@
     <servlet-mapping>
         <servlet-name>CommunitiesServlet</servlet-name>
         <url-pattern>/_ah/spi/communities/join</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ApnFeedbackServlet</servlet-name>
+        <url-pattern>/_ah/spi/apnFeedback</url-pattern>
     </servlet-mapping>
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>

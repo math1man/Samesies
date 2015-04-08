@@ -1,12 +1,9 @@
 package com.dfaenterprises.samesies;
 
-import com.dfaenterprises.samesies.model.Storable;
-import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.EmbeddedEntity;
 import com.google.appengine.api.datastore.Entity;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -48,23 +45,6 @@ public class EntityUtils {
 
     public static <T extends Enum<T>> T getEnumProp(Entity e, String property, Class<T> clazz) {
         return Enum.valueOf(clazz, (String) e.getProperty(property));
-    }
-
-    public static void put(DatastoreService ds, Storable... ss) {
-        put(ds, Arrays.asList(ss));
-    }
-
-    public static void put(DatastoreService ds, List<? extends Storable> ss) {
-        List<Entity> es = new ArrayList<>();
-        for (Storable s : ss) {
-            if (s != null) {
-                es.add(s.toEntity());
-            }
-        }
-        ds.put(es);
-        for (int i=0; i<es.size(); i++) {
-            ss.get(i).setId(es.get(i).getKey().getId());
-        }
     }
 
     public static String randomString(int length) {

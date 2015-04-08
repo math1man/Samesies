@@ -1,9 +1,7 @@
 package com.dfaenterprises.samesies;
 
 import apns.*;
-import apns.keystore.ClassPathResourceKeyStoreProvider;
-import apns.keystore.KeyStoreProvider;
-import apns.keystore.KeyStoreType;
+import com.dfaenterprises.samesies.apn.ApnManager;
 import com.dfaenterprises.samesies.model.*;
 import com.google.android.gcm.server.Sender;
 import com.google.api.server.spi.ServiceException;
@@ -39,10 +37,8 @@ import java.util.regex.Pattern;
         audiences = {Constants.ANDROID_AUDIENCE})
 public class SamesiesApi {
 
-    public static final boolean IS_PROD = false;
-
     public void initQuestions() throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
 
         Question[] questions = {
                 new Question("What do you like to do on a first date?"),
@@ -80,15 +76,15 @@ public class SamesiesApi {
         for (Question q : questions) {
             q.setCategory("Random");
         }
-        EntityUtils.put(ds, questions);
+        DS.put(ds, questions);
 
         ds.put(Arrays.asList(new Entity("Category", "All"),
                 new Entity("Category", "Random")));
     }
 
     public void initModes() throws ServiceException {
-        DatastoreService ds = getDS();
-        EntityUtils.put(ds, new Mode("Random", "Answer 10 random questions from our database."),
+        DatastoreService ds = DS.getDS();
+        DS.put(ds, new Mode("Random", "Answer 10 random questions from our database."),
                 new Mode("Personal", "Answer each of your and your partner's 5 personal questions."));
     }
 
@@ -100,14 +96,14 @@ public class SamesiesApi {
             path = "user/login",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public User login(User user) throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
 
         String email = user.getEmail();
         String password = user.getPassword();
         if (email == null) {
             throw new BadRequestException("Invalid Email");
         }
-        User dsUser = getUser(ds, email, User.Relation.SELF, false);
+        User dsUser = DS.getUser(ds, email, User.Relation.SELF, false);
         if (dsUser.getIsBanned()) {
             throw new ForbiddenException("Account has been banned");
         } else if (!dsUser.getIsActivated()) {
@@ -123,7 +119,7 @@ public class SamesiesApi {
             path = "user/create",
             httpMethod = ApiMethod.HttpMethod.POST)
     public User createUser(User newUser) throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
 
         String email = newUser.getEmail();
         if (email == null) {
@@ -132,10 +128,10 @@ public class SamesiesApi {
         if (newUser.getPassword() == null) {
             throw new BadRequestException("Invalid Password");
         }
-        if (getUser(ds, email, User.Relation.STRANGER, true) == null) {
+        if (DS.getUser(ds, email, User.Relation.STRANGER, true) == null) {
             newUser.initNewUser();
-            EntityUtils.put(ds, newUser);
-            EntityUtils.put(ds, new CommunityUser(Constants.EVERYONE_CID, newUser.getId(), true));
+            DS.put(ds, newUser);
+            DS.put(ds, new CommunityUser(Constants.EVERYONE_CID, newUser.getId(), true));
             sendEmail(email, "Activate your Samesies Account",
                     "Click the link below to activate your account:\n" +
                             "https://samesies-app.appspot.com/_ah/spi/activate?user_id=" + newUser.getId() + "\n\n" +
@@ -151,11 +147,11 @@ public class SamesiesApi {
             path = "user/recover/{email}",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void recoverUser(@Named("email") String email) throws ServiceException {
-        DatastoreService ds = getDS();
-        User user = getUser(ds, email, User.Relation.ADMIN, false);
+        DatastoreService ds = DS.getDS();
+        User user = DS.getUser(ds, email, User.Relation.ADMIN, false);
         String tempPass = EntityUtils.randomString(8);
         user.setPassword(tempPass);
-        EntityUtils.put(ds, user);
+        DS.put(ds, user);
         sendEmail(user, "Samesies Password Reset",
                 "Your password has been reset.  Your new temporary password is " + tempPass + ".  " +
                         "We recommend you change this password immediately once you log in to Samesies.\n\n" +
@@ -167,7 +163,7 @@ public class SamesiesApi {
             path = "user/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public User getUser(@Named("id") long uid) throws ServiceException {
-        return getUser(getDS(), uid, User.Relation.STRANGER, false);
+        return DS.getUser(DS.getDS(), uid, User.Relation.STRANGER, false);
     }
 
     @ApiMethod(name = "samesiesApi.getUsers",
@@ -178,7 +174,7 @@ public class SamesiesApi {
         for (long uid : uids) {
             keys.add(KeyFactory.createKey("User", uid));
         }
-        Map<Key, Entity> map = getDS().get(keys);
+        Map<Key, Entity> map = DS.getDS().get(keys);
         List<User> users = new ArrayList<>();
         for (Key key : keys) {
             users.add(new User(map.get(key), User.Relation.STRANGER));
@@ -190,12 +186,12 @@ public class SamesiesApi {
             path = "user/update",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void updateUser(User user) throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
         if (user.getId() == null) {
             throw new BadRequestException("User ID not specified");
         }
         String newPassword = user.getNewPassword();
-        User dsUser = getUser(ds, user.getId(), User.Relation.SELF, false);
+        User dsUser = DS.getUser(ds, user.getId(), User.Relation.SELF, false);
         if (newPassword != null) {
             // password is being changed
             if (BCrypt.checkpw(user.getPassword(), dsUser.getHashedPw())) {
@@ -207,14 +203,14 @@ public class SamesiesApi {
         user.setGeoPt(dsUser.getGeoPt());
         user.setIsActivated(dsUser.getIsActivated());
         user.setIsBanned(dsUser.getIsBanned());
-        EntityUtils.put(ds, user);
+        DS.put(ds, user);
     }
 
     @ApiMethod(name = "samesiesApi.findUser",
             path = "user/find/{email}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public User findUser(@Named("email") String email) throws ServiceException {
-        User user = getUser(getDS(), email, User.Relation.STRANGER, true);
+        User user = DS.getUser(DS.getDS(), email, User.Relation.STRANGER, true);
         if (isValid(user)) {
             return user;
         } else {
@@ -226,9 +222,9 @@ public class SamesiesApi {
             path = "user/search/{string}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<User> searchUsers(@Named("string") String string) throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
         // first, lets check if they straight entered an email
-        User user = getUser(getDS(), string, User.Relation.STRANGER, true);
+        User user = DS.getUser(DS.getDS(), string, User.Relation.STRANGER, true);
         if (isValid(user)) { // ignore banned users
             return Collections.singletonList(user);
         } else {
@@ -259,22 +255,22 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.POST)
     public void flagUser(@Named("flaggedId") long flaggedId, @Named("flaggerId") long flaggerId,
                      @Nullable @Named("reason") String reason) throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
         Flag flag = new Flag(flaggedId, flaggerId, reason);
-        EntityUtils.put(ds, flag);
+        DS.put(ds, flag);
     }
 
     @ApiMethod(name = "samesiesApi.banUser",
             path = "user/ban/{id}",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void banUser(@Named("id") long uid, @Nullable @Named("isBanned") Boolean isBanned) throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
         if (isBanned == null) {
             isBanned = true;
         }
-        User user = getUser(ds, uid, User.Relation.ADMIN, false);
+        User user = DS.getUser(ds, uid, User.Relation.ADMIN, false);
         user.setIsBanned(isBanned);
-        EntityUtils.put(ds, user);
+        DS.put(ds, user);
         sendEmail(user, "Samesies Account Banned",
                 "We are sorry to inform you that your account has been banned from Samesies.  " +
                         "We received multiple complaints that your profile picture was inappropriate, " +
@@ -290,7 +286,7 @@ public class SamesiesApi {
             path = "friends/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Friend> getFriends(@Named("id") long uid) throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
 
         Query query = new Query("Friend").setFilter(Query.CompositeFilterOperator.or(
                 new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, uid),
@@ -302,7 +298,7 @@ public class SamesiesApi {
             if (!friend.getStatus().isDeleted()) {
                 long theirUid = friend.getOtherUid(uid);
                 User.Relation relation = friend.getStatus().getRelation();
-                User user = getUser(ds, theirUid, relation, true);
+                User user = DS.getUser(ds, theirUid, relation, true);
                 if (isValid(user)) {
                     friend.setUser(user);
                     friends.add(friend);
@@ -316,14 +312,14 @@ public class SamesiesApi {
             path = "friends/check/{myId}/{theirId}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public Friend checkFriend(@Named("myId") long myId, @Named("theirId") long theirId) throws ServiceException {
-        return getFriend(getDS(), myId, theirId);
+        return DS.getFriend(DS.getDS(), myId, theirId);
     }
 
     @ApiMethod(name = "samesiesApi.addFriend",
             path = "friends/add/{myId}/{theirId}",
             httpMethod = ApiMethod.HttpMethod.POST)
     public Friend addFriend(@Named("myId") long myId, @Named("theirId") long theirId) throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
 
         if (myId == theirId) {
             throw new ForbiddenException("Cannot add oneself as a friend");
@@ -331,7 +327,7 @@ public class SamesiesApi {
 
         Friend.Status sendPush = null;
 
-        Friend friend = getFriend(ds, myId, theirId);
+        Friend friend = DS.getFriend(ds, myId, theirId);
         if (friend == null) {
             friend = new Friend(myId, theirId);
             sendPush = friend.getStatus();
@@ -364,8 +360,8 @@ public class SamesiesApi {
         if (friend.getStatus().isDeleted()) {
             return null;
         } else {
-            EntityUtils.put(ds, friend); // update the friend in case it changed
-            friend.setUser(getUser(ds, theirId, friend.getStatus().getRelation(), true));
+            DS.put(ds, friend); // update the friend in case it changed
+            friend.setUser(DS.getUser(ds, theirId, friend.getStatus().getRelation(), true));
             return friend;
         }
     }
@@ -374,7 +370,7 @@ public class SamesiesApi {
             path = "friends/remove/{id}/{myId}",
             httpMethod = ApiMethod.HttpMethod.DELETE)
     public void removeFriend(@Named("id") long fid, @Named("myId") long myId) throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
         try {
             Friend friend = new Friend(ds.get(KeyFactory.createKey("Friend", fid)));
             if (friend.isUid1(myId)) {
@@ -382,7 +378,7 @@ public class SamesiesApi {
             } else {
                 friend.setStatus(Friend.Status.DELETED_2);
             }
-            EntityUtils.put(ds, friend);
+            DS.put(ds, friend);
         } catch (EntityNotFoundException e) {
             throw new NotFoundException("Friend not found", e);
         }
@@ -397,7 +393,7 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.GET)
     public Community getCommunity(@Nullable@Named("location") String location, @Nullable@Named("name") String name, @Nullable@Named("id") Long cid) throws ServiceException {
         // **v1.1.0** TODO: eventually remove name and make cid not Nullable, but needed for compatibility
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
         List<User> users = new ArrayList<>();
         if (cid == null) {
             // **v1.0.0** TODO: eventually remove location, but needed for compatibility
@@ -416,13 +412,13 @@ public class SamesiesApi {
                 users.add(new User(e, User.Relation.STRANGER));
             }
         } else {
-            name = getCommunity(ds, cid).getName();
+            name = DS.getCommunity(ds, cid).getName();
             Query query = new Query("CommunityUser").setFilter(Query.CompositeFilterOperator.and(
                     new Query.FilterPredicate("cid", Query.FilterOperator.EQUAL, cid),
                     new Query.FilterPredicate("isValidated", Query.FilterOperator.EQUAL, true)));
             PreparedQuery pq = ds.prepare(query);
             for (Entity e : pq.asIterable()) {
-                User user = getUser(ds, new CommunityUser(e).getUid(), User.Relation.STRANGER, true);
+                User user = DS.getUser(ds, new CommunityUser(e).getUid(), User.Relation.STRANGER, true);
                 if (isValid(user)) {
                     users.add(user);
                 }
@@ -442,7 +438,7 @@ public class SamesiesApi {
             path = "nearby/{latitude}/{longitude}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public Community getNearBy(@Named("latitude") float latitude, @Named("longitude") float longitude) throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
         GeoPt location = new GeoPt(latitude, longitude);
         Query query = new Query("User").setFilter(new Query.FilterPredicate("isBanned", Query.FilterOperator.EQUAL, false));
         PreparedQuery pq = ds.prepare(query);
@@ -461,7 +457,7 @@ public class SamesiesApi {
             path = "communities/user/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Community> getUserCommunities(@Named("id") long uid) throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
         Query query = new Query("CommunityUser").setFilter(Query.CompositeFilterOperator.and(
                 new Query.FilterPredicate("uid", Query.FilterOperator.EQUAL, uid),
                 new Query.FilterPredicate("isActive", Query.FilterOperator.EQUAL, true),
@@ -469,7 +465,7 @@ public class SamesiesApi {
         PreparedQuery pq = ds.prepare(query);
         List<Community> communities = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
-            Community community = getCommunity(ds, new CommunityUser(e).getCid());
+            Community community = DS.getCommunity(ds, new CommunityUser(e).getCid());
             if (community != null) {
                 communities.add(community);
             }
@@ -481,7 +477,7 @@ public class SamesiesApi {
             path = "communities/search/{string}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Community> searchCommunities(@Named("string") String string) throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
         Query query = new Query("Community").setFilter(new Query.FilterPredicate(
                 "state", Query.FilterOperator.EQUAL, Community.State.ACTIVE.name()));
         PreparedQuery pq = ds.prepare(query);
@@ -503,9 +499,9 @@ public class SamesiesApi {
             path = "communities/join/{id}/{myId}",
             httpMethod = ApiMethod.HttpMethod.POST)
     public Community joinCommunity(@Named("id") long cid, @Named("myId") long myUid, @Nullable@Named("string") String string) throws ServiceException {
-        DatastoreService ds = getDS();
-        Community community = getCommunity(ds, cid);
-        CommunityUser cu = getCommunityUser(ds, cid, myUid);
+        DatastoreService ds = DS.getDS();
+        Community community = DS.getCommunity(ds, cid);
+        CommunityUser cu = DS.getCommunityUser(ds, cid, myUid);
         boolean returnNull = true;
         if (cu == null) {
             // CommunityUser does not exist, make new one
@@ -543,7 +539,7 @@ public class SamesiesApi {
             returnNull = !cu.getIsValidated();
         }
         if (cu != null) {
-            EntityUtils.put(ds, cu);
+            DS.put(ds, cu);
         }
         if (returnNull) {
             return null;
@@ -556,13 +552,13 @@ public class SamesiesApi {
             path = "communities/leave/{id}/{myId}",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void leaveCommunity(@Named("id") long cid, @Named("myId") long myUid) throws ServiceException {
-        DatastoreService ds = getDS();
-        CommunityUser cu = getCommunityUser(ds, cid, myUid);
+        DatastoreService ds = DS.getDS();
+        CommunityUser cu = DS.getCommunityUser(ds, cid, myUid);
         if (cu == null) {
             throw new NotFoundException("User is not member of that community");
         } else {
             cu.setIsActive(false);
-            EntityUtils.put(ds, cu);
+            DS.put(ds, cu);
         }
     }
 
@@ -570,7 +566,7 @@ public class SamesiesApi {
             path = "communities/create/{name}",
             httpMethod = ApiMethod.HttpMethod.POST)
     public void createOpenCommunity(@Named("name") String name, @Nullable@Named("description") String description) throws ServiceException {
-        EntityUtils.put(getDS(), new Community(name, description));
+        DS.put(DS.getDS(), new Community(name, description));
     }
 
     @ApiMethod(name = "samesiesApi.createEmailCommunity",
@@ -578,7 +574,7 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.POST)
     public void createEmailCommunity(@Named("name") String name, @Named("emailSuffix") String emailSuffix,
                                      @Nullable@Named("description") String description) throws ServiceException {
-        EntityUtils.put(getDS(), new Community(name, description, Community.Type.EMAIL, emailSuffix));
+        DS.put(DS.getDS(), new Community(name, description, Community.Type.EMAIL, emailSuffix));
     }
 
     @ApiMethod(name = "samesiesApi.createPasswordCommunity",
@@ -586,7 +582,7 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.POST)
     public void createPasswordCommunity(@Named("name") String name, @Named("password") String password,
                                         @Nullable@Named("description") String description) throws ServiceException {
-        EntityUtils.put(getDS(), new Community(name, description, Community.Type.PASSWORD,
+        DS.put(DS.getDS(), new Community(name, description, Community.Type.PASSWORD,
                 BCrypt.hashpw(password, BCrypt.gensalt())));
     }
 
@@ -595,7 +591,7 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.POST)
     public void createExclusiveCommunity(@Named("name") String name, @Named("password") String adminPassword,
                                         @Nullable@Named("description") String description) throws ServiceException {
-        EntityUtils.put(getDS(), new Community(name, description, Community.Type.EXCLUSIVE,
+        DS.put(DS.getDS(), new Community(name, description, Community.Type.EXCLUSIVE,
                 BCrypt.hashpw(adminPassword, BCrypt.gensalt())));
     }
 
@@ -607,14 +603,14 @@ public class SamesiesApi {
             path = "question/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public Question getQuestion(@Named("id") long qid) throws ServiceException {
-        return getQuestion(getDS(), qid);
+        return DS.getQuestion(DS.getDS(), qid);
     }
 
     @ApiMethod(name = "samesiesApi.getQuestions",
             path = "questions",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Question> getQuestions() throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
         Query query = new Query("Question")
                 .addProjection(new PropertyProjection("q", String.class))
                 .addProjection(new PropertyProjection("category", String.class));
@@ -641,7 +637,7 @@ public class SamesiesApi {
             path = "questions/categories",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<String> getCategories() throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
 
         Query query = new Query("Category").setKeysOnly();
         PreparedQuery pq = ds.prepare(query);
@@ -657,7 +653,7 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.POST)
     public void suggestQuestion(@Named("question") String question) throws ServiceException {
         Question q = new Question(question, "Suggestion");
-        EntityUtils.put(getDS(), q);
+        DS.put(DS.getDS(), q);
     }
 
     //----------------------------
@@ -668,7 +664,7 @@ public class SamesiesApi {
             path = "episodes/modes",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Mode> getModes() throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
         Query query = new Query("Mode");
         PreparedQuery pq = ds.prepare(query);
         List<Mode> modes = new ArrayList<>();
@@ -685,7 +681,7 @@ public class SamesiesApi {
                                @Named("matchFemale") boolean matchFemale, @Named("matchOther") boolean matchOther,
                                @Nullable@Named("isPersistent") Boolean isPersistent, @Nullable@Named("cid") Long cid,
                                @Nullable@Named("latitude") Float latitude, @Nullable@Named("longitude") Float longitude) throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
         // **v1.1.0** TODO: make isPersistent not Nullable
         if (isPersistent == null) {
             isPersistent = false;
@@ -719,7 +715,7 @@ public class SamesiesApi {
                 } else {
                     // if it hasn't been modified in over a minute, the person is not there
                     temp.setStatus(Episode.Status.UNMATCHED);
-                    EntityUtils.put(ds, temp);
+                    DS.put(ds, temp);
                 }
             }
         }
@@ -728,11 +724,11 @@ public class SamesiesApi {
         } else {
             episode.setStatus(Episode.Status.IN_PROGRESS);
             episode.setUid2(myUid);
-            episode.setQids(getQids(ds, mode));
-            episode.setUser(getUser(ds, episode.getUid1(), User.Relation.STRANGER, true));
+            episode.setQids(DS.getQids(ds, mode));
+            episode.setUser(DS.getUser(ds, episode.getUid1(), User.Relation.STRANGER, true));
             episode.modify();
         }
-        EntityUtils.put(ds, episode);
+        DS.put(ds, episode);
         return episode;
     }
 
@@ -740,10 +736,10 @@ public class SamesiesApi {
             path = "episode/connect/{myId}/{theirId}/{mode}",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public Episode connectEpisode(@Named("myId") long myUid, @Named("theirId") long theirUid, @Named("mode") String mode) throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
         Episode episode = new Episode(myUid, theirUid, new Settings(mode));
-        episode.setQids(getQids(ds, mode));
-        EntityUtils.put(ds, episode);
+        episode.setQids(DS.getQids(ds, mode));
+        DS.put(ds, episode);
         sendPairingPush(ds, myUid, theirUid, "New Connection", "wants to connect!");
         return episode;
     }
@@ -752,23 +748,23 @@ public class SamesiesApi {
             path = "episode/accept/{id}",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void acceptEpisode(@Named("id") long eid) throws ServiceException {
-        DatastoreService ds = getDS();
-        Episode episode = getEpisode(ds, eid);
+        DatastoreService ds = DS.getDS();
+        Episode episode = DS.getEpisode(ds, eid);
         episode.setStatus(Episode.Status.IN_PROGRESS);
         episode.modify();
-        EntityUtils.put(ds, episode);
+        DS.put(ds, episode);
     }
 
     @ApiMethod(name = "samesiesApi.getEpisode",
             path = "episode/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public Episode getEpisode(@Named("id") long eid) throws ServiceException {
-        DatastoreService ds = getDS();
-        Episode episode = getEpisode(ds, eid);
+        DatastoreService ds = DS.getDS();
+        Episode episode = DS.getEpisode(ds, eid);
         if (!episode.getIsPersistent() && episode.getStatus() == Episode.Status.MATCHING) {
             // update it for matching purposes so that the matching system can discard old episodes
             episode.setLastModified(new Date());
-            EntityUtils.put(ds, episode);
+            DS.put(ds, episode);
         }
         return episode;
     }
@@ -778,8 +774,8 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.PUT)
     public Episode answerEpisode(@Named("id") long eid, @Named("myId") long myUid,
                                  @Named("answer") String answer) throws ServiceException {
-        DatastoreService ds = getDS();
-        Episode episode = getEpisode(ds, eid);
+        DatastoreService ds = DS.getDS();
+        Episode episode = DS.getEpisode(ds, eid);
         List<String> answers = episode.getAnswers(myUid);
         if (answers == null) {
             answers = new ArrayList<>();
@@ -793,7 +789,7 @@ public class SamesiesApi {
         answers.add(answer);
         episode.setAnswers(myUid, answers);
         episode.modify();
-        EntityUtils.put(ds, episode, a);
+        DS.put(ds, episode, a);
         sendPairingPush(ds, myUid, episode.getOtherUid(myUid), "New Answer", "answered a question in your connection!");
         return episode;
     }
@@ -802,8 +798,8 @@ public class SamesiesApi {
             path = "episode/end/{id}",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void endEpisode(@Named("id") long eid) throws ServiceException {
-        DatastoreService ds = getDS();
-        Episode episode = getEpisode(ds, eid);
+        DatastoreService ds = DS.getDS();
+        Episode episode = DS.getEpisode(ds, eid);
         if (episode.getStatus() == Episode.Status.MATCHING) {
             episode.setStatus(Episode.Status.UNMATCHED);
         } else if (episode.getAnswers1().size() == 10 && episode.getAnswers2().size() == 10) {
@@ -812,14 +808,14 @@ public class SamesiesApi {
             episode.setStatus(Episode.Status.ABANDONED);
         }
         episode.modify();
-        EntityUtils.put(ds, episode);
+        DS.put(ds, episode);
     }
 
     @ApiMethod(name = "samesiesApi.getConnections",
             path = "connections/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Episode> getConnections(@Named("id") long uid) throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
 
         Query query = new Query("Episode").setFilter(Query.CompositeFilterOperator.and(
                 Query.CompositeFilterOperator.or(
@@ -837,7 +833,7 @@ public class SamesiesApi {
                 if (otherUid == null) {
                     connections.add(episode);
                 } else {
-                    User user = getUser(ds, episode.getOtherUid(uid), User.Relation.STRANGER, true);
+                    User user = DS.getUser(ds, episode.getOtherUid(uid), User.Relation.STRANGER, true);
                     if (isValid(user)) {
                         episode.setUser(user);
                         connections.add(episode);
@@ -852,12 +848,12 @@ public class SamesiesApi {
             path = "episodes/questions/{eid}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Question> getEpisodeQuestions(@Named("eid") long eid) throws ServiceException {
-        DatastoreService ds = getDS();
-        Episode episode = getEpisode(ds, eid);
+        DatastoreService ds = DS.getDS();
+        Episode episode = DS.getEpisode(ds, eid);
         List<Question> questions = new ArrayList<>();
         if (episode.isPersonal()) {
-            User u1 = getUser(ds, episode.getUid1(), User.Relation.ADMIN, false);
-            User u2 = getUser(ds, episode.getUid2(), User.Relation.ADMIN, false);
+            User u1 = DS.getUser(ds, episode.getUid1(), User.Relation.ADMIN, false);
+            User u2 = DS.getUser(ds, episode.getUid2(), User.Relation.ADMIN, false);
             try {
                 for (int i=0; i<5; i++) {
                     questions.add(new Question(u1.getQuestions().get(i)));
@@ -868,7 +864,7 @@ public class SamesiesApi {
             }
         } else {
             for (long qid : episode.getQids()) {
-                questions.add(getQuestion(ds, qid));
+                questions.add(DS.getQuestion(ds, qid));
             }
         }
         return questions;
@@ -883,15 +879,15 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.POST)
     public Chat startChat(@Named("eofid") long eofid, @Named("isEpisode") boolean isEpisode,
                           @Named("myId") long myUid, @Named("theirId") long theirUid) throws ServiceException {
-        DatastoreService ds = getDS();
-        Chat chat = getChat(ds, eofid, isEpisode);
+        DatastoreService ds = DS.getDS();
+        Chat chat = DS.getChat(ds, eofid, isEpisode);
         if (chat == null) {
             chat = new Chat(eofid, isEpisode, myUid, theirUid);
         } else {
             chat.setIsClosed(false);
             chat.setIsUpToDate(myUid, true);
         }
-        EntityUtils.put(ds, chat);
+        DS.put(ds, chat);
         return chat;
     }
 
@@ -899,14 +895,14 @@ public class SamesiesApi {
             path = "chat/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public Chat getChat(@Named("id") long cid) throws ServiceException {
-        return getChat(getDS(), cid);
+        return DS.getChat(DS.getDS(), cid);
     }
 
     @ApiMethod(name = "samesiesApi.getChats",
             path = "chats/{myId}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Chat> getChats(@Named("myId") long myUid) throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
         Query query = new Query("Chat").setFilter(Query.CompositeFilterOperator.and(
                 Query.CompositeFilterOperator.or(
                         new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, myUid),
@@ -916,7 +912,7 @@ public class SamesiesApi {
         List<Chat> chats = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
             Chat chat = new Chat(e);
-            User user = getUser(ds, chat.getOtherUid(myUid), User.Relation.STRANGER, true);
+            User user = DS.getUser(ds, chat.getOtherUid(myUid), User.Relation.STRANGER, true);
             if (isValid(user)) {
                 chat.setUser(user);
                 chats.add(chat);
@@ -929,21 +925,21 @@ public class SamesiesApi {
             path = "chat/update/{id}/{eofid}/{isEpisode}",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void updateChat(@Named("id") long cid, @Named("eofid") long eofid, @Named("isEpisode") boolean isEpisode) throws ServiceException {
-        DatastoreService ds = getDS();
-        Chat chat = getChat(ds, cid);
+        DatastoreService ds = DS.getDS();
+        Chat chat = DS.getChat(ds, cid);
         chat.setEofid(eofid);
         chat.setIsEpisode(isEpisode);
-        EntityUtils.put(ds, chat);
+        DS.put(ds, chat);
     }
 
     @ApiMethod(name = "samesiesApi.closeChat",
             path = "chat/close/{id}",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void closeChat(@Named("id") long cid) throws ServiceException {
-        DatastoreService ds = getDS();
-        Chat chat = getChat(ds, cid);
+        DatastoreService ds = DS.getDS();
+        Chat chat = DS.getChat(ds, cid);
         chat.setIsClosed(true);
-        EntityUtils.put(ds, chat);
+        DS.put(ds, chat);
     }
 
     @ApiMethod(name = "samesiesApi.sendMessage",
@@ -951,11 +947,11 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.POST)
     public Message sendMessage(@Named("chatId") long cid, @Named("myId") long myUid, @Named("message") String message,
                                @Named("random") @Nullable String random) throws ServiceException {
-        DatastoreService ds = getDS();
-        Chat chat = getChat(ds, cid);
+        DatastoreService ds = DS.getDS();
+        Chat chat = DS.getChat(ds, cid);
         Message m = new Message(cid, myUid, message, random);
         chat.update(myUid, m.getSentDate());
-        EntityUtils.put(ds, chat, m);
+        DS.put(ds, chat, m);
         sendPairingPush(ds, myUid, chat.getOtherUid(myUid), "New Message", "sent you a message!");
         return m;
     }
@@ -966,11 +962,11 @@ public class SamesiesApi {
     public List<Message> getMessages(@Named("chatId") long cid, @Named("after") Date after, @Nullable@Named("myId") Long myUid) throws ServiceException {
         // **v1.0.0** TODO: eventually remove the @Nullable to the myUid parameter
         // For now we need it for backwards compatibility
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
         if (myUid != null) {
-            Chat chat = getChat(ds, cid);
+            Chat chat = DS.getChat(ds, cid);
             chat.setIsUpToDate(myUid, true);
-            EntityUtils.put(ds, chat);
+            DS.put(ds, chat);
         }
         Query query = new Query("Message").setFilter(Query.CompositeFilterOperator.and(
                 new Query.FilterPredicate("chatId", Query.FilterOperator.EQUAL, cid),
@@ -996,7 +992,7 @@ public class SamesiesApi {
             path = "feedback",
             httpMethod = ApiMethod.HttpMethod.POST)
     public void sendFeedback(Feedback feedback) throws ServiceException {
-        EntityUtils.put(getDS(), feedback);
+        DS.put(DS.getDS(), feedback);
     }
 
     @ApiMethod(name = "samesiesApi.sendEmail",
@@ -1007,17 +1003,17 @@ public class SamesiesApi {
         for (String s : messageLines) {
             sb.append(s).append('\n');
         }
-        sendEmail(getUser(getDS(), uid, User.Relation.ADMIN, false), subject, sb.toString());
+        sendEmail(DS.getUser(DS.getDS(), uid, User.Relation.ADMIN, false), subject, sb.toString());
     }
 
     @ApiMethod(name = "samesiesApi.registerPush",
             path = "push/register/{id}/{type}/{deviceToken}",
             httpMethod = ApiMethod.HttpMethod.POST)
     public Push registerPush(@Named("id") long uid, @Named("type") String type, @Named("deviceToken") String deviceToken) throws ServiceException {
-        DatastoreService ds = getDS();
+        DatastoreService ds = DS.getDS();
         type = type.toLowerCase();
-        Push devicePush = getPush(ds, type, deviceToken);
-        Push userPush = getPush(ds, uid);
+        Push devicePush = DS.getPush(ds, type, deviceToken);
+        Push userPush = DS.getPush(ds, uid);
         if (devicePush == null && userPush == null) {
             // neither device nor user is registered:
             // create a new push
@@ -1037,7 +1033,7 @@ public class SamesiesApi {
             ds.delete(userPush.toEntity().getKey());
             devicePush.setUid(uid);
         } // else user push and device push match: user-device combo is registered together
-        EntityUtils.put(ds, devicePush);
+        DS.put(ds, devicePush);
         return devicePush;
     }
 
@@ -1045,43 +1041,14 @@ public class SamesiesApi {
             path = "push/send/{id}/{title}/{message}",
             httpMethod = ApiMethod.HttpMethod.POST)
     public void sendPush(@Named("id") long pid, @Named("title") String title, @Named("message") String message) throws ServiceException {
-        DatastoreService ds = getDS();
-        Push push = getPushById(ds, pid);
+        DatastoreService ds = DS.getDS();
+        Push push = DS.getPushById(ds, pid);
         sendPush(push, title, message);
-    }
-
-    @ApiMethod(name = "samesiesApi.pushApnFeedback",
-            path = "push/apnFeedback",
-            httpMethod = ApiMethod.HttpMethod.POST)
-    public List<String> pushApnFeedback() throws ServiceException {
-        // TODO: schedule me to happen daily(?)
-        DatastoreService ds = getDS();
-        List<FailedDeviceToken> failedTokens;
-        try {
-            FeedbackService fs = new DefaultFeedbackService();
-            failedTokens = fs.read(getConnection(IS_PROD, true));
-        } catch (ApnsException e) {
-            throw new InternalServerErrorException("Communication Error", e);
-        } catch (IOException e) {
-            throw new InternalServerErrorException("Internal Server Error", e);
-        }
-        List<Key> pushKeys = new ArrayList<>();
-        List<String> tokens = new ArrayList<>();
-        for (FailedDeviceToken token : failedTokens) {
-            pushKeys.add(getPush(ds, "ios", token.getDeviceToken()).toEntity().getKey());
-            tokens.add(token.getDeviceToken());
-        }
-        ds.delete(pushKeys);
-        return tokens;
     }
 
     //----------------------------
     //   Static Helper Methods
     //----------------------------
-
-    private static DatastoreService getDS() {
-        return DatastoreServiceFactory.getDatastoreService();
-    }
 
     /**
      * This method decides whether a two user-settings pairs are compatible.
@@ -1122,13 +1089,13 @@ public class SamesiesApi {
         }
         // make sure their last pairing wasn't each other
         // confirm the episode was a match by searching uid2 (if not matched, would be null)
-        if (isLastMatched(ds, uid1, uid2) || isLastMatched(ds, uid2, uid1)) {
+        if (DS.isLastMatched(ds, uid1, uid2) || DS.isLastMatched(ds, uid2, uid1)) {
             return false;
         }
 
         // finally check that genders are acceptable to each other
-        return checkGender(getUser(ds, uid1, User.Relation.ADMIN, false).getGender(), settings2)
-                && checkGender(getUser(ds, uid2, User.Relation.ADMIN, false).getGender(), settings1);
+        return checkGender(DS.getUser(ds, uid1, User.Relation.ADMIN, false).getGender(), settings2)
+                && checkGender(DS.getUser(ds, uid2, User.Relation.ADMIN, false).getGender(), settings1);
     }
 
     private static boolean checkGender(String gender, Settings settings) {
@@ -1174,8 +1141,8 @@ public class SamesiesApi {
     }
 
     private static void sendPairingPush(DatastoreService ds, long myUid, long theirUid, String title, String messagePredicate) throws ServiceException {
-        Push push = getPush(ds, theirUid);
-        User me = getUser(ds, myUid, User.Relation.SELF, false);
+        Push push = DS.getPush(ds, theirUid);
+        User me = DS.getUser(ds, myUid, User.Relation.SELF, false);
         sendPush(push, title, me.getDisplayName() + " " + messagePredicate);
     }
 
@@ -1186,7 +1153,7 @@ public class SamesiesApi {
                 PushNotificationService pns = new DefaultPushNotificationService();
                 ApnsConnection conn;
                 try {
-                    conn = getConnection(IS_PROD);
+                    conn = ApnManager.getPushConnection(Constants.IS_PROD);
                     pns.send(pn, conn);
                 } catch (ApnsException e) {
                     throw new InternalServerErrorException("Communication error: iOS", e);
@@ -1202,189 +1169,6 @@ public class SamesiesApi {
                     throw new InternalServerErrorException("Communication error: Android", e);
                 }
             }
-        }
-    }
-
-    private static User getUser(DatastoreService ds, long id, User.Relation relation, boolean returnNull) throws NotFoundException {
-        try {
-            return new User(ds.get(KeyFactory.createKey("User", id)), relation);
-        } catch (EntityNotFoundException e) {
-            if (returnNull) {
-                return null;
-            } else {
-                throw new NotFoundException("User not found", e);
-            }
-        }
-    }
-
-    private static User getUser(DatastoreService ds, String email, User.Relation relation, boolean returnNull) throws NotFoundException {
-        Query query = new Query("User").setFilter(new Query.FilterPredicate(
-                "email", Query.FilterOperator.EQUAL, email));
-        PreparedQuery pq = ds.prepare(query);
-
-        Entity e = pq.asSingleEntity();
-        if (e == null) {
-            if (returnNull) {
-                return null;
-            } else {
-                throw new NotFoundException("Email not found");
-            }
-        } else {
-            return new User(e, relation);
-        }
-    }
-
-    private static Friend getFriend(DatastoreService ds, long myId, long theirId) {
-        if (myId == theirId) {
-            return null;
-        }
-        Query query = new Query("Friend").setFilter(Query.CompositeFilterOperator.and(
-                new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, myId),
-                new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, theirId)));
-        PreparedQuery pq = ds.prepare(query);
-        Entity e = pq.asSingleEntity();
-        if (e == null) {
-            query = new Query("Friend").setFilter(Query.CompositeFilterOperator.and(
-                    new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, theirId),
-                    new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, myId)));
-            pq = ds.prepare(query);
-            e = pq.asSingleEntity();
-            if (e == null) {
-                return null;
-            }
-        }
-        return new Friend(e);
-    }
-
-    private static Community getCommunity(DatastoreService ds, long cid) throws NotFoundException {
-        try {
-            return new Community(ds.get(KeyFactory.createKey("Community", cid)));
-        } catch (EntityNotFoundException e) {
-            throw new NotFoundException("Community not found", e);
-        }
-    }
-
-    private static CommunityUser getCommunityUser(DatastoreService ds, long cid, long uid) {
-        Query query = new Query("CommunityUser").setFilter(Query.CompositeFilterOperator.and(
-                new Query.FilterPredicate("cid", Query.FilterOperator.EQUAL, cid),
-                new Query.FilterPredicate("uid", Query.FilterOperator.EQUAL, uid)));
-        PreparedQuery pq = ds.prepare(query);
-        Entity e = pq.asSingleEntity();
-        if (e == null) {
-            return null;
-        } else {
-            return new CommunityUser(e);
-        }
-    }
-
-    private static Question getQuestion(DatastoreService ds, long qid) throws NotFoundException {
-        try {
-            return new Question(ds.get(KeyFactory.createKey("Question", qid)));
-        } catch (EntityNotFoundException e) {
-            throw new NotFoundException("Question not found", e);
-        }
-    }
-
-    private static List<Long> getQids(DatastoreService ds, String mode) {
-        List<Long> questions = new ArrayList<>();
-        if (!mode.equals("Personal")) { // personal questions can be ignored at this stage
-            Query query = new Query("Question").setKeysOnly();
-            // **Reminder** TODO: when we have more categories, this code might get more complex
-            query.setFilter(new Query.FilterPredicate("category", Query.FilterOperator.EQUAL, mode));
-            PreparedQuery pq = ds.prepare(query);
-            int max = pq.countEntities(FetchOptions.Builder.withDefaults());
-            int[] a = new int[max];
-            for (int i=0; i<max; ++i) {
-                a[i] = i;
-            }
-            int top = 0;
-            while (top < 10) {
-                int swap = (int) (Math.random() * (max - top) + top);
-                int tmp = a[swap];
-                a[swap] = a[top];
-                a[top] = tmp;
-                top++;
-            }
-            List<Entity> keys = pq.asList(FetchOptions.Builder.withDefaults());
-            for (int i=0; i<10; i++) {
-                questions.add(keys.get(a[i]).getKey().getId());
-            }
-        }
-        return questions;
-    }
-
-    private static Episode getEpisode(DatastoreService ds, long eid) throws NotFoundException {
-        try {
-            return new Episode(ds.get(KeyFactory.createKey("Episode", eid)));
-        } catch (EntityNotFoundException e) {
-            throw new NotFoundException("Episode not found", e);
-        }
-    }
-
-    private static boolean isLastMatched(DatastoreService ds, long uidA, long uidB) {
-        Query query = new Query("Episode").setFilter(new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, uidA))
-                .addSort("startDate", Query.SortDirection.DESCENDING);
-        PreparedQuery pq = ds.prepare(query);
-        Iterator<Entity> iter = pq.asIterator(FetchOptions.Builder.withLimit(1));
-        if (iter.hasNext()) {
-            if (new Episode(iter.next()).getUid1() == uidB) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static Chat getChat(DatastoreService ds, long cid) throws NotFoundException {
-        try {
-            return new Chat(ds.get(KeyFactory.createKey("Chat", cid)));
-        } catch (EntityNotFoundException e) {
-            throw new NotFoundException("Chat not found", e);
-        }
-    }
-
-    private static Chat getChat(DatastoreService ds, long eofid, boolean isEpisode) {
-        Query query = new Query("Chat").setFilter(Query.CompositeFilterOperator.and(
-                new Query.FilterPredicate("eofid", Query.FilterOperator.EQUAL, eofid),
-                new Query.FilterPredicate("isEpisode", Query.FilterOperator.EQUAL, isEpisode)));
-        // need to check isEpisode on the UNLIKELY chance that an episode and friend have same ID
-        PreparedQuery pq = ds.prepare(query);
-        Entity e = pq.asSingleEntity();
-        if (e == null) {
-            return null;
-        } else {
-            return new Chat(e);
-        }
-    }
-
-    private static Push getPushById(DatastoreService ds, long pid) throws NotFoundException {
-        try {
-            return new Push(ds.get(KeyFactory.createKey("Push", pid)));
-        } catch (EntityNotFoundException e) {
-            throw new NotFoundException("Push not found", e);
-        }
-    }
-
-    private static Push getPush(DatastoreService ds, long uid) {
-        Query query = new Query("Push").setFilter(new Query.FilterPredicate("uid", Query.FilterOperator.EQUAL, uid));
-        PreparedQuery pq = ds.prepare(query);
-        Entity e = pq.asSingleEntity();
-        if (e == null) {
-            return null;
-        } else {
-            return new Push(e);
-        }
-    }
-
-    private static Push getPush(DatastoreService ds, String type, String deviceToken) {
-        Query query = new Query("Push").setFilter(Query.CompositeFilterOperator.and(
-                new Query.FilterPredicate("type", Query.FilterOperator.EQUAL, type),
-                new Query.FilterPredicate("deviceToken", Query.FilterOperator.EQUAL, deviceToken)));
-        PreparedQuery pq = ds.prepare(query);
-        Entity e = pq.asSingleEntity();
-        if (e == null) {
-            return null;
-        } else {
-            return new Push(e);
         }
     }
 
@@ -1415,39 +1199,4 @@ public class SamesiesApi {
             throw new InternalServerErrorException(e);
         }
     }
-
-    private static ApnsConnectionFactory prodFactory = null;
-    private static ApnsConnectionFactory devFactory = null;
-
-    private static ApnsConnectionFactory getFactory(boolean isProd) throws ApnsException, IOException {
-        DefaultApnsConnectionFactory.Builder builder = DefaultApnsConnectionFactory.Builder.get();
-        if (isProd) {
-            if (prodFactory == null) {
-                KeyStoreProvider ksp = new ClassPathResourceKeyStoreProvider("SamesiesProdAPN.p12", KeyStoreType.PKCS12, Constants.APNS_CERT_KEY);
-                builder.setProductionKeyStoreProvider(ksp);
-                prodFactory = builder.build();
-            }
-            return prodFactory;
-        } else {
-            if (devFactory == null) {
-                KeyStoreProvider ksp = new ClassPathResourceKeyStoreProvider("SamesiesDevAPN.p12", KeyStoreType.PKCS12, Constants.APNS_CERT_KEY);
-                builder.setSandboxKeyStoreProvider(ksp);
-                devFactory = builder.build();
-            }
-            return devFactory;
-        }
-    }
-
-    private static ApnsConnection getConnection(boolean isProd) throws ApnsException, IOException {
-        return getConnection(isProd, false);
-    }
-
-    private static ApnsConnection getConnection(boolean isProd, boolean isFeedback) throws ApnsException, IOException {
-        if (isFeedback) {
-            return getFactory(isProd).openFeedbackConnection();
-        } else {
-            return getFactory(isProd).openPushConnection();
-        }
-    }
-
 }
