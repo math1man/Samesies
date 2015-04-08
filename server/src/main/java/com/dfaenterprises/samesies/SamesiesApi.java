@@ -200,7 +200,7 @@ public class SamesiesApi {
                 throw new BadRequestException("Invalid Password");
             }
         }
-        user.setGeoPt(dsUser.getGeoPt());
+        user.setLocation(dsUser.getLocation());
         user.setIsActivated(dsUser.getIsActivated());
         user.setIsBanned(dsUser.getIsBanned());
         DS.put(ds, user);
@@ -261,7 +261,7 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.banUser",
-            path = "user/ban/{id}",
+            path = "user/{id}/ban",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void banUser(@Named("id") long uid, @Nullable @Named("isBanned") Boolean isBanned) throws ServiceException {
         DatastoreService ds = DS.getDS();
@@ -367,7 +367,7 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.removeFriend",
-            path = "friends/remove/{id}/{myId}",
+            path = "friends/{id}/remove/{myId}",
             httpMethod = ApiMethod.HttpMethod.DELETE)
     public void removeFriend(@Named("id") long fid, @Named("myId") long myId) throws ServiceException {
         DatastoreService ds = DS.getDS();
@@ -389,49 +389,31 @@ public class SamesiesApi {
     //----------------------------
 
     @ApiMethod(name = "samesiesApi.getCommunity",
-            path = "community",
+            path = "community/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
-    public Community getCommunity(@Nullable@Named("location") String location, @Nullable@Named("name") String name, @Nullable@Named("id") Long cid) throws ServiceException {
-        // **v1.0.0** TODO: remove name and location and make cid not Nullable
-        // after v1.0.0, the getCommunity by name/location will not be supported at all. Users must update to v1.0.0
+    public Community getCommunity(@Named("id") Long cid) throws ServiceException {
         DatastoreService ds = DS.getDS();
         List<User> users = new ArrayList<>();
-        if (cid == null) {
-            if (name == null) {
-                if (location == null) {
-                    throw new BadRequestException("Must specify a community");
-                } else {
-                    name = location;
-                }
-            }
-            Query query = new Query("User").setFilter(Query.CompositeFilterOperator.and(
-                    new Query.FilterPredicate("community", Query.FilterOperator.EQUAL, name),
-                    new Query.FilterPredicate("isBanned", Query.FilterOperator.EQUAL, false)));
-            PreparedQuery pq = ds.prepare(query);
-            for (Entity e : pq.asIterable()) {
-                users.add(new User(e, User.Relation.STRANGER));
-            }
-        } else {
-            name = DS.getCommunity(ds, cid).getName();
-            Query query = new Query("CommunityUser").setFilter(Query.CompositeFilterOperator.and(
-                    new Query.FilterPredicate("cid", Query.FilterOperator.EQUAL, cid),
-                    new Query.FilterPredicate("isValidated", Query.FilterOperator.EQUAL, true)));
-            PreparedQuery pq = ds.prepare(query);
-            for (Entity e : pq.asIterable()) {
-                User user = DS.getUser(ds, new CommunityUser(e).getUid(), User.Relation.STRANGER, true);
-                if (isValid(user)) {
-                    users.add(user);
-                }
+        Community community = DS.getCommunity(ds, cid);
+        Query query = new Query("CommunityUser").setFilter(Query.CompositeFilterOperator.and(
+                new Query.FilterPredicate("cid", Query.FilterOperator.EQUAL, cid),
+                new Query.FilterPredicate("isValidated", Query.FilterOperator.EQUAL, true)));
+        PreparedQuery pq = ds.prepare(query);
+        for (Entity e : pq.asIterable()) {
+            User user = DS.getUser(ds, new CommunityUser(e).getUid(), User.Relation.STRANGER, true);
+            if (isValid(user)) {
+                users.add(user);
             }
         }
         Collections.shuffle(users);
         if (users.size() > 100) {
             // only return 100 users max
             // need this out here for randomization reasons
-            return new Community(name, users.subList(0, 100));
+            community.setUsers(users.subList(0, 100));
         } else {
-            return new Community(name, users);
+            community.setUsers(users);
         }
+        return community;
     }
 
     @ApiMethod(name = "samesiesApi.getNearBy",
@@ -445,7 +427,7 @@ public class SamesiesApi {
         List<User> users = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
             User user = new User(e, User.Relation.STRANGER);
-            if (user.hasGeoPt() && distance(user.getGeoPt(), location) <= 10) {
+            if (user.hasLocation() && distance(user.getLocation(), location) <= 10) {
                 users.add(user);
             }
         }
@@ -496,7 +478,7 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.joinCommunity",
-            path = "communities/join/{id}/{myId}",
+            path = "communities/{id}/join/{myId}",
             httpMethod = ApiMethod.HttpMethod.POST)
     public Community joinCommunity(@Named("id") long cid, @Named("myId") long myUid, @Nullable@Named("string") String string) throws ServiceException {
         DatastoreService ds = DS.getDS();
@@ -549,7 +531,7 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.leaveCommunity",
-            path = "communities/leave/{id}/{myId}",
+            path = "communities/{id}/leave/{myId}",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void leaveCommunity(@Named("id") long cid, @Named("myId") long myUid) throws ServiceException {
         DatastoreService ds = DS.getDS();
@@ -625,15 +607,6 @@ public class SamesiesApi {
         return questions;
     }
 
-    @ApiMethod(name = "samesiesApi.getAllQuestions",
-            path = "questions/all",
-            httpMethod = ApiMethod.HttpMethod.GET)
-    public List<Question> getAllQuestions() throws ServiceException {
-        // **v1.0.0** TODO: remove this method, needed for compatibility
-        // after v1.0.0, this method will not be completely replaced by getQuestions(). Users must update to v1.0.0
-        return getQuestions();
-    }
-
     @ApiMethod(name = "samesiesApi.getCategories",
             path = "questions/categories",
             httpMethod = ApiMethod.HttpMethod.GET)
@@ -676,17 +649,13 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.findEpisode",
-            path = "episode/find/{myId}/{mode}/{matchMale}/{matchFemale}/{matchOther}",
+            path = "episode/find/{myId}/{mode}/{matchMale}/{matchFemale}/{matchOther}/{isPersistent}",
             httpMethod = ApiMethod.HttpMethod.POST)
     public Episode findEpisode(@Named("myId") long myUid, @Named("mode") String mode, @Named("matchMale") boolean matchMale,
                                @Named("matchFemale") boolean matchFemale, @Named("matchOther") boolean matchOther,
-                               @Nullable@Named("isPersistent") Boolean isPersistent, @Nullable@Named("cid") Long cid,
+                               @Named("isPersistent") Boolean isPersistent, @Nullable@Named("cid") Long cid,
                                @Nullable@Named("latitude") Float latitude, @Nullable@Named("longitude") Float longitude) throws ServiceException {
         DatastoreService ds = DS.getDS();
-        // **v1.0.0** TODO: make isPersistent not Nullable
-        if (isPersistent == null) {
-            isPersistent = false;
-        }
         GeoPt location = null;
         if (latitude != null && longitude != null) {
             location = new GeoPt(latitude, longitude);
@@ -746,7 +715,7 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.acceptEpisode",
-            path = "episode/accept/{id}",
+            path = "episode/{id}/accept",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void acceptEpisode(@Named("id") long eid) throws ServiceException {
         DatastoreService ds = DS.getDS();
@@ -771,7 +740,7 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.answerEpisode",
-            path = "episode/answer/{id}/{myId}/{answer}",
+            path = "episode/{id}/answer/{myId}/{answer}",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public Episode answerEpisode(@Named("id") long eid, @Named("myId") long myUid,
                                  @Named("answer") String answer) throws ServiceException {
@@ -796,7 +765,7 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.endEpisode",
-            path = "episode/end/{id}",
+            path = "episode/{id}/end",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void endEpisode(@Named("id") long eid) throws ServiceException {
         DatastoreService ds = DS.getDS();
@@ -846,7 +815,7 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.getEpisodeQuestions",
-            path = "episodes/questions/{eid}",
+            path = "episodes/{eid}/questions",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Question> getEpisodeQuestions(@Named("eid") long eid) throws ServiceException {
         DatastoreService ds = DS.getDS();
@@ -923,7 +892,7 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.updateChat",
-            path = "chat/update/{id}/{eofid}/{isEpisode}",
+            path = "chat/{id}/update/{eofid}/{isEpisode}",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void updateChat(@Named("id") long cid, @Named("eofid") long eofid, @Named("isEpisode") boolean isEpisode) throws ServiceException {
         DatastoreService ds = DS.getDS();
@@ -934,7 +903,7 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.closeChat",
-            path = "chat/close/{id}",
+            path = "chat/{id}/close",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void closeChat(@Named("id") long cid) throws ServiceException {
         DatastoreService ds = DS.getDS();
@@ -958,17 +927,15 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.getMessages",
-            path = "chat/messages/{chatId}/{after}",
+            path = "chat/messages/{chatId}/{after}/{myId}",
             httpMethod = ApiMethod.HttpMethod.GET)
-    public List<Message> getMessages(@Named("chatId") long cid, @Named("after") Date after, @Nullable@Named("myId") Long myUid) throws ServiceException {
-        // **v1.0.0** TODO: remove the @Nullable to the myId parameter
-        // after v1.0.0, this method will require the myId parameter. Users must update to v1.0.0
+    public List<Message> getMessages(@Named("chatId") long cid, @Named("after") Date after, @Named("myId") long myUid) throws ServiceException {
         DatastoreService ds = DS.getDS();
-        if (myUid != null) {
-            Chat chat = DS.getChat(ds, cid);
-            chat.setIsUpToDate(myUid, true);
-            DS.put(ds, chat);
-        }
+
+        Chat chat = DS.getChat(ds, cid);
+        chat.setIsUpToDate(myUid, true);
+        DS.put(ds, chat);
+
         Query query = new Query("Message").setFilter(Query.CompositeFilterOperator.and(
                 new Query.FilterPredicate("chatId", Query.FilterOperator.EQUAL, cid),
                 new Query.FilterPredicate("sentDate", Query.FilterOperator.GREATER_THAN, after)))
@@ -1039,7 +1006,7 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.sendPush",
-            path = "push/send/{id}/{title}/{message}",
+            path = "push/{id}/send/{title}/{message}",
             httpMethod = ApiMethod.HttpMethod.POST)
     public void sendPush(@Named("id") long pid, @Named("title") String title, @Named("message") String message) throws ServiceException {
         DatastoreService ds = DS.getDS();

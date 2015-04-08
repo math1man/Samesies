@@ -28,16 +28,12 @@ public class Community extends Storable {
     // Front end fields
     private List<User> users;
 
-    // **v1.0.0** TODO: remove location, needed for compatibility
-    private String location;
-
     public Community() {
     }
 
     public Community(Entity e) {
         super(e);
         this.name = (String) e.getProperty("name");
-        this.location = name;
         this.description = (String) e.getProperty("description");
         this.type = EntityUtils.getEnumProp(e, "type", Type.class);
         this.utilityString = (String) e.getProperty("utilityString");
@@ -50,7 +46,6 @@ public class Community extends Storable {
 
     public Community(String name, String description, Type type, String utilityString) {
         this.name = name;
-        this.location = name;
         setDescription(description);
         this.type = type;
         this.utilityString = utilityString;
@@ -59,7 +54,6 @@ public class Community extends Storable {
 
     public Community(String name, List<User> users) {
         this.name = name;
-        this.location = name;
         this.users = users;
     }
 
@@ -101,14 +95,6 @@ public class Community extends Storable {
 
     public void setUsers(List<User> users) {
         this.users = users;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
     }
 
     @Override
