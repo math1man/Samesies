@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 /**
  * @author Ari Weiland
  */
+@SuppressWarnings("UnusedDeclaration")
 @Api(
         name = "samesies",
         version = "v1",
