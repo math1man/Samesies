@@ -7,7 +7,7 @@
     var app = angular.module('samesies.controllers', []);
 
     app.controller('IndexCtrl', function($scope, $window, $state, $ionicHistory, $ionicViewSwitcher,
-                                         $ionicPopup, $ionicModal, API, Data, Utils) {
+                                         $ionicPopup, $ionicModal, API, Data, Utils, Loading) {
 
         $window.init = function() {
             if (!$state.is('login')) {
@@ -101,6 +101,10 @@
             return Data[field];
         };
 
+        $scope.loading = function (field) {
+            return Loading[field];
+        };
+
         $scope.back = function() {
             $ionicHistory.goBack();
         };
@@ -128,9 +132,7 @@
                     if (friends && friends.length) {
                         Data.friends = friends;
                     }
-                    if (Data.isLoading) {
-                        Data.isLoading--;
-                    }
+                    Loading.friends = false;
                     $scope.$apply();
                     // nested so that it can pull from friends
                     $scope.refreshChats();
@@ -147,9 +149,7 @@
                         Data.communities = communities;
                         $scope.$apply();
                     }
-                    if (Data.isLoading) {
-                        Data.isLoading--;
-                    }
+                    Loading.communities = false;
                 });
             }
         };
@@ -167,9 +167,7 @@
                         }
                         Data.chats = chats;
                     }
-                    if (Data.isLoading) {
-                        Data.isLoading--;
-                    }
+                    Loading.chats = false;
                     $scope.$apply();
                 });
             }
@@ -196,9 +194,7 @@
                         }
                         Data.connections = cxns;
                     }
-                    if (Data.isLoading) {
-                        Data.isLoading--;
-                    }
+                    Loading.connections = false;
                     $scope.$apply();
                 });
             }
@@ -210,7 +206,7 @@
 
     });
 
-    app.controller('LoginCtrl', function($scope, $window, $ionicPopup, API, Data) {
+    app.controller('LoginCtrl', function($scope, $window, $ionicPopup, API, Data, Loading) {
 
         $scope.$on('$ionicView.beforeEnter', function() {
             $scope.loginData = {
@@ -230,7 +226,10 @@
             $scope.loginData = null;
             $scope.loginCheck = {};
             Data.user = user;
-            Data.isLoading = 4;
+            Loading.communities = true;
+            Loading.friends = true;
+            Loading.chats = true;
+            Loading.connections = true;
             $scope.refresh();
             $scope.resetToggle();
             $scope.go('menu', true);
@@ -510,7 +509,7 @@
 
     });
 
-    app.controller('SelectComCtrl', function($scope, $ionicPopup, API, Data, Utils) {
+    app.controller('SelectComCtrl', function($scope, $ionicPopup, API, Data, Utils, Loading) {
 
         $scope.$on('popover.shown', function() {
             $scope.selected = Data.community;
@@ -597,6 +596,7 @@
         };
 
         $scope.loadCommunity = function(community) {
+            Loading.community = true;
             Data.community = community;
             $scope.hideSelect();
             if ($scope.addCommPopup) {
@@ -604,6 +604,7 @@
             }
             API.getCommunity(community.id).then(function(resp) {
                 Data.community = resp.result;
+                Loading.community = false;
                 $scope.$apply();
             });
         };
@@ -913,10 +914,6 @@
             $scope.refreshCxns();
         });
 
-        $scope.isLoading = function() {
-            return Data.isLoading && Data.connections.length === 0;
-        };
-
         $scope.accept = function(cxn) {
             cxn.status = "IN_PROGRESS";
             API.acceptEpisode(cxn.id);
@@ -969,10 +966,6 @@
     app.controller('MessagesCtrl', function($scope, API, Data, Utils) {
 
         $scope.search = '';
-
-        $scope.isLoading = function() {
-            return Data.isLoading && Data.chats.length === 0;
-        };
 
         $scope.goChat = function(chat) {
             if (chat.uid1 === Data.user.id) {
@@ -1224,10 +1217,6 @@
             $scope.findPopup.hide();
         };
 
-        $scope.isLoading = function() {
-            return Data.isLoading && Data.friends.length === 0;
-        };
-
         $scope.search = '';
 
         $scope.profile = function(friend) {
@@ -1337,10 +1326,6 @@
         $scope.$on('$destroy', function() {
             $scope.addCommPopup.remove();
         });
-
-        $scope.isLoading = function() {
-            return Data.isLoading && Data.communities.length === 0;
-        };
 
         $scope.leave = function(community) {
             API.leaveCommunity(community.id, Data.user.id);

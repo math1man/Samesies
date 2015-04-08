@@ -257,7 +257,7 @@
     });
 
     app.service('Data', function() {
-        // global stataic data
+        // global static data
         this.questions = [];
         this.categories = [];
         this.modes = [];
@@ -287,5 +287,13 @@
         this.chat = null;
         this.isLoading = 0;
     });
+
+    app.service('Loading', function() {
+        this.community = false;
+        this.communities = false;
+        this.friends = false;
+        this.chats = false;
+        this.connections = false;
+    })
 
 })();

@@ -4,7 +4,7 @@
     </ion-nav-buttons>
     <ion-content scroll="false">
         <ion-content>
-            <ss-loading ng-show="isLoading()"></ss-loading>
+            <ss-loading ng-show="loading('communities')"></ss-loading>
             <div class="row hidden-grid" ng-repeat="com in data('communities') | orderBy:'name'">
                 <div class="col col-90">
                     <div class="item item-text-wrap">
