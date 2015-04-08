@@ -2,7 +2,7 @@
 
     var app = angular.module('samesies', ['ionic', 'ngCordova', 'samesies.controllers', 'samesies.services', 'samesies.filters', 'samesies.directives']);
 
-    app.run(function ($window, $rootScope, $ionicPlatform, $cordovaKeyboard, $cordovaPush, $cordovaToast, $ionicPopup) {
+    app.run(function ($window, $rootScope, $ionicPlatform, $cordovaKeyboard, $cordovaPush, $cordovaToast) {
         $ionicPlatform.ready(function () {
             // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
             // for form inputs)
