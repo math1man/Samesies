@@ -1,5 +1,6 @@
 <ion-view view-title="{{dispName(data('chat').user)}}" ng-controller="ChatCtrl">
 	<ion-nav-buttons side="right">
+		<!--TODO: add some indication that it's been clicked-->
 		<button class="button button-icon icon ion-person-add" ng-show="showAddFriend()" ng-click="addFriend()">
 			<span class="badge badge-assertive icon-badge" ng-show="showOtherAdded()">+</span>
 		</button>

@@ -23,8 +23,6 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
@@ -41,8 +39,7 @@ import java.util.regex.Pattern;
         audiences = {Constants.ANDROID_AUDIENCE})
 public class SamesiesApi {
 
-    public static final String GCM_API_KEY = "AIzaSyDPn1pR_XC5VpMjmJzQZQucXa4Y_Kr-m-Q";
-    public static final long EVERYONE_CID = 5686812383117312L;
+    public static final boolean IS_PROD = false;
 
     public void initQuestions() throws ServiceException {
         DatastoreService ds = getDS();
@@ -138,7 +135,7 @@ public class SamesiesApi {
         if (getUser(ds, email, User.Relation.STRANGER, true) == null) {
             newUser.initNewUser();
             EntityUtils.put(ds, newUser);
-            EntityUtils.put(ds, new CommunityUser(EVERYONE_CID, newUser.getId(), true));
+            EntityUtils.put(ds, new CommunityUser(Constants.EVERYONE_CID, newUser.getId(), true));
             sendEmail(email, "Activate your Samesies Account",
                     "Click the link below to activate your account:\n" +
                             "https://samesies-app.appspot.com/_ah/spi/activate?user_id=" + newUser.getId() + "\n\n" +
@@ -332,27 +329,37 @@ public class SamesiesApi {
             throw new ForbiddenException("Cannot add oneself as a friend");
         }
 
-        // TODO: send push notification
+        Friend.Status sendPush = null;
+
         Friend friend = getFriend(ds, myId, theirId);
         if (friend == null) {
             friend = new Friend(myId, theirId);
+            sendPush = friend.getStatus();
         } else if (friend.isUid1(myId)) {
             if (friend.getStatus() == Friend.Status.DELETED_1) {
                 // if you had deleted them, set it back to pending
                 friend.setStatus(Friend.Status.PENDING);
+                sendPush = friend.getStatus();
             }
             // if already pending, accepted, or deleted by them, leave it
         } else {
             if (friend.getStatus() == Friend.Status.PENDING) {
                 // if both have added each other, accept
                 friend.setStatus(Friend.Status.ACCEPTED);
+                sendPush = friend.getStatus();
             } else if (friend.getStatus() == Friend.Status.DELETED_2) {
                 // if you had deleted them, set it back to pending
                 friend.setUid1(myId);
                 friend.setUid2(theirId);
                 friend.setStatus(Friend.Status.PENDING);
+                sendPush = friend.getStatus();
             }
             // if already accepted or deleted by them, leave it
+        }
+        if (sendPush == Friend.Status.PENDING) {
+            sendPairingPush(ds, myId, theirId, "New Friend Request", "wants to be your friend!");
+        } else if (sendPush == Friend.Status.ACCEPTED) {
+            sendPairingPush(ds, myId, theirId, "Friend Request Accepted", "accepted your friend request!");
         }
         if (friend.getStatus().isDeleted()) {
             return null;
@@ -733,11 +740,11 @@ public class SamesiesApi {
             path = "episode/connect/{myId}/{theirId}/{mode}",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public Episode connectEpisode(@Named("myId") long myUid, @Named("theirId") long theirUid, @Named("mode") String mode) throws ServiceException {
-        // TODO: send push notification
         DatastoreService ds = getDS();
         Episode episode = new Episode(myUid, theirUid, new Settings(mode));
         episode.setQids(getQids(ds, mode));
         EntityUtils.put(ds, episode);
+        sendPairingPush(ds, myUid, theirUid, "New Connection", "wants to connect!");
         return episode;
     }
 
@@ -745,7 +752,6 @@ public class SamesiesApi {
             path = "episode/accept/{id}",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void acceptEpisode(@Named("id") long eid) throws ServiceException {
-        // TODO: send push notification?
         DatastoreService ds = getDS();
         Episode episode = getEpisode(ds, eid);
         episode.setStatus(Episode.Status.IN_PROGRESS);
@@ -772,7 +778,6 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.PUT)
     public Episode answerEpisode(@Named("id") long eid, @Named("myId") long myUid,
                                  @Named("answer") String answer) throws ServiceException {
-        // TODO: send push notification
         DatastoreService ds = getDS();
         Episode episode = getEpisode(ds, eid);
         List<String> answers = episode.getAnswers(myUid);
@@ -789,6 +794,7 @@ public class SamesiesApi {
         episode.setAnswers(myUid, answers);
         episode.modify();
         EntityUtils.put(ds, episode, a);
+        sendPairingPush(ds, myUid, episode.getOtherUid(myUid), "New Answer", "answered a question in your connection!");
         return episode;
     }
 
@@ -880,7 +886,6 @@ public class SamesiesApi {
         DatastoreService ds = getDS();
         Chat chat = getChat(ds, eofid, isEpisode);
         if (chat == null) {
-            // TODO: send push notification?
             chat = new Chat(eofid, isEpisode, myUid, theirUid);
         } else {
             chat.setIsClosed(false);
@@ -946,12 +951,12 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.POST)
     public Message sendMessage(@Named("chatId") long cid, @Named("myId") long myUid, @Named("message") String message,
                                @Named("random") @Nullable String random) throws ServiceException {
-        // TODO: send push notification
         DatastoreService ds = getDS();
         Chat chat = getChat(ds, cid);
         Message m = new Message(cid, myUid, message, random);
         chat.update(myUid, m.getSentDate());
         EntityUtils.put(ds, chat, m);
+        sendPairingPush(ds, myUid, chat.getOtherUid(myUid), "New Message", "sent you a message!");
         return m;
     }
 
@@ -1012,15 +1017,6 @@ public class SamesiesApi {
         DatastoreService ds = getDS();
         type = type.toLowerCase();
         Push devicePush = getPush(ds, type, deviceToken);
-
-        // temporarily allow multiple devices, for debugging
-        if (devicePush == null) {
-            devicePush = new Push(uid, type, deviceToken);
-        } else {
-            devicePush.setUid(uid);
-        }
-
-        /* TODO: revert to this section of code
         Push userPush = getPush(ds, uid);
         if (devicePush == null && userPush == null) {
             // neither device nor user is registered:
@@ -1041,8 +1037,6 @@ public class SamesiesApi {
             ds.delete(userPush.toEntity().getKey());
             devicePush.setUid(uid);
         } // else user push and device push match: user-device combo is registered together
-        */
-
         EntityUtils.put(ds, devicePush);
         return devicePush;
     }
@@ -1064,11 +1058,8 @@ public class SamesiesApi {
         DatastoreService ds = getDS();
         List<FailedDeviceToken> failedTokens;
         try {
-            if (factory == null) {
-                buildFactory(true);
-            }
             FeedbackService fs = new DefaultFeedbackService();
-            failedTokens = fs.read(factory.openFeedbackConnection());
+            failedTokens = fs.read(getConnection(IS_PROD, true));
         } catch (ApnsException e) {
             throw new InternalServerErrorException("Communication Error", e);
         } catch (IOException e) {
@@ -1182,26 +1173,34 @@ public class SamesiesApi {
         return user != null && !user.getIsBanned();
     }
 
+    private static void sendPairingPush(DatastoreService ds, long myUid, long theirUid, String title, String messagePredicate) throws ServiceException {
+        Push push = getPush(ds, theirUid);
+        User me = getUser(ds, myUid, User.Relation.SELF, false);
+        sendPush(push, title, me.getDisplayName() + " " + messagePredicate);
+    }
+
     private static void sendPush(Push push, String title, String message) throws InternalServerErrorException {
-        if (push.getType().equals("ios")) {
-            PushNotification pn = new PushNotification().setAlert(message).setDeviceTokens(push.getDeviceToken());
-            PushNotificationService pns = new DefaultPushNotificationService();
-            ApnsConnection conn;
-            try {
-                conn = getConnection();
-                pns.send(pn, conn);
-            } catch (ApnsException e) {
-                throw new InternalServerErrorException("Communication error: iOS", e);
-            } catch (IOException e) {
-                throw new InternalServerErrorException("File IO error", e);
-            }
-        } else if (push.getType().equals("android")) {
-            Sender sender = new Sender(GCM_API_KEY);
-            try {
-                sender.sendNoRetry(new com.google.android.gcm.server.Message.Builder().addData("title", title)
-                        .addData("message", message).build(), push.getDeviceToken());
-            } catch (IOException e) {
-                throw new InternalServerErrorException("Communication error: Android", e);
+        if (push != null) {
+            if (push.getType().equals("ios")) {
+                PushNotification pn = new PushNotification().setAlert(message).setBadge(1).setDeviceTokens(push.getDeviceToken());
+                PushNotificationService pns = new DefaultPushNotificationService();
+                ApnsConnection conn;
+                try {
+                    conn = getConnection(IS_PROD);
+                    pns.send(pn, conn);
+                } catch (ApnsException e) {
+                    throw new InternalServerErrorException("Communication error: iOS", e);
+                } catch (IOException e) {
+                    throw new InternalServerErrorException("File IO error", e);
+                }
+            } else if (push.getType().equals("android")) {
+                Sender sender = new Sender(Constants.GCM_API_KEY);
+                try {
+                    sender.sendNoRetry(new com.google.android.gcm.server.Message.Builder().addData("title", title)
+                            .addData("message", message).build(), push.getDeviceToken());
+                } catch (IOException e) {
+                    throw new InternalServerErrorException("Communication error: Android", e);
+                }
             }
         }
     }
@@ -1417,44 +1416,38 @@ public class SamesiesApi {
         }
     }
 
-    private static ApnsConnectionFactory factory = null;
+    private static ApnsConnectionFactory prodFactory = null;
+    private static ApnsConnectionFactory devFactory = null;
 
-    private static void buildFactory(boolean isProd) throws ApnsException, IOException {
+    private static ApnsConnectionFactory getFactory(boolean isProd) throws ApnsException, IOException {
         DefaultApnsConnectionFactory.Builder builder = DefaultApnsConnectionFactory.Builder.get();
         if (isProd) {
-            KeyStoreProvider ksp = new ClassPathResourceKeyStoreProvider("SamesiesProdAPN.p12", KeyStoreType.PKCS12, getApnCertificatePassword());
-            builder.setProductionKeyStoreProvider(ksp);
-        } else {
-            KeyStoreProvider ksp = new ClassPathResourceKeyStoreProvider("SamesiesDevAPN.p12", KeyStoreType.PKCS12, getApnCertificatePassword());
-            builder.setSandboxKeyStoreProvider(ksp);
-        }
-        factory = builder.build();
-    }
-
-    private static ApnsConnection getConnection() throws ApnsException, IOException {
-        if (factory == null) {
-            buildFactory(true);
-        }
-        return factory.openPushConnection();
-    }
-
-    private static char[] apnCertificatePassword = null;
-
-    private static char[] getApnCertificatePassword() throws IOException {
-        if (apnCertificatePassword == null) {
-            BufferedReader br = new BufferedReader(new FileReader("WEB-INF/apn_password.txt"));
-            char[] password = new char[100];
-            int i = br.read();
-            int count = 0;
-            while (i > -1) {
-                password[count] = (char) i;
-                count++;
-                i = br.read();
+            if (prodFactory == null) {
+                KeyStoreProvider ksp = new ClassPathResourceKeyStoreProvider("SamesiesProdAPN.p12", KeyStoreType.PKCS12, Constants.APNS_CERT_KEY);
+                builder.setProductionKeyStoreProvider(ksp);
+                prodFactory = builder.build();
             }
-            apnCertificatePassword = new char[count];
-            System.arraycopy(password, 0, apnCertificatePassword, 0, count);
+            return prodFactory;
+        } else {
+            if (devFactory == null) {
+                KeyStoreProvider ksp = new ClassPathResourceKeyStoreProvider("SamesiesDevAPN.p12", KeyStoreType.PKCS12, Constants.APNS_CERT_KEY);
+                builder.setSandboxKeyStoreProvider(ksp);
+                devFactory = builder.build();
+            }
+            return devFactory;
         }
-        return apnCertificatePassword;
+    }
+
+    private static ApnsConnection getConnection(boolean isProd) throws ApnsException, IOException {
+        return getConnection(isProd, false);
+    }
+
+    private static ApnsConnection getConnection(boolean isProd, boolean isFeedback) throws ApnsException, IOException {
+        if (isFeedback) {
+            return getFactory(isProd).openFeedbackConnection();
+        } else {
+            return getFactory(isProd).openPushConnection();
+        }
     }
 
 }

@@ -2,6 +2,7 @@ app/platforms
 app/node_modules
 app/private
 server/target
+server/eclipse-launch-profiles
 .idea
 
 */.DS_Store
@@ -10,8 +11,6 @@ server/target
 *.keystore
 *.apk
 
-apn_password.txt
+Constants.java
 
 Letter of Understanding.docx
-
-server/eclipse-launch-profiles

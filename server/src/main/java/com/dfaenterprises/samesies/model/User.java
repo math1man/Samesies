@@ -239,6 +239,14 @@ public class User extends Storable {
         this.isBanned = isBanned;
     }
 
+    public String getDisplayName() {
+        if (name == null) {
+            return alias;
+        } else {
+            return name;
+        }
+    }
+
     public void setDefaultAlias() {
         if (email != null) {
             setAlias(getAlias(email));

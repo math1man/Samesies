@@ -38,17 +38,11 @@
                         if (notification.event === "registered") {
                             $window.localStorage['deviceToken'] = notification.regid;
                         } else if (notification.event === "message") {
-                            // TODO: why does this not work?
                             $cordovaToast.showLongTop(notification.message);
-                            $ionicPopup.alert({
-                                title: "Message Received",
-                                template: notification.message
-                            });
                         }
                     } else if (ionic.Platform.isIOS()) {
                         if (notification.foreground === "1") {
                             if (notification.body && notification.messageFrom) {
-                                // TODO: what is this code for?
                                 $cordovaToast.showLongTop(notification.body);
                             } else {
                                 $cordovaToast.showLongTop(notification.alert);
