@@ -1,7 +1,7 @@
 Samesies: A new way to meet people
 ========
 
-Samesies is a new app for Android and iOS that allows you to casually interact with other people in your area.
+Samesies is a new app for Android and iOS that allows you to meet people in your community in a fun, natural, stress-free environment.
 
 The current structure is built on the Ionic framework with AngularJS. In order to use the project, all of these 
 libraries must be installed.  If you don't have node, you can download it from http://nodejs.org/. Then, use the 
