@@ -2,7 +2,7 @@
 
     var app = angular.module('samesies', ['ionic', 'ngCordova', 'samesies.controllers', 'samesies.services', 'samesies.filters', 'samesies.directives']);
 
-    app.run(function ($window, $rootScope, $ionicPlatform, $cordovaKeyboard, $cordovaPush, $cordovaToast) {
+    app.run(function ($window, $rootScope, $ionicPlatform, $cordovaKeyboard, $cordovaPush, $cordovaToast, Refresh) {
         $ionicPlatform.ready(function () {
             // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
             // for form inputs)
@@ -34,6 +34,7 @@
                 }
 
                 $rootScope.$on('$cordovaPush:notificationReceived', function (event, notification) {
+                    Refresh.all($rootScope);
                     if (ionic.Platform.isAndroid()) {
                         if (notification.event === "registered") {
                             $window.localStorage['deviceToken'] = notification.regid;
@@ -46,9 +47,6 @@
                                 $cordovaToast.showLongTop(notification.body);
                             } else {
                                 $cordovaToast.showLongTop(notification.alert);
-                            }
-                            if (notification.badge) {
-                                $cordovaPush.setBadgeNumber(notification.badge).then();
                             }
                         }
                     }

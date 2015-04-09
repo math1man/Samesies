@@ -294,6 +294,108 @@
         this.friends = false;
         this.chats = false;
         this.connections = false;
+    });
+
+    app.factory('Refresh', function(API, Data, Utils, Loading) {
+        var all = function($scope) {
+            communities($scope);
+            if (Data.user) {
+                API.getFriends(Data.user.id).then(function (resp) {
+                    var friends = resp.result.items;
+                    if (friends && friends.length) {
+                        Data.friends = friends;
+                    }
+                    Loading.friends = false;
+                    if ($scope) {
+                        $scope.$apply();
+                    }
+                    // nested so that it can pull from friends
+                    chats($scope);
+                    connections($scope);
+                });
+            }
+        };
+        var communities = function($scope) {
+            if (Data.user) {
+                API.getUserCommunities(Data.user.id).then(function(resp) {
+                    var communities = resp.result.items;
+                    if (communities && communities.length) {
+                        Data.communities = communities;
+                    }
+                    Loading.communities = false;
+                    if ($scope) {
+                        $scope.$apply();
+                    }
+                });
+            }
+        };
+        var friends = function($scope) {
+            API.getFriends(Data.user.id).then(function (resp) {
+                var friends = resp.result.items;
+                if (friends && friends.length) {
+                    Data.friends = friends;
+                }
+                Loading.friends = false;
+                if ($scope) {
+                    $scope.$apply();
+                }
+            });
+        };
+        var chats = function($scope) {
+            if (Data.user) { // need to add a second check in case they immediately log out
+                API.getChats(Data.user.id).then(function (resp) {
+                    var chats = resp.result.items;
+                    if (chats && chats.length) {
+                        for (var i = 0; i < chats.length; i++) {
+                            var index = Utils.indexOfById(Data.friends, chats[i].user, 'user');
+                            if (index > -1) {
+                                chats[i].user = Data.friends[index].user;
+                            }
+                        }
+                        Data.chats = chats;
+                    }
+                    Loading.chats = false;
+                    if ($scope) {
+                        $scope.$apply();
+                    }
+                });
+            }
+        };
+        var connections = function($scope) {
+            if (Data.user) { // need to add a second check in case they immediately log out
+                API.getConnections(Data.user.id).then(function (resp) {
+                    var cxns = resp.result.items;
+                    if (cxns && cxns.length) {
+                        for (var i = 0; i < cxns.length; i++) {
+                            cxns[i].data = Utils.getData(cxns[i]);
+                            if (cxns[i].user) {
+                                var index = Utils.indexOfById(Data.friends, cxns[i].user, 'user');
+                                if (index > -1) {
+                                    cxns[i].user = Data.friends[index].user;
+                                }
+                            } else {
+                                cxns[i].user = {
+                                    name: 'Matching...',
+                                    avatar: 'img/lone_icon.png'
+                                }
+                            }
+                        }
+                        Data.connections = cxns;
+                    }
+                    Loading.connections = false;
+                    if ($scope) {
+                        $scope.$apply();
+                    }
+                });
+            }
+        };
+        return {
+            all: all,
+            communities: communities,
+            friends: friends,
+            chats: chats,
+            connections: connections
+        }
     })
 
 })();

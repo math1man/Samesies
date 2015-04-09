@@ -991,6 +991,7 @@ public class SamesiesApi {
             // device is not registered, user is:
             // change the device token of the user push
             userPush.setDeviceToken(deviceToken);
+            userPush.setType(type);
             devicePush = userPush;
         } else if (userPush == null) {
             // user is not registered, device is:
