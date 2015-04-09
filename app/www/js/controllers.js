@@ -124,89 +124,13 @@
             $state.go(state);
         };
 
-        $scope.refresh = function() {
-            $scope.refreshCommunities();
-            if (Data.user) {
-                API.getFriends(Data.user.id).then(function(resp) {
-                    var friends = resp.result.items;
-                    if (friends && friends.length) {
-                        Data.friends = friends;
-                    }
-                    Loading.friends = false;
-                    $scope.$apply();
-                    // nested so that it can pull from friends
-                    $scope.refreshChats();
-                    $scope.refreshCxns();
-                });
-            }
-        };
-
-        $scope.refreshCommunities = function() {
-            if (Data.user) {
-                API.getUserCommunities(Data.user.id).then(function(resp) {
-                    var communities = resp.result.items;
-                    if (communities && communities.length) {
-                        Data.communities = communities;
-                        $scope.$apply();
-                    }
-                    Loading.communities = false;
-                });
-            }
-        };
-
-        $scope.refreshChats = function() {
-            if (Data.user) { // need to add a second check in case they immediately log out
-                API.getChats(Data.user.id).then(function (resp) {
-                    var chats = resp.result.items;
-                    if (chats && chats.length) {
-                        for (var i = 0; i < chats.length; i++) {
-                            var index = Utils.indexOfById(Data.friends, chats[i].user, 'user');
-                            if (index > -1) {
-                                chats[i].user = Data.friends[index].user;
-                            }
-                        }
-                        Data.chats = chats;
-                    }
-                    Loading.chats = false;
-                    $scope.$apply();
-                });
-            }
-        };
-
-        $scope.refreshCxns = function() {
-            if (Data.user) { // need to add a second check in case they immediately log out
-                API.getConnections(Data.user.id).then(function (resp) {
-                    var cxns = resp.result.items;
-                    if (cxns && cxns.length) {
-                        for (var i = 0; i < cxns.length; i++) {
-                            cxns[i].data = Utils.getData(cxns[i]);
-                            if (cxns[i].user) {
-                                var index = Utils.indexOfById(Data.friends, cxns[i].user, 'user');
-                                if (index > -1) {
-                                    cxns[i].user = Data.friends[index].user;
-                                }
-                            } else {
-                                cxns[i].user = {
-                                    name: 'Matching...',
-                                    avatar: 'img/lone_icon.png'
-                                }
-                            }
-                        }
-                        Data.connections = cxns;
-                    }
-                    Loading.connections = false;
-                    $scope.$apply();
-                });
-            }
-        };
-
         $scope.$on('$destroy', function() {
             $scope.settingsPopup.remove();
         });
 
     });
 
-    app.controller('LoginCtrl', function($scope, $window, $ionicPopup, API, Data, Loading) {
+    app.controller('LoginCtrl', function($scope, $window, $ionicPopup, API, Data, Loading, Refresh) {
 
         $scope.$on('$ionicView.beforeEnter', function() {
             $scope.loginData = {
@@ -230,7 +154,7 @@
             Loading.friends = true;
             Loading.chats = true;
             Loading.connections = true;
-            $scope.refresh();
+            Refresh.all($scope);
             $scope.resetToggle();
             $scope.go('menu', true);
         };
@@ -390,10 +314,10 @@
 
     });
 
-    app.controller('MenuCtrl', function ($scope, $ionicModal, $ionicPopup, $ionicPopover, API, Data, Utils) {
+    app.controller('MenuCtrl', function ($scope, $ionicModal, $ionicPopup, $ionicPopover, API, Data, Utils, Refresh) {
 
         $scope.$on('$ionicView.beforeEnter', function() {
-            $scope.refresh();
+            Refresh.all($scope);
             Data.tempUser = null;
         });
 
@@ -863,10 +787,10 @@
 
     });
 
-    app.controller('BrowseCtrl', function($scope, $ionicPopup, $ionicPopover, API, Data) {
+    app.controller('BrowseCtrl', function($scope, $ionicPopup, $ionicPopover, API, Data, Refresh) {
 
         $scope.$on('$ionicView.beforeEnter', function() {
-            $scope.refreshCommunities();
+            Refresh.communities($scope);
         });
 
         $ionicPopover.fromTemplateUrl('templates/popovers/select-community.html', {
@@ -908,10 +832,10 @@
 
     });
 
-    app.controller('ConnectionsCtrl', function($scope, $ionicPopup, Data, API, Utils) {
+    app.controller('ConnectionsCtrl', function($scope, $ionicPopup, Data, API, Utils, Refresh) {
 
         $scope.$on('$ionicView.beforeEnter', function() {
-            $scope.refreshCxns();
+            Refresh.connections($scope);
         });
 
         $scope.accept = function(cxn) {
@@ -963,7 +887,11 @@
         };
     });
 
-    app.controller('MessagesCtrl', function($scope, API, Data, Utils) {
+    app.controller('MessagesCtrl', function($scope, API, Data, Utils, Refresh) {
+
+        $scope.$on('$ionicView.beforeEnter', function() {
+            Refresh.chats($scope);
+        });
 
         $scope.search = '';
 
@@ -1009,10 +937,6 @@
     });
 
     app.controller('ChatCtrl', function($scope, $window, $timeout, $ionicPopup, $ionicScrollDelegate, API, Data, Utils) {
-
-        $scope.$on('$ionicView.beforeEnter', function() {
-            $scope.refreshChats();
-        });
 
         // **Low-Priority** TODO: the focusInput/scrollBottom interactions are really awkward, so we aren't using focusInput atm
         //var focusInput = function() {
