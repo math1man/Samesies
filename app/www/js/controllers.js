@@ -2,43 +2,42 @@
 
     const URL = 'https://samesies-app.appspot.com/_ah/api';
     const PING_INTERVAL = 1000; // ms
+    const EVERYONE_CID = '5686812383117312'; // ID for the "Everyone" community
 
     var app = angular.module('samesies.controllers', []);
 
-    app.controller('IndexCtrl', function($scope, $window, $state, $ionicHistory, $ionicPopup, $ionicModal, API, Data, Utils) {
+    app.controller('IndexCtrl', function($scope, $window, $state, $ionicHistory, $ionicViewSwitcher,
+                                         $ionicPopup, $ionicModal, API, Data, Utils, Loading) {
 
         $window.init = function() {
-            if (!$state.is('menu')) {
-                $scope.menu();
+            if (!$state.is('login')) {
+                $scope.go('login', true, 'none');
             }
             gapi.client.load('samesies', 'v1', function() {
                 // initialize API variable
                 API.init(gapi.client.samesies.samesiesApi);
 
-                API.getAllQuestions().then(function(resp) {
+                // retrieve static data
+                API.getQuestions().then(function(resp) {
                     Data.questions = resp.result.items;
                 });
-
                 API.getCategories().then(function(resp) {
                     Data.categories = resp.result.items;
                 });
-
                 API.getModes().then(function(resp) {
                     Data.modes = resp.result.items;
-                    if (Data.modes && Data.modes.length) {
-                        for (var i = 0; i < Data.modes.length; i++) {
-                            if (Data.modes[i].mode === 'Random') {
-                                Data.defaultMode = Data.modes[i];
-                            }
+                    for (var i = 0; i < Data.modes.length; i++) {
+                        if (Data.modes[i].mode === 'Random') {
+                            Data.defaultMode = Data.modes[i];
                         }
-                        Data.settings.mode = Data.defaultMode;
                     }
+                    Data.settings.mode = Data.defaultMode;
                 });
 
             }, URL);
         };
 
-        $ionicModal.fromTemplateUrl('templates/game-settings.html', {
+        $ionicModal.fromTemplateUrl('templates/modals/settings.html', {
             scope: $scope,
             animation: 'slide-in-left'
         }).then(function(modal) {
@@ -102,70 +101,27 @@
             return Data[field];
         };
 
+        $scope.loading = function (field) {
+            return Loading[field];
+        };
+
         $scope.back = function() {
             $ionicHistory.goBack();
         };
 
-        $scope.menu = function() {
-            $ionicHistory.nextViewOptions({
-                historyRoot: true
-            });
-            $state.go('menu');
-        };
-
-        $scope.refresh = function() {
-            if (Data.user) {
-                API.getCommunity(Data.user.community).then(function(resp) {
-                    Data.community = resp.result;
-                    $scope.$apply();
-                });
-                API.getFriends(Data.user.id).then(function(resp) {
-                    var friends = resp.result.items;
-                    if (friends && friends.length) {
-                        Data.friends = friends;
-                    }
-                    if (Data.isLoading) {
-                        Data.isLoading--;
-                    }
-                    $scope.$apply();
-                    // nested so that it can pull from friends
-                    if (Data.user) { // need to add a second check in case they immediately log out
-                        API.getChats(Data.user.id).then(function (resp) {
-                            var chats = resp.result.items;
-                            if (chats && chats.length) {
-                                for (var i = 0; i < chats.length; i++) {
-                                    var index = Utils.indexOfById(Data.friends, chats[i].user, 'user');
-                                    if (index > -1) {
-                                        chats[i].user = Data.friends[index].user;
-                                    }
-                                }
-                                Data.chats = chats;
-                            }
-                            if (Data.isLoading) {
-                                Data.isLoading--;
-                            }
-                            $scope.$apply();
-                        });
-                        API.getConnections(Data.user.id).then(function (resp) {
-                            var cxns = resp.result.items;
-                            if (cxns && cxns.length) {
-                                for (var i = 0; i < cxns.length; i++) {
-                                    cxns[i].data = Utils.getData(cxns[i]);
-                                    var index = Utils.indexOfById(Data.friends, cxns[i].user, 'user');
-                                    if (index > -1) {
-                                        cxns[i].user = Data.friends[index].user;
-                                    }
-                                }
-                                Data.connections = cxns;
-                            }
-                            if (Data.isLoading) {
-                                Data.isLoading--;
-                            }
-                            $scope.$apply();
-                        });
-                    }
-                });
+        $scope.go = function(state, historyRoot, direction) {
+            if (angular.isUndefined(direction)) {
+                direction = 'forward';
             }
+            if (angular.isUndefined(historyRoot)) {
+                historyRoot = false;
+            }
+            $ionicHistory.nextViewOptions({
+                historyRoot: historyRoot,
+                disableAnimate: direction === 'none'
+            });
+            $ionicViewSwitcher.nextDirection(direction);
+            $state.go(state);
         };
 
         $scope.$on('$destroy', function() {
@@ -174,28 +130,33 @@
 
     });
 
-    app.controller('LoginCtrl', function($scope, $window, $ionicPopup, API, Data) {
+    app.controller('LoginCtrl', function($scope, $window, $ionicPopup, API, Data, Loading, Refresh) {
 
-        $scope.$on('modal.shown', function() {
+        $scope.$on('$ionicView.beforeEnter', function() {
             $scope.loginData = {
                 error: false,
                 email: $window.localStorage['email'],
-                avatar: 'img/lone_icon.png',
-                community: 'Macalester College'
+                avatar: 'img/lone_icon.png'
             };
             $scope.loginCheck = {};
             $scope.isLoading = false;
         });
 
         $scope.login = function(user) {
+            if ($window.localStorage['deviceToken']) {
+                API.registerPush(user.id, ionic.Platform.platform(), $window.localStorage['deviceToken']);
+            }
             $window.localStorage['email'] = $scope.loginData.email;
             $scope.loginData = null;
             $scope.loginCheck = {};
             Data.user = user;
-            Data.isLoading = 3;
-            $scope.refresh();
+            Loading.communities = true;
+            Loading.friends = true;
+            Loading.chats = true;
+            Loading.connections = true;
+            Refresh.all($scope);
             $scope.resetToggle();
-            $scope.closeLogin();
+            $scope.go('menu', true);
         };
 
         $scope.loginShortcut = function() {
@@ -239,14 +200,13 @@
                 $scope.loginData.error = "Password too short";
             } else if ($scope.loginData.password != $scope.loginData.confirmPassword) {
                 $scope.loginData.error = "Passwords don't match";
-            } else if (!$scope.loginData.community) {
-                $scope.loginData.error = "Invalid community";
-            } else if (!$scope.loginCheck.key || $scope.loginCheck.key.toLowerCase() != 'macalester') {
-                $scope.loginData.error = "Invalid login key";
             } else if (!$scope.loginCheck.accept) {
                 $scope.loginData.error = "Accept Terms and Conditions";
             } else {
                 $scope.loginData.error = "";
+            }
+            if (!/\S/.test($scope.loginData.alias)) {
+                $scope.loginData.alias = null;
             }
             if (!$scope.loginData.error) {
                 $scope.isLoading = true;
@@ -273,7 +233,7 @@
             $ionicPopup.show({
                 scope: $scope,
                 title: 'Update Profile Picture',
-                templateUrl: 'templates/upload-avatar.html',
+                templateUrl: 'templates/popups/upload-avatar.html',
                 buttons: [
                     {
                         text: 'Cancel',
@@ -354,33 +314,19 @@
 
     });
 
-    app.controller('MenuCtrl', function ($scope, $ionicModal, $ionicPopup, $ionicPopover, API, Data, Utils) {
+    app.controller('MenuCtrl', function ($scope, $ionicModal, $ionicPopup, $ionicPopover, API, Data, Utils, Refresh) {
 
         $scope.$on('$ionicView.beforeEnter', function() {
-            $scope.refresh();
+            Refresh.all($scope);
             Data.tempUser = null;
         });
-
-        $ionicModal.fromTemplateUrl('templates/login.html', {
-            scope: $scope,
-            animation: 'slide-in-up',
-            backdropClickToClose: false,
-            hardwareBackButtonClose: false
-        }).then(function(modal) {
-            $scope.loginPopup = modal;
-            $scope.logout();
-        });
-
-        $scope.closeLogin = function() {
-            $scope.loginPopup.hide();
-        };
 
         $scope.logout = function() {
             Data.user = null;
             Data.connections = [];
             Data.chats = [];
             Data.friends = [];
-            $scope.loginPopup.show();
+            $scope.go('login', true, 'back');
         };
 
         $scope.getCxnRequestCount = function() {
@@ -388,7 +334,8 @@
             if (Data.connections && Data.connections.length) {
                 for (var i = 0; i < Data.connections.length; i++) {
                     var item = Data.connections[i];
-                    if (item.data) { // Connections pending your approval
+                    if (item.data) {
+                        // Connections pending your approval
                         if (item.status === 'MATCHING' && !item.data.is1) {
                             count++;
                         }
@@ -404,7 +351,7 @@
 
         $scope.getChatCount = function() {
             var count = 0;
-            if (Data.chats && Data.chats.length) {
+            if (Data.user && Data.chats && Data.chats.length) {
                 for (var i = 0; i < Data.chats.length; i++) {
                     if (Utils.isUpdated(Data.chats[i])) {
                         count++;
@@ -427,23 +374,33 @@
             return count;
         };
 
-        $scope.$on('$destroy', function() {
-            $scope.loginPopup.remove();
-        });
-
     });
 
-    app.controller('SettingsCtrl', function($scope, $ionicPopup, Data, Utils) {
+    app.controller('SettingsCtrl', function($scope, $ionicPopup, $ionicPopover, Data, Utils) {
+
+        $scope.$on('modal.shown', function() {
+            $scope.settings = Data.settings;
+        });
+
+        $ionicPopover.fromTemplateUrl('templates/popovers/select-community.html', {
+            scope: $scope
+        }).then(function(popover) {
+            $scope.selectPopup = popover;
+        });
+
+        $scope.showSelect = function($event) {
+            $scope.selectPopup.show($event);
+        };
+
+        $scope.hideSelect = function() {
+            $scope.selectPopup.hide();
+        };
 
         var isShowModes = false;
 
         $scope.isShowModes = function() {
             return isShowModes;
         };
-
-        $scope.$on('modal.shown', function() {
-            $scope.settings = Data.settings;
-        });
 
         $scope.showModes = function() {
             isShowModes = true;
@@ -476,9 +433,111 @@
 
     });
 
-    app.controller('EpisodeCtrl', function($scope, $state, $window, $cordovaKeyboard, $ionicPopup, $ionicModal, API, Utils, Data) {
+    app.controller('SelectComCtrl', function($scope, $ionicPopup, API, Data, Utils, Loading) {
 
-        $ionicModal.fromTemplateUrl('templates/help.html', {
+        $scope.$on('popover.shown', function() {
+            $scope.selected = Data.community;
+            $scope.search = '';
+            $scope.searched = [];
+        });
+
+        $scope.searchCommunities = function(string) {
+            API.searchCommunities(string).then(function(resp) {
+                var list = resp.result.items;
+                if (list && list.length) {
+                    for (var i=0; i<Data.communities.length; i++) {
+                        Utils.removeById(list, Data.communities[i]);
+                    }
+                    $scope.searched = list;
+                    $scope.$apply();
+                }
+            })
+        };
+
+        $scope.join = function(community) {
+            if (community.type === 'EMAIL') {
+                $scope.tempData = [''];
+                $ionicPopup.show({
+                    scope: $scope,
+                    title: 'Enter a valid ' + community.name + ' email',
+                    template: '<label class="item item-input"><input type="email" placeholder="johndoe@community.org" ng-model="tempData[0]"></label>',
+                    buttons: [{
+                        text: 'Cancel',
+                        type: 'button-stable'
+                    },{
+                        text: 'Submit',
+                        type: 'button-royal',
+                        onTap: function() {
+                            return $scope.tempData[0];
+                        }
+                    }]
+                }).then(function(email) {
+                    if (angular.isDefined(email)) {
+                        API.joinCommunity(community.id, Data.user.id, email).then(function (resp) {
+                            if (resp.result) {
+                                Data.communities.push(resp.result);
+                                $scope.loadCommunity(resp.result);
+                            } else {
+                                $scope.hideSelect();
+                            }
+                        });
+                    }
+                });
+            } else if (community.type === 'PASSWORD') {
+                $scope.tempData = [''];
+                $ionicPopup.show({
+                    scope: $scope,
+                    title: "Enter " + community.name + "'s access password",
+                    template: '<label class="item item-input"><input type="password" placeholder="••••••••" ng-model="tempData[0]"></label>',
+                    buttons: [{
+                        text: 'Cancel',
+                        type: 'button-stable'
+                    },{
+                        text: 'Submit',
+                        type: 'button-royal',
+                        onTap: function() {
+                            return $scope.tempData[0];
+                        }
+                    }]
+                }).then(function(password) {
+                    if (angular.isDefined(password)) {
+                        API.joinCommunity(community.id, Data.user.id, password).then(function (resp) {
+                            if (resp.result) {
+                                Data.communities.push(resp.result);
+                                $scope.loadCommunity(resp.result);
+                            }
+                        });
+                    }
+                });
+            } else { // handle OPEN and EXCLUSIVE together
+                API.joinCommunity(community.id, Data.user.id).then(function (resp) {
+                    if (resp.result) {
+                        Data.communities.push(resp.result);
+                        $scope.loadCommunity(resp.result);
+                    }
+                });
+            }
+        };
+
+        $scope.loadCommunity = function(community) {
+            Loading.community = true;
+            Data.community = community;
+            $scope.hideSelect();
+            if ($scope.addCommPopup) {
+                $scope.addCommPopup.hide();
+            }
+            API.getCommunity(community.id).then(function(resp) {
+                Data.community = resp.result;
+                Loading.community = false;
+                $scope.$apply();
+            });
+        };
+
+    });
+
+    app.controller('EpisodeCtrl', function($scope, $window, $cordovaKeyboard, $ionicPopup, $ionicModal, API, Utils, Data) {
+
+        $ionicModal.fromTemplateUrl('templates/modals/help.html', {
             scope: $scope,
             animation: 'slide-in-left'
         }).then(function(modal) {
@@ -536,8 +595,13 @@
                     state: 'matching',
                     stage: 0
                 };
-                // TODO: location/community
-                API.findCommunityEpisode(Data.user.id, Data.settings, Data.user.community).then(function (resp) {
+                var params = {};
+                // TODO: this should probably instead set null -> EVERYONE_CID
+                if (Data.community.id != EVERYONE_CID) {
+                    params.cid = Data.community.id;
+                }
+                // **Eventually** TODO: location
+                API.findEpisode(Data.user.id, Data.settings, params).then(function (resp) {
                     Data.episode = resp.result;
                     if (Data.episode.status === "MATCHING") {
                         Utils.interval(function () {
@@ -597,9 +661,7 @@
                                     Data.chat = resp.result;
                                     Data.chat.user = friend.user;
                                     Utils.addById(Data.chats, Data.chat);
-                                    $state.go('chat');
-                                }, function (reason) {
-                                    console.log(reason);
+                                    $scope.go('chat');
                                 });
                             } else if ($scope.isPersistent()) {
                                 $scope.back();
@@ -612,7 +674,7 @@
                                 if (answer) {
                                     Data.chat.user = Data.tempUser;
                                     Data.chats.push(Data.chat);
-                                    $state.go('chat');
+                                    $scope.go('chat');
                                 } else {
                                     API.closeChat(Data.chat.id);
                                     Data.chat = null;
@@ -622,8 +684,6 @@
                                         $scope.find();
                                     }
                                 }
-                            }, function (reason) {
-                                console.log(reason);
                             });
                         }
                     });
@@ -650,8 +710,6 @@
             go('waiting');
             API.answerEpisode(Data.episode.id, Data.user.id, $scope.episodeData.myAnswer).then(function(resp) {
                 updateEpisode(resp.result);
-            }, function(reason) {
-                console.log(reason);
             });
         };
 
@@ -730,22 +788,13 @@
 
     });
 
-    app.controller('CommunitiesCtrl', function($scope, $ionicPopover, $ionicPopup, API, Data) {
+    app.controller('BrowseCtrl', function($scope, $ionicPopup, $ionicPopover, API, Data, Refresh) {
 
-        // for the selector popup, do not remove
-        $scope.selected = Data.community.name;
+        $scope.$on('$ionicView.beforeEnter', function() {
+            Refresh.communities($scope);
+        });
 
-        $scope.loadCommunity = function(community) {
-            if ($scope.selectPopup) {
-                $scope.selectPopup.hide();
-            }
-            API.getCommunity(community).then(function(resp) {
-                Data.community = resp.result;
-                $scope.$apply();
-            });
-        };
-
-        $ionicPopover.fromTemplateUrl('templates/select-community.html', {
+        $ionicPopover.fromTemplateUrl('templates/popovers/select-community.html', {
             scope: $scope
         }).then(function(popover) {
             $scope.selectPopup = popover;
@@ -753,6 +802,10 @@
 
         $scope.showSelect = function($event) {
             $scope.selectPopup.show($event);
+        };
+
+        $scope.hideSelect = function() {
+            $scope.selectPopup.hide();
         };
 
         $scope.flag = function(user) {
@@ -775,16 +828,71 @@
                 if (angular.isDefined(reason)) {
                     API.flagUser(user.id, Data.user.id, reason);
                 }
-            })
+            });
         };
-
-        $scope.$on('$destroy', function() {
-            $scope.selectPopup.remove();
-        });
 
     });
 
-    app.controller('MessagesCtrl', function($scope, $state, API, Data, Utils) {
+    app.controller('ConnectionsCtrl', function($scope, $ionicPopup, Data, API, Utils, Refresh) {
+
+        $scope.$on('$ionicView.beforeEnter', function() {
+            Refresh.connections($scope);
+        });
+
+        $scope.accept = function(cxn) {
+            cxn.status = "IN_PROGRESS";
+            API.acceptEpisode(cxn.id);
+            $scope.play(cxn);
+        };
+
+        $scope.reject = function(cxn) {
+            API.endEpisode(cxn.id);
+            removeCxn(cxn);
+        };
+
+        $scope.play = function(cxn) {
+            Data.episode = cxn;
+            removeCxn(cxn);
+            $scope.go('play');
+        };
+
+        $scope.remove = function(cxn) {
+            $ionicPopup.confirm({
+                title: 'Abandon Connection',
+                template: 'Are you sure you want to abandon your connection with ' + $scope.dispName(cxn.user) + '?',
+                okText: 'Abandon',
+                okType: 'button-assertive',
+                cancelText: 'Cancel',
+                cancelType: 'button-stable'
+            }).then(function(resp) {
+                if (resp) {
+                    $scope.reject(cxn);
+                }
+            })
+        };
+
+        $scope.dispStage = function(cxn) {
+            if (cxn.status === 'MATCHING') {
+                if (cxn.uid2) {
+                    return 'Pending';
+                } else {
+                    return 'Matching';
+                }
+            } else {
+                return 'Stage ' + cxn.data.stage;
+            }
+        };
+
+        var removeCxn = function(cxn) {
+            Utils.removeById(Data.connections, cxn);
+        };
+    });
+
+    app.controller('MessagesCtrl', function($scope, API, Data, Utils, Refresh) {
+
+        $scope.$on('$ionicView.beforeEnter', function() {
+            Refresh.chats($scope);
+        });
 
         $scope.search = '';
 
@@ -795,7 +903,7 @@
                 chat.isUpToDate2 = true;
             }
             Data.chat = chat;
-            $state.go('chat');
+            $scope.go('chat');
         };
 
         $scope.remove = function(chat) {
@@ -831,14 +939,17 @@
 
     app.controller('ChatCtrl', function($scope, $window, $timeout, $ionicPopup, $ionicScrollDelegate, API, Data, Utils) {
 
-        // TODO: the focusInput/scrollBottom interactions are really awkward, so we aren't using focusInput atm
+        // **Low-Priority** TODO: the focusInput/scrollBottom interactions are really awkward, so we aren't using focusInput atm
+        //var focusInput = function() {
+        //    document.getElementById("chatInput").focus();
+        //};
 
         $scope.buffer = '';
         $scope.history = [];
-        var friendPending = 0; // 0: they haven't clicked, 1: they clicked, 2: accepted
+        $scope.friendPending = 0; // 0: they haven't clicked, 1: you clicked, 2: they clicked, 3: both clicked
         if (Data.chat) {
             if (!Data.chat.isEpisode) {
-                friendPending = 2;
+                $scope.friendPending = 3;
             }
             API.getMessages(Data.chat.id, Data.chat.startDate, Data.user.id).then(function (resp) {
                 if (resp.result.items && resp.result.items.length) {
@@ -849,8 +960,6 @@
                 Utils.interval(function () {
                     checkChat();
                 }, PING_INTERVAL);
-            }, function (reason) {
-                console.log(reason);
             });
         }
 
@@ -921,20 +1030,20 @@
                             if (resp) {
                                 $scope.back();
                             } else {
-                                $scope.menu();
+                                $scope.go('menu', true, 'back');
                             }
                         });
                     }
                 });
-                if (!friendPending) { // if its pending, it will stay that way until user accepts
+                if ($scope.friendPending < 2) { // if its pending, it will stay that way until user accepts
                     API.checkFriend(Data.user.id, Data.chat.user.id).then(function (resp) {
                         var friend = resp.result;
                         if (friend) {
                             Utils.addById(Data.friends, friend);
                             if (friend.status === 'ACCEPTED') {
-                                friendPending = 2;
+                                $scope.friendPending = 3;
                             } else if (friend.uid2 === Data.user.id) {
-                                friendPending = 1;
+                                $scope.friendPending = 2;
                             }
                         }
                     });
@@ -954,10 +1063,6 @@
                     scrollBottom(true);
                 }
             });
-        };
-
-        var focusInput = function() {
-            document.getElementById("chatInput").focus();
         };
 
         $scope.isMine = function(message) {
@@ -980,22 +1085,15 @@
             }
         };
 
-        $scope.showAddFriend = function() {
-            return friendPending < 2;
-        };
-
-        $scope.showOtherAdded = function() {
-            return friendPending === 1;
-        };
-
         $scope.addFriend = function() {
+            $scope.friendPending = 1;
             API.addFriend(Data.user.id, Data.chat.user.id).then(function(resp) {
                 var friend = resp.result;
                 if (friend) {
                     Utils.addById(Data.friends, friend);
                     if (friend.status === 'ACCEPTED') {
                         API.updateChat(Data.chat.id, friend.id, false);
-                        friendPending = 2;
+                        $scope.friendPending = 3;
                     }
                 }
             });
@@ -1003,13 +1101,10 @@
 
         if (ionic.Platform.isIOS()) {
             $window.addEventListener('native.keyboardshow', function (e) {
-                console.log("Keyboard shown!");
-                console.log(e.keyboardHeight);
                 document.getElementById("inputBar").style.marginBottom = e.keyboardHeight + "px";
             });
 
             $window.addEventListener('native.keyboardhide', function () {
-                console.log("Keyboard hidden!");
                 document.getElementById("inputBar").style.marginBottom = "0";
             });
         }
@@ -1021,9 +1116,9 @@
 
     });
 
-    app.controller('FriendsCtrl', function($scope, $state, $ionicPopover, $ionicPopup, Data, API, Utils) {
+    app.controller('FriendsCtrl', function($scope, $ionicPopover, $ionicPopup, Data, API, Utils) {
 
-        $ionicPopover.fromTemplateUrl('templates/find-friends.html', {
+        $ionicPopover.fromTemplateUrl('templates/popovers/find-friends.html', {
             scope: $scope,
             focusFirstInput: true
         }).then(function(popover) {
@@ -1045,7 +1140,7 @@
         $scope.profile = function(friend) {
             Data.tempUser = friend.user;
             Data.friend = friend;
-            $state.go('profile');
+            $scope.go('profile');
         };
 
         $scope.accept = function(friend) {
@@ -1053,7 +1148,7 @@
                 var friend = resp.result;
                 if (friend) {
                     Utils.addById(Data.friends, friend);
-                    $scope.profile(friend.user);
+                    $scope.profile(friend);
                 }
             });
         };
@@ -1086,10 +1181,10 @@
 
     app.controller('FindFriendCtrl', function($scope, API, Data, Utils) {
         $scope.list = [];
-        $scope.search = [''];
+        $scope.search = '';
 
-        $scope.findFriend = function() {
-            API.searchUsers($scope.search[0]).then(function(resp) {
+        $scope.findFriend = function(string) {
+            API.searchUsers(string).then(function(resp) {
                 var list = resp.result.items;
                 if (list && list.length) {
                     $scope.list = list;
@@ -1113,48 +1208,48 @@
 
         $scope.$on('popover.hidden', function() {
             $scope.list = [];
-            $scope.search = [''];
+            $scope.search = '';
         });
 
     });
 
-    app.controller('ConnectionsCtrl', function($scope, $state, $ionicPopup, Data, API, Utils) {
+    app.controller('ProfileCtrl', function($scope, API, Data) {
 
-        $scope.accept = function(cxn) {
-            cxn.status = "IN_PROGRESS";
-            API.acceptEpisode(cxn.id);
-            $scope.play(cxn);
+        $scope.isMe = function() {
+            return Data.user.id === Data.tempUser.id;
         };
 
-        $scope.reject = function(cxn) {
-            API.endEpisode(cxn.id);
-            removeCxn(cxn);
+        $scope.message = function() {
+            API.startChat(Data.friend.id, false, Data.user.id, Data.tempUser.id).then(function (resp) {
+                Data.chat = resp.result;
+                Data.chat.user = Data.tempUser;
+                Data.chats.push(Data.chat);
+                $scope.go('chat');
+            });
+        };
+    });
+
+    app.controller('CommunitiesCtrl', function($scope, $ionicPopover, API, Data, Utils) {
+
+        $ionicPopover.fromTemplateUrl('templates/popovers/add-community.html', {
+            scope: $scope
+        }).then(function(popover) {
+            $scope.addCommPopup = popover;
+        });
+
+        $scope.showAddComm = function($event) {
+            $scope.addCommPopup.show($event);
         };
 
-        $scope.play = function(cxn) {
-            Data.episode = cxn;
-            removeCxn(cxn);
-            $state.go('play');
-        };
+        $scope.$on('$destroy', function() {
+            $scope.addCommPopup.remove();
+        });
 
-        $scope.remove = function(cxn) {
-            $ionicPopup.confirm({
-                title: 'Abandon Connection',
-                template: 'Are you sure you want to abandon your connection with ' + $scope.dispName(cxn.user) + '?',
-                okText: 'Abandon',
-                okType: 'button-assertive',
-                cancelText: 'Cancel',
-                cancelType: 'button-stable'
-            }).then(function(resp) {
-                if (resp) {
-                    $scope.reject(cxn);
-                }
-            })
-        };
+        $scope.leave = function(community) {
+            API.leaveCommunity(community.id, Data.user.id);
+            Utils.removeById(Data.communities, community);
+        }
 
-        var removeCxn = function(cxn) {
-            Utils.removeById(Data.connections, cxn);
-        };
     });
 
     app.controller('QuestionsCtrl', function($scope, $ionicPopover, $ionicScrollDelegate) {
@@ -1162,7 +1257,7 @@
         $scope.category = ['All'];
         $scope.search = '';
 
-        $ionicPopover.fromTemplateUrl('templates/select-category.html', {
+        $ionicPopover.fromTemplateUrl('templates/popovers/select-category.html', {
             scope: $scope
         }).then(function(popover) {
             $scope.categoryPopup = popover;
@@ -1177,7 +1272,7 @@
             $ionicScrollDelegate.scrollTop(true);
         };
 
-        $ionicPopover.fromTemplateUrl('templates/suggest-question.html', {
+        $ionicPopover.fromTemplateUrl('templates/popovers/suggest-question.html', {
             scope: $scope
         }).then(function(popover) {
             $scope.suggestPopup = popover;
@@ -1211,7 +1306,7 @@
         }
     });
 
-    app.controller('EditProfileCtrl', function($scope, $state, $ionicPopup, Data, API) {
+    app.controller('EditProfileCtrl', function($scope, $ionicPopup, Data, API) {
 
         var isChanged = false;
 
@@ -1224,7 +1319,7 @@
             $ionicPopup.show({
                 scope: $scope,
                 title: 'Edit ' + property,
-                templateUrl: 'templates/edit.html',
+                templateUrl: 'templates/popups/edit.html',
                 buttons: [
                     {
                         text: 'Cancel',
@@ -1233,7 +1328,7 @@
                         text: 'Okay',
                         type: 'button-royal',
                         onTap: function(e) {
-                            if (!required || $scope.tempData.value) {
+                            if (!required || ($scope.tempData.value && /\S/.test($scope.tempData.value))) {
                                 return $scope.tempData.value;
                             } else {
                                 e.preventDefault();
@@ -1268,7 +1363,7 @@
             $ionicPopup.show({
                 scope: $scope,
                 title: 'Change Password',
-                templateUrl: 'templates/edit-password.html',
+                templateUrl: 'templates/popups/edit-password.html',
                 buttons: [
                     {
                         text: 'Cancel',
@@ -1290,7 +1385,7 @@
                 if (passwordData) {
                     Data.user.password = passwordData.password;
                     Data.user.newPassword = passwordData.newPassword;
-                    API.updateUser(Data.user).then(function(resp){
+                    API.updateUser(Data.user).then(function() {
                         $ionicPopup.alert({
                             title: 'Password Changed',
                             template: 'Your password has successfully been changed.',
@@ -1319,7 +1414,7 @@
             $ionicPopup.show({
                 scope: $scope,
                 title: 'Edit Gender',
-                templateUrl: 'templates/edit-gender.html',
+                templateUrl: 'templates/popups/edit-gender.html',
                 buttons: [
                     {
                         text: 'Cancel',
@@ -1350,7 +1445,7 @@
             $ionicPopup.show({
                 scope: $scope,
                 title: 'Edit Question',
-                templateUrl: 'templates/edit.html',
+                templateUrl: 'templates/popups/edit.html',
                 buttons: [
                     {
                         text: 'Cancel',
@@ -1377,7 +1472,7 @@
             $ionicPopup.show({
                 scope: $scope,
                 title: 'Update Profile Picture',
-                templateUrl: 'templates/upload-avatar.html',
+                templateUrl: 'templates/popups/upload-avatar.html',
                 buttons: [
                     {
                         text: 'Cancel',
@@ -1401,7 +1496,7 @@
 
         $scope.preview = function() {
             Data.tempUser = Data.user;
-            $state.go('profile');
+            $scope.go('profile');
         };
 
         $scope.$on('$ionicView.beforeLeave', function() {
@@ -1420,27 +1515,25 @@
         fileInput.addEventListener('change', function() {
             var file = fileInput.files[0];
             var imageType = /image.*/;
-
             if (file.type.match(imageType)) {
-
                 var orientation;
-
                 loadImage.parseMetaData(file, function (data) {
                     if (data.exif) {
                         orientation = data.exif.get('Orientation');
                     }
                 });
-
                 loadImage(
                     file,
                     function (image) {
                         var canvas = document.createElement('canvas');
-                        if (!orientation || orientation < 5) { // image is fine or upside down
+                        if (orientation && orientation > 4) { // image is sideways
+                            //noinspection JSSuspiciousNameCombination
+                            canvas.width = image.height;
+                            //noinspection JSSuspiciousNameCombination
+                            canvas.height = image.width;
+                        } else {                              // image is fine or upside down
                             canvas.width = image.width;
                             canvas.height = image.height;
-                        } else {                               // image is sideways
-                            canvas.width = image.height;
-                            canvas.height = image.width;
                         }
                         var ctx = canvas.getContext('2d');
                         if (orientation && orientation > 2) { // image is rotated
@@ -1455,14 +1548,10 @@
                             ctx.translate(image.width * -0.5, image.height * -0.5);
                         }
                         ctx.drawImage(image, 0, 0);
-
                         $scope.tempData.image = canvas.toDataURL('image/jpeg');
                         $scope.$apply();
                     }
                 );
-
-            } else {
-                console.log("Bad file type");
             }
         });
 
@@ -1470,24 +1559,6 @@
             fileInput.click();
         }
 
-    });
-
-    app.controller('ProfileCtrl', function($scope, $state, API, Data) {
-
-        $scope.isMe = function() {
-            return Data.user.id === Data.tempUser.id;
-        };
-
-        $scope.message = function() {
-            API.startChat(Data.friend.id, false, Data.user.id, Data.tempUser.id).then(function (resp) {
-                Data.chat = resp.result;
-                Data.chat.user = Data.tempUser;
-                Data.chats.push(Data.chat);
-                $state.go('chat');
-            }, function (reason) {
-                console.log(reason);
-            });
-        };
     });
 
     app.controller('FeedbackCtrl', function($scope, $ionicPopup, API) {

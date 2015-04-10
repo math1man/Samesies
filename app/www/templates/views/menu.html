@@ -1,0 +1,61 @@
+<ion-view view-title="Menu" ng-controller="MenuCtrl">
+	<ion-nav-buttons side="left">
+		<button class="button button-clear" ng-click="logout()">
+			Log Out
+		</button>
+	 </ion-nav-buttons>
+	<ion-nav-buttons side="right">
+		<button class="button button-icon" ng-click="showSettings()">
+			<i class="icon ion-gear-a"></i>
+		</button>
+	</ion-nav-buttons>
+	<ion-content>
+		<div class="list">
+			<a class="item item-icon-left" href="#/play">
+				<i class="icon ion-play"></i>
+				Play Samesies!
+				<span class="item-note">{{data('settings').mode.mode}}</span>
+			</a>
+			<a class="item item-icon-left" href="#/browse">
+				<i class="icon ion-ios7-people"></i>
+				Browse People
+			</a>
+			<a class="item item-icon-left" href="#/connections">
+				<i class="icon ion-loop"></i>
+				Pending Connections
+				<span class="badge badge-royal" ng-show="getCxnRequestCount()">{{getCxnRequestCount()}}</span>
+			</a>
+			<a class="item item-icon-left" href="#/chats">
+				<i class="icon ion-chatbubble-working"></i>
+				Messages
+				<span class="badge badge-royal" ng-show="getChatCount()">{{getChatCount()}}</span>
+			</a>
+			<a class="item item-icon-left" href="#/friends">
+				<i class="icon ion-person-add"></i>
+				View Friends
+				<span class="badge badge-royal" ng-show="getFriendRequestCount()">{{getFriendRequestCount()}}</span>
+			</a>
+			<a class="item item-icon-left" href="#/communities">
+				<i class="icon ion-android-earth"></i>
+				My Communities
+			</a>
+			<a class="item item-icon-left" href="#/questions">
+				<i class="icon ion-help"></i>
+				Questions List
+			</a>
+			<a class="item item-icon-left" href="#/edit-profile">
+				<i class="icon ion-edit"></i>
+				Edit Profile
+			</a>
+			<a class="item item-icon-left" href="#/feedback">
+				<i class="icon ion-paper-airplane"></i>
+				Give Us Feedback
+			</a>
+			<a class="item item-icon-left" href="#/about">
+				<i class="icon ion-information"></i>
+				About Us
+			</a>
+		</div>
+	</ion-content>
+</ion-view>
+

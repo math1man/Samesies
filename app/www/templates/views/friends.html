@@ -1,0 +1,69 @@
+<ion-view view-title="Friends" ng-controller="FriendsCtrl">
+	<ion-nav-buttons side="right">
+		<button class="button button-icon icon ion-person-add" ng-click="showFind($event)"></button>
+	</ion-nav-buttons>
+	<ion-content scroll="false">
+		<ion-header-bar class="bar-stable item-input-inset">
+			<label class="item-input-wrapper">
+				<i class="icon ion-search placeholder-icon"></i>
+				<input type="text" ng-model="search" placeholder="Search">
+			</label>
+		</ion-header-bar>
+		<ion-content>
+			<div class="item item-divider">
+				Requests
+			</div>
+			<ss-loading ng-show="loading('friends')"></ss-loading>
+			<div class="item item-avatar item-button-right" ng-repeat="friend in data('friends') | friendRequests | checkName:search"
+				 ng-click="accept(friend)">
+				<img ng-src="{{friend.user.avatar}}">
+				{{dispName(friend.user)}}
+				<p ng-show="friend.name">{{friend.user.alias}}</p>
+				<div class="buttons">
+					<button class="button button-round button-royal" ng-click="accept(friend)">
+						<i class="icon ion-checkmark-round"></i>
+					</button>
+					<button class="button button-round button-stable" ng-click="reject(friend)">
+						<i class="icon ion-close-round"></i>
+					</button>
+				</div>
+			</div>
+			<div class="item item-divider">
+				Friends
+			</div>
+			<ss-loading ng-show="loading('friends')"></ss-loading>
+			<div class="row hidden-grid" ng-repeat="friend in data('friends') | friends | checkName:search">
+				<div class="col col-90">
+					<div class="item item-avatar" ng-click="profile(friend)">
+						<img ng-src="{{friend.user.avatar}}">
+						{{dispName(friend.user)}}
+						<p ng-show="friend.user.name">{{friend.user.alias}}</p>
+					</div>
+				</div>
+				<div class="col col-10">
+					<div class="item" ng-click="remove(friend)">
+						<button class="button button-clear button-small button-icon small-icon ion-close-round"></button>
+					</div>
+				</div>
+			</div>
+			<div class="item item-divider">
+				Awaiting Response
+			</div>
+			<ss-loading ng-show="loading('friends')"></ss-loading>
+			<div class="row hidden-grid" ng-repeat="friend in data('friends') | pendingFriends | checkName:search">
+				<div class="col col-90">
+					<div class="item item-avatar" ng-click="profile(friend)">
+						<img ng-src="{{friend.user.avatar}}">
+						{{dispName(friend.user)}}
+						<p ng-show="friend.user.name">{{friend.user.alias}}</p>
+					</div>
+				</div>
+				<div class="col col-10">
+					<div class="item" ng-click="remove(friend)">
+						<button class="button button-clear button-small button-icon small-icon ion-close-round"></button>
+					</div>
+				</div>
+			</div>
+		</ion-content>
+	</ion-content>
+</ion-view>

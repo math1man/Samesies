@@ -1,0 +1,21 @@
+<ion-view view-title="Browse" ng-controller="BrowseCtrl">
+    <ion-nav-buttons side="right">
+        <button class="button button-icon icon ion-gear-a" ng-click="showSettings()"></button>
+    </ion-nav-buttons>
+    <ion-content scroll="false">
+        <ion-header-bar class="bar-stable" ng-click="showSelect($event)">
+            <div class="title">{{data('community').name}}</div>
+        </ion-header-bar>
+        <ion-content>
+            <div class="item item-text-wrap">
+                Click on a person's picture to make a connection with them.
+            </div>
+            <ss-loading ng-show="loading('community')"></ss-loading>
+            <div class="item" ng-repeat="user in data('community').users | filterSelf">
+                <img class="full-image" ng-src="{{user.avatar}}" ng-click="connect(user)">
+                <h2 class="float-left padding-top">{{user.alias}}</h2>
+                <button class="button button-clear button-small float-right" ng-click="flag(user)">Flag as Inappropriate</button>
+            </div>
+        </ion-content>
+    </ion-content>
+</ion-view>

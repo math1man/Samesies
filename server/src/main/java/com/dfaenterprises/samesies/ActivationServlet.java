@@ -2,7 +2,6 @@ package com.dfaenterprises.samesies;
 
 import com.dfaenterprises.samesies.model.User;
 import com.google.appengine.api.datastore.DatastoreService;
-import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.KeyFactory;
 
@@ -19,7 +18,7 @@ public class ActivationServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        DatastoreService ds = DatastoreServiceFactory.getDatastoreService();
+        DatastoreService ds = DS.getDS();
         String param = req.getParameter("user_id");
         if (param == null) {
             resp.sendError(400, "Bad Request: Must specify a user_id");
@@ -28,7 +27,7 @@ public class ActivationServlet extends HttpServlet {
             try {
                 User user = new User(ds.get(KeyFactory.createKey("User", uid)));
                 user.setIsActivated(true);
-                EntityUtils.put(ds, user);
+                DS.put(ds, user);
                 resp.sendRedirect("http://samesies.org/activated.html");
             } catch (EntityNotFoundException e) {
                 resp.sendError(404, "User " + uid + " Not Found");

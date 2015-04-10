@@ -2,6 +2,7 @@ package com.dfaenterprises.samesies.model;
 
 import com.dfaenterprises.samesies.EntityUtils;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.GeoPt;
 import com.google.appengine.api.datastore.Text;
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -21,11 +22,10 @@ public class User extends Storable {
     private String password;
     private String newPassword;
     private String hashedPw;
-    private String community;
-    // **Low-Priority** TODO: remove location eventually, needed for compatibility
-    private String location;
     private String alias;
     private Text avatar;
+    private Float latitude;
+    private Float longitude;
     private String name;
     private Long age;
     private String gender;
@@ -45,27 +45,24 @@ public class User extends Storable {
     public User(Entity e, Relation relation) {
         super(e);
         int ordinal = relation.ordinal();
-
         // public
-        this.community = (String) e.getProperty("community");
-        this.location = community;
         this.alias = (String) e.getProperty("alias");
         this.avatar = (Text) e.getProperty("avatar");
+        setLocation((GeoPt) e.getProperty("location"));
+        this.gender = (String) e.getProperty("gender");
+        this.aboutMe = (String) e.getProperty("aboutMe");
+        this.questions = EntityUtils.getListProp(e, "questions", 5, String.class);
         this.isBanned = (Boolean) e.getProperty("isBanned");
-
+        // protected
+        if (ordinal >= Relation.FRIEND.ordinal()) {
+            this.name = (String) e.getProperty("name");
+            this.age = (Long) e.getProperty("age");
+        }
         // private
         if (ordinal >= Relation.SELF.ordinal()) {
             this.email = (String) e.getProperty("email");
             this.hashedPw = (String) e.getProperty("hashedPw");
             this.isActivated = (Boolean) e.getProperty("isActivated");
-        }
-        // protected
-        if (ordinal >= Relation.FRIEND.ordinal()) {
-            this.name = (String) e.getProperty("name");
-            this.age = (Long) e.getProperty("age");
-            this.gender = (String) e.getProperty("gender");
-            this.aboutMe = (String) e.getProperty("aboutMe");
-            this.questions = EntityUtils.getListProp(e, "questions", 5, String.class);
         }
     }
 
@@ -101,22 +98,6 @@ public class User extends Storable {
         this.hashedPw = hashedPw;
     }
 
-    public String getCommunity() {
-        return community;
-    }
-
-    public void setCommunity(String community) {
-        this.community = community;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
     public String getAlias() {
         return alias;
     }
@@ -130,6 +111,41 @@ public class User extends Storable {
             setDefaultAvatar();
         }
         return avatar.getValue();
+    }
+
+    public Float getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Float latitude) {
+        this.latitude = latitude;
+    }
+
+    public Float getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Float longitude) {
+        this.longitude = longitude;
+    }
+
+    public boolean hasLocation() {
+        return latitude != null && longitude != null;
+    }
+
+    public GeoPt getLocation() {
+        if (hasLocation()) {
+            return new GeoPt(latitude, longitude);
+        } else {
+            return null;
+        }
+    }
+
+    public void setLocation(GeoPt location) {
+        if (location != null) {
+            this.latitude = location.getLatitude();
+            this.longitude = location.getLongitude();
+        }
     }
 
     public void setAvatar(String avatar) {
@@ -200,6 +216,14 @@ public class User extends Storable {
         this.isBanned = isBanned;
     }
 
+    public String getDisplayName() {
+        if (name == null) {
+            return alias;
+        } else {
+            return name;
+        }
+    }
+
     public void setDefaultAlias() {
         if (email != null) {
             setAlias(getAlias(email));
@@ -233,13 +257,9 @@ public class User extends Storable {
             hashedPw = BCrypt.hashpw(password, BCrypt.gensalt());
         }
         e.setUnindexedProperty("hashedPw", hashedPw);
-        String community = this.community;
-        if (community == null) {
-            community = this.location;
-        }
-        e.setProperty("community", community);
         e.setProperty("alias", alias);
         e.setUnindexedProperty("avatar", avatar);
+        e.setUnindexedProperty("location", getLocation());
         e.setProperty("name", name);
         e.setProperty("age", age);
         e.setProperty("gender", gender);

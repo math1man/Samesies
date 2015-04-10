@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cronentries>
+    <cron>
+        <url>/_ah/spi/apnFeedback</url>
+        <description>Handle APN Feedback</description>
+        <schedule>every 24 hours synchronized</schedule>
+    </cron>
+</cronentries>

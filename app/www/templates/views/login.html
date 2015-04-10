@@ -1,0 +1,52 @@
+<ion-view view-title="Login" ng-controller="LoginCtrl">
+    <ion-content ng-keypress="$event.keyCode === 13 && loginShortcut()">
+        <label class="item item-input">
+            <span class="input-label">Email</span>
+            <input type="email" ng-model="loginData.email" placeholder="johndoe@samesies.org" autofocus>
+        </label>
+        <label class="item item-input">
+            <span class="input-label">Password</span>
+            <input type="password" ng-model="loginData.password" placeholder="••••••••">
+        </label>
+        <div ng-show="isToggled()">
+            <label class="item item-input">
+                <span class="input-label">Confirm</span>
+                <input type="password" ng-model="loginData.confirmPassword" placeholder="••••••••">
+            </label>
+            <label class="item item-input">
+                <span class="input-label">Nickname</span>
+                <input type="text" ng-model="loginData.alias" placeholder="Nickname">
+            </label>
+            <label class="item item-avatar-right" ng-click="selectAvatar()">
+                <img ng-src="{{loginData.avatar}}">
+                Profile Picture
+            </label>
+            <ion-checkbox ng-model="loginCheck.accept" class="item item-checkbox-right checkbox-royal">Accept Terms and Conditions</ion-checkbox>
+            <div class="item item-text-wrap">
+                Terms and Conditions may be viewed on our website at <a href="" ss-browse-to="http://samesies.org/toc.html">samesies.org</a>
+            </div>
+        </div>
+        <div class="item assertive" ng-show="loginData.error">
+            {{loginData.error}}
+        </div>
+        <ss-loading ng-show="isLoading"></ss-loading>
+        <div class="row padding-horizontal" ng-show="!isLoading && isToggled()">
+            <div class="col">
+                <button class="button button-block button-stable" ng-click="toggle()">Cancel</button>
+            </div>
+            <div class="col">
+                <button class="button button-block button-royal" ng-click="createAccount()">Create!</button>
+            </div>
+        </div>
+        <div ng-show="!isToggled()">
+            <div class="item" ng-show="!isLoading">
+                <button class="button button-block button-royal" ng-click="doLogin()">Log in</button>
+            </div>
+            <div class="item">
+                <a href="" ng-click="toggle()">Create Account</a>
+                <span class="float-right"><a href="" ng-click="recoverPassword()">Forgot your Password?</a></span>
+            </div>
+        </div>
+
+    </ion-content>
+</ion-view>

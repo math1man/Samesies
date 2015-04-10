@@ -1,7 +1,7 @@
 {
   "name": "samesies",
   "version": "1.0.0",
-  "description": "samesies: An Ionic project",
+  "description": "Samesies: An Ionic project",
   "dependencies": {
     "gulp": "^3.5.6",
     "gulp-sass": "^0.7.1",
@@ -16,6 +16,9 @@
   },
   "cordovaPlugins": [
     "org.apache.cordova.inappbrowser",
-    "com.ionic.keyboard"
+    "com.ionic.keyboard",
+    "nl.x-services.plugins.toast",
+    "https://github.com/phonegap-build/PushPlugin.git",
+    "org.apache.cordova.device"
   ]
 }

@@ -12,7 +12,7 @@ public class Settings {
     private Boolean matchFemale;
     private Boolean matchOther;
     private GeoPt location;
-    private String community;
+    private Long cid;
 
     public Settings() {
     }
@@ -21,13 +21,13 @@ public class Settings {
         this(mode, null, null, null, null, null);
     }
 
-    public Settings(String mode, Boolean matchMale, Boolean matchFemale, Boolean matchOther, GeoPt location, String community) {
+    public Settings(String mode, Boolean matchMale, Boolean matchFemale, Boolean matchOther, GeoPt location, Long cid) {
         this.mode = mode;
         this.matchMale = matchMale;
         this.matchFemale = matchFemale;
         this.matchOther = matchOther;
         this.location = location;
-        this.community = community;
+        this.cid = cid;
     }
 
     public String getMode() {
@@ -70,12 +70,12 @@ public class Settings {
         this.location = location;
     }
 
-    public String getCommunity() {
-        return community;
+    public Long getCid() {
+        return cid;
     }
 
-    public void setCommunity(String community) {
-        this.community = community;
+    public void setCid(Long cid) {
+        this.cid = cid;
     }
 
     public boolean hasLocation() {
@@ -83,7 +83,7 @@ public class Settings {
     }
 
     public boolean hasCommunity() {
-        return getCommunity() != null;
+        return getCid() != null;
     }
 
     public static Settings defaults() {

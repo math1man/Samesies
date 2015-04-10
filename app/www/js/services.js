@@ -43,17 +43,26 @@
             removeFriend: function(id, myId) {
                 API.removeFriend({id: id, myId: myId}).then();
             },
-            getCommunity: function(name) {
-                return API.getCommunity({name: name});
+            getCommunity: function(id) {
+                return API.getCommunity({id: id});
+            },
+            getUserCommunities: function(id) {
+                return API.getUserCommunities({id: id});
+            },
+            searchCommunities: function(string) {
+                return API.searchCommunities({string: string});
+            },
+            joinCommunity: function(id, myId, string) {
+                return API.joinCommunity({id: id, myId: myId, string: string});
+            },
+            leaveCommunity: function(id, myId) {
+                API.leaveCommunity({id: id, myId: myId}).then();
             },
             getQuestion: function(id) {
                 return API.getQuestion({id: id});
             },
-            getQuestions: function(ids) {
-                return API.getQuestions({ids: ids});
-            },
-            getAllQuestions: function() {
-                return API.getAllQuestions();
+            getQuestions: function() {
+                return API.getQuestions();
             },
             getCategories: function() {
                 return API.getCategories();
@@ -64,34 +73,17 @@
             getModes: function() {
                 return API.getModes();
             },
-            findEpisode: function(myId, settings) {
+            findEpisode: function(myId, settings, params) {
                 return API.findEpisode({
                     myId: myId,
-                    mode: settings.mode.mode,
-                    matchMale: settings.matchMale,
-                    matchFemale: settings.matchFemale,
-                    matchOther: settings.matchOther
-                });
-            },
-            findLocationEpisode: function(myId, settings, latitude, longitude) {
-                return API.findEpisode({
-                    myId: myId,
+                    isPersistent: !settings.isNotPersistent,
                     mode: settings.mode.mode,
                     matchMale: settings.matchMale,
                     matchFemale: settings.matchFemale,
                     matchOther: settings.matchOther,
-                    latitude: latitude,
-                    longitude: longitude
-                });
-            },
-            findCommunityEpisode: function(myId, settings, community) {
-                return API.findEpisode({
-                    myId: myId,
-                    mode: settings.mode.mode,
-                    matchMale: settings.matchMale,
-                    matchFemale: settings.matchFemale,
-                    matchOther: settings.matchOther,
-                    community: community
+                    cid: params.cid,
+                    latitude: params.latitude,
+                    longitude: params.longitude
                 });
             },
             connectEpisode: function(myId, theirId, settings) {
@@ -142,6 +134,9 @@
             },
             sendFeedback: function(feedback) {
                 API.sendFeedback(feedback).then();
+            },
+            registerPush: function(id, type, deviceToken) {
+                API.registerPush({id: id, type: type, deviceToken: deviceToken}).then();
             }
         };
     });
@@ -191,6 +186,7 @@
                         myAnswer = myAnswers[stage - 1];
                         if (!theirAnswers || theirAnswers.length < stage) {
                             state = 'waiting';
+                            theirAnswer = "Waiting for your partner to answer...";
                         } else {
                             state = 'continue';
                             theirAnswer = theirAnswers[stage - 1];
@@ -261,19 +257,20 @@
     });
 
     app.service('Data', function() {
-        // global stataic data
+        // global static data
         this.questions = [];
         this.categories = [];
         this.modes = [];
         this.defaultMode = null;
-        this.communities = ['Macalester College'];
+        this.communities = [];
         // global dynamic data
         this.community = {
-            name: this.communities[0],
+            name: 'Click to select a Community',
             users: []
         };
         this.settings = {
             mode: 'Random',
+            isNotPersistent: false,
             matchMale: true,
             matchFemale: true,
             matchOther: true
@@ -290,5 +287,115 @@
         this.chat = null;
         this.isLoading = 0;
     });
+
+    app.service('Loading', function() {
+        this.community = false;
+        this.communities = false;
+        this.friends = false;
+        this.chats = false;
+        this.connections = false;
+    });
+
+    app.factory('Refresh', function(API, Data, Utils, Loading) {
+        var all = function($scope) {
+            communities($scope);
+            if (Data.user) {
+                API.getFriends(Data.user.id).then(function (resp) {
+                    var friends = resp.result.items;
+                    if (friends && friends.length) {
+                        Data.friends = friends;
+                    }
+                    Loading.friends = false;
+                    if ($scope) {
+                        $scope.$apply();
+                    }
+                    // nested so that it can pull from friends
+                    chats($scope);
+                    connections($scope);
+                });
+            }
+        };
+        var communities = function($scope) {
+            if (Data.user) {
+                API.getUserCommunities(Data.user.id).then(function(resp) {
+                    var communities = resp.result.items;
+                    if (communities && communities.length) {
+                        Data.communities = communities;
+                    }
+                    Loading.communities = false;
+                    if ($scope) {
+                        $scope.$apply();
+                    }
+                });
+            }
+        };
+        var friends = function($scope) {
+            API.getFriends(Data.user.id).then(function (resp) {
+                var friends = resp.result.items;
+                if (friends && friends.length) {
+                    Data.friends = friends;
+                }
+                Loading.friends = false;
+                if ($scope) {
+                    $scope.$apply();
+                }
+            });
+        };
+        var chats = function($scope) {
+            if (Data.user) { // need to add a second check in case they immediately log out
+                API.getChats(Data.user.id).then(function (resp) {
+                    var chats = resp.result.items;
+                    if (chats && chats.length) {
+                        for (var i = 0; i < chats.length; i++) {
+                            var index = Utils.indexOfById(Data.friends, chats[i].user, 'user');
+                            if (index > -1) {
+                                chats[i].user = Data.friends[index].user;
+                            }
+                        }
+                        Data.chats = chats;
+                    }
+                    Loading.chats = false;
+                    if ($scope) {
+                        $scope.$apply();
+                    }
+                });
+            }
+        };
+        var connections = function($scope) {
+            if (Data.user) { // need to add a second check in case they immediately log out
+                API.getConnections(Data.user.id).then(function (resp) {
+                    var cxns = resp.result.items;
+                    if (cxns && cxns.length) {
+                        for (var i = 0; i < cxns.length; i++) {
+                            cxns[i].data = Utils.getData(cxns[i]);
+                            if (cxns[i].user) {
+                                var index = Utils.indexOfById(Data.friends, cxns[i].user, 'user');
+                                if (index > -1) {
+                                    cxns[i].user = Data.friends[index].user;
+                                }
+                            } else {
+                                cxns[i].user = {
+                                    name: 'Matching...',
+                                    avatar: 'img/lone_icon.png'
+                                }
+                            }
+                        }
+                        Data.connections = cxns;
+                    }
+                    Loading.connections = false;
+                    if ($scope) {
+                        $scope.$apply();
+                    }
+                });
+            }
+        };
+        return {
+            all: all,
+            communities: communities,
+            friends: friends,
+            chats: chats,
+            connections: connections
+        }
+    })
 
 })();

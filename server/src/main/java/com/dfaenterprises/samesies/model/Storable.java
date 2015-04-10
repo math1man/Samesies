@@ -40,4 +40,18 @@ public abstract class Storable {
         }
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Storable storable = (Storable) o;
+
+        return id == null ? storable.id == null : id.equals(storable.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
 }

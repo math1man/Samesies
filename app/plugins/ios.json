@@ -13,6 +13,14 @@
                             "count": 1
                         },
                         {
+                            "xml": "<feature name=\"PushPlugin\"><param name=\"ios-package\" value=\"PushPlugin\" /></feature>",
+                            "count": 1
+                        },
+                        {
+                            "xml": "<feature name=\"Toast\"><param name=\"ios-package\" value=\"Toast\" /></feature>",
+                            "count": 1
+                        },
+                        {
                             "xml": "<feature name=\"InAppBrowser\"><param name=\"ios-package\" value=\"CDVInAppBrowser\" /></feature>",
                             "count": 1
                         }
@@ -21,19 +29,30 @@
             },
             "framework": {
                 "parents": {
-                    "CoreGraphics.framework": [
+                    "QuartzCore.framework": [
                         {
                             "xml": "false",
                             "count": 1
                         }
                     ],
-                    "QuartzCore.framework": []
+                    "CoreGraphics.framework": [
+                        {
+                            "xml": "false",
+                            "count": 1
+                        }
+                    ]
                 }
             }
         }
     },
     "installed_plugins": {
         "com.ionic.keyboard": {
+            "PACKAGE_NAME": "com.dfaenterprises.samesies"
+        },
+        "com.phonegap.plugins.PushPlugin": {
+            "PACKAGE_NAME": "com.dfaenterprises.samesies"
+        },
+        "nl.x-services.plugins.toast": {
             "PACKAGE_NAME": "com.dfaenterprises.samesies"
         },
         "org.apache.cordova.inappbrowser": {
