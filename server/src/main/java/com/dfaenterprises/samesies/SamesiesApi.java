@@ -544,13 +544,16 @@ public class SamesiesApi {
             path = "communities/{id}/leave/{myId}",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void leaveCommunity(@Named("id") long cid, @Named("myId") long myUid) throws ServiceException {
-        DatastoreService ds = DS.getDS();
-        CommunityUser cu = DS.getCommunityUser(ds, cid, myUid);
-        if (cu == null) {
-            throw new NotFoundException("User is not member of that community");
-        } else {
-            cu.setIsActive(false);
-            DS.put(ds, cu);
+        // Cannot leave everyone
+        if (cid != Constants.EVERYONE_CID) {
+            DatastoreService ds = DS.getDS();
+            CommunityUser cu = DS.getCommunityUser(ds, cid, myUid);
+            if (cu == null) {
+                throw new NotFoundException("User is not member of that community");
+            } else {
+                cu.setIsActive(false);
+                DS.put(ds, cu);
+            }
         }
     }
 
