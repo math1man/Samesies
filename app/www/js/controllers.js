@@ -570,9 +570,10 @@
                     stage: 0
                 };
                 var params = {};
-                // TODO: this should probably instead set null -> EVERYONE_CID
-                if (Data.community.id != EVERYONE_CID) {
+                if (Data.community.id) {
                     params.cid = Data.community.id;
+                } else {
+                    params.cid = EVERYONE_CID;
                 }
                 // **Eventually** TODO: location
                 API.findEpisode(Data.user.id, Data.settings, params).then(function (resp) {
