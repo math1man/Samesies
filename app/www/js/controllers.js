@@ -596,6 +596,7 @@
                     stage: 0
                 };
                 var params = {};
+                // TODO: this should probably instead set null -> EVERYONE_CID
                 if (Data.community.id != EVERYONE_CID) {
                     params.cid = Data.community.id;
                 }

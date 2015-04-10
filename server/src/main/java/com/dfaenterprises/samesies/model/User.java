@@ -49,14 +49,14 @@ public class User extends Storable {
         this.alias = (String) e.getProperty("alias");
         this.avatar = (Text) e.getProperty("avatar");
         setLocation((GeoPt) e.getProperty("location"));
+        this.gender = (String) e.getProperty("gender");
+        this.aboutMe = (String) e.getProperty("aboutMe");
+        this.questions = EntityUtils.getListProp(e, "questions", 5, String.class);
         this.isBanned = (Boolean) e.getProperty("isBanned");
         // protected
         if (ordinal >= Relation.FRIEND.ordinal()) {
             this.name = (String) e.getProperty("name");
             this.age = (Long) e.getProperty("age");
-            this.gender = (String) e.getProperty("gender");
-            this.aboutMe = (String) e.getProperty("aboutMe");
-            this.questions = EntityUtils.getListProp(e, "questions", 5, String.class);
         }
         // private
         if (ordinal >= Relation.SELF.ordinal()) {
