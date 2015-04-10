@@ -14,6 +14,10 @@ import java.util.List;
  */
 public class User extends Storable {
 
+    public static enum Status {
+        PENDING, ACTIVATED, DELETED
+    }
+
     public static enum Relation {
         STRANGER, FRIEND, SELF, ADMIN
     }
@@ -32,7 +36,7 @@ public class User extends Storable {
     private String aboutMe;
     private List<String> questions;
 
-    private Boolean isActivated;
+    private Status status;
     private Boolean isBanned;
 
     public User() {
@@ -47,11 +51,12 @@ public class User extends Storable {
         int ordinal = relation.ordinal();
         // public
         this.alias = (String) e.getProperty("alias");
-        this.avatar = (Text) e.getProperty("avatar");
+        this.avatar = (Text) e.getProperty("z_avatar");
         setLocation((GeoPt) e.getProperty("location"));
         this.gender = (String) e.getProperty("gender");
         this.aboutMe = (String) e.getProperty("aboutMe");
         this.questions = EntityUtils.getListProp(e, "questions", 5, String.class);
+        this.status = EntityUtils.getEnumProp(e, "status", Status.class);
         this.isBanned = (Boolean) e.getProperty("isBanned");
         // protected
         if (ordinal >= Relation.FRIEND.ordinal()) {
@@ -62,7 +67,6 @@ public class User extends Storable {
         if (ordinal >= Relation.SELF.ordinal()) {
             this.email = (String) e.getProperty("email");
             this.hashedPw = (String) e.getProperty("hashedPw");
-            this.isActivated = (Boolean) e.getProperty("isActivated");
         }
     }
 
@@ -200,12 +204,12 @@ public class User extends Storable {
         this.questions = questions;
     }
 
-    public Boolean getIsActivated() {
-        return isActivated;
+    public Status getStatus() {
+        return status;
     }
 
-    public void setIsActivated(Boolean isActivated) {
-        this.isActivated = isActivated;
+    public void setStatus(Status status) {
+        this.status = status;
     }
 
     public Boolean getIsBanned() {
@@ -246,7 +250,7 @@ public class User extends Storable {
             setDefaultAvatar();
         }
         setBlankQuestions();
-        this.isActivated = false;
+        this.status = Status.PENDING;
         this.isBanned = false;
     }
 
@@ -258,14 +262,14 @@ public class User extends Storable {
         }
         e.setUnindexedProperty("hashedPw", hashedPw);
         e.setProperty("alias", alias);
-        e.setUnindexedProperty("avatar", avatar);
+        e.setUnindexedProperty("z_avatar", avatar);
         e.setUnindexedProperty("location", getLocation());
         e.setProperty("name", name);
         e.setProperty("age", age);
         e.setProperty("gender", gender);
         e.setUnindexedProperty("aboutMe", aboutMe);
         EntityUtils.setListProp(e, "questions", questions);
-        e.setProperty("isActivated", isActivated);
+        e.setProperty("status", status.name());
         e.setProperty("isBanned", isBanned);
         return e;
     }

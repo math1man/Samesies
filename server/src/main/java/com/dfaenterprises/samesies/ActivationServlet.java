@@ -26,7 +26,7 @@ public class ActivationServlet extends HttpServlet {
             long uid = Long.parseLong(param);
             try {
                 User user = new User(ds.get(KeyFactory.createKey("User", uid)));
-                user.setIsActivated(true);
+                user.setStatus(User.Status.ACTIVATED);
                 DS.put(ds, user);
                 resp.sendRedirect("http://samesies.org/activated.html");
             } catch (EntityNotFoundException e) {

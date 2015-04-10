@@ -107,12 +107,21 @@ public class SamesiesApi {
         User dsUser = DS.getUser(ds, email, User.Relation.SELF, false);
         if (dsUser.getIsBanned()) {
             throw new ForbiddenException("Account has been banned");
-        } else if (!dsUser.getIsActivated()) {
-            throw new ForbiddenException("Account has not been activated");
-        } else if (password != null && BCrypt.checkpw(password, dsUser.getHashedPw())) {
-            return dsUser;
-        } else {
-            throw new BadRequestException("Incorrect Password");
+        }
+        switch (dsUser.getStatus()) {
+            case PENDING:
+                throw new ForbiddenException("Account has not been activated");
+            case ACTIVATED:
+                if (password != null && BCrypt.checkpw(password, dsUser.getHashedPw())) {
+                    return dsUser;
+                } else {
+                    throw new BadRequestException("Incorrect Password");
+                }
+            case DELETED:
+                // TODO: what to do here?
+                throw new ForbiddenException("Account has been deleted");
+            default:
+                throw new ForbiddenException("Account is not active");
         }
     }
 
@@ -202,7 +211,7 @@ public class SamesiesApi {
             }
         }
         user.setLocation(dsUser.getLocation());
-        user.setIsActivated(dsUser.getIsActivated());
+        user.setStatus(dsUser.getStatus());
         user.setIsBanned(dsUser.getIsBanned());
         DS.put(ds, user);
     }
