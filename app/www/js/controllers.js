@@ -569,9 +569,10 @@
                     state: 'matching',
                     stage: 0
                 };
-                var params = {};
-                params.cid = Data.community.id || EVERYONE_CID;
                 // **Eventually** TODO: location
+                var params = {
+                    cid: Data.community.id || EVERYONE_CID
+                };
                 API.findEpisode(Data.user.id, Data.settings, params).then(function (resp) {
                     Data.episode = resp.result;
                     if (Data.episode.status === "MATCHING") {
