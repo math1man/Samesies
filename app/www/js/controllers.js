@@ -570,11 +570,7 @@
                     stage: 0
                 };
                 var params = {};
-                if (Data.community.id) {
-                    params.cid = Data.community.id;
-                } else {
-                    params.cid = EVERYONE_CID;
-                }
+                params.cid = Data.community.id || EVERYONE_CID;
                 // **Eventually** TODO: location
                 API.findEpisode(Data.user.id, Data.settings, params).then(function (resp) {
                     Data.episode = resp.result;
