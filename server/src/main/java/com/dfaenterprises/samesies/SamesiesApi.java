@@ -929,7 +929,7 @@ public class SamesiesApi {
     }
 
     @ApiMethod(name = "samesiesApi.getMessages",
-            path = "chat/messages/{chatId}/{after}/{myId}",
+            path = "chat/{chatId}/messages/{after}/{myId}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Message> getMessages(@Named("chatId") long cid, @Named("after") Date after, @Named("myId") long myUid) throws ServiceException {
         DatastoreService ds = DS.getDS();
