@@ -10,8 +10,8 @@ public class Friend extends Pairing {
     public static enum Status {
         PENDING, ACCEPTED, DELETED_1, DELETED_2;
 
-        public User.Relation getRelation() {
-            return this == ACCEPTED ? User.Relation.FRIEND : User.Relation.STRANGER;
+        public int getRelation() {
+            return this == ACCEPTED ? User.FRIEND : User.STRANGER;
         }
 
         public boolean isDeleted() {

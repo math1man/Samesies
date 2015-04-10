@@ -18,7 +18,7 @@ public class DS {
         return DatastoreServiceFactory.getDatastoreService();
     }
 
-    public static User getUser(DatastoreService ds, long id, User.Relation relation, boolean returnNull) throws NotFoundException {
+    public static User getUser(DatastoreService ds, long id, int relation, boolean returnNull) throws NotFoundException {
         try {
             return new User(ds.get(KeyFactory.createKey("User", id)), relation);
         } catch (EntityNotFoundException e) {
@@ -30,7 +30,7 @@ public class DS {
         }
     }
 
-    public static User getUser(DatastoreService ds, String email, User.Relation relation, boolean returnNull) throws NotFoundException {
+    public static User getUser(DatastoreService ds, String email, int relation, boolean returnNull) throws NotFoundException {
         Query query = new Query("User").setFilter(new Query.FilterPredicate("email", Query.FilterOperator.EQUAL, email));
         PreparedQuery pq = ds.prepare(query);
 

@@ -104,7 +104,7 @@ public class SamesiesApi {
         if (email == null) {
             throw new BadRequestException("Invalid Email");
         }
-        User dsUser = DS.getUser(ds, email, User.Relation.SELF, false);
+        User dsUser = DS.getUser(ds, email, User.SELF, false);
         if (dsUser.getIsBanned()) {
             throw new ForbiddenException("Account has been banned");
         }
@@ -138,7 +138,7 @@ public class SamesiesApi {
         if (newUser.getPassword() == null) {
             throw new BadRequestException("Invalid Password");
         }
-        if (DS.getUser(ds, email, User.Relation.STRANGER, true) == null) {
+        if (DS.getUser(ds, email, User.STRANGER, true) == null) {
             newUser.initNewUser();
             DS.put(ds, newUser);
             DS.put(ds, new CommunityUser(Constants.EVERYONE_CID, newUser.getId(), true));
@@ -158,7 +158,7 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.PUT)
     public void recoverUser(@Named("email") String email) throws ServiceException {
         DatastoreService ds = DS.getDS();
-        User user = DS.getUser(ds, email, User.Relation.ADMIN, false);
+        User user = DS.getUser(ds, email, User.ADMIN, false);
         String tempPass = EntityUtils.randomString(8);
         user.setPassword(tempPass);
         DS.put(ds, user);
@@ -173,7 +173,7 @@ public class SamesiesApi {
             path = "user/{id}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public User getUser(@Named("id") long uid) throws ServiceException {
-        return DS.getUser(DS.getDS(), uid, User.Relation.STRANGER, false);
+        return DS.getUser(DS.getDS(), uid, User.STRANGER, false);
     }
 
     @ApiMethod(name = "samesiesApi.getUsers",
@@ -187,7 +187,7 @@ public class SamesiesApi {
         Map<Key, Entity> map = DS.getDS().get(keys);
         List<User> users = new ArrayList<>();
         for (Key key : keys) {
-            users.add(new User(map.get(key), User.Relation.STRANGER));
+            users.add(new User(map.get(key), User.STRANGER));
         }
         return users;
     }
@@ -201,7 +201,7 @@ public class SamesiesApi {
             throw new BadRequestException("User ID not specified");
         }
         String newPassword = user.getNewPassword();
-        User dsUser = DS.getUser(ds, user.getId(), User.Relation.SELF, false);
+        User dsUser = DS.getUser(ds, user.getId(), User.SELF, false);
         if (newPassword != null) {
             // password is being changed
             if (BCrypt.checkpw(user.getPassword(), dsUser.getHashedPw())) {
@@ -220,7 +220,7 @@ public class SamesiesApi {
             path = "user/find/{email}",
             httpMethod = ApiMethod.HttpMethod.GET)
     public User findUser(@Named("email") String email) throws ServiceException {
-        User user = DS.getUser(DS.getDS(), email, User.Relation.STRANGER, true);
+        User user = DS.getUser(DS.getDS(), email, User.STRANGER, true);
         if (isValid(user)) {
             return user;
         } else {
@@ -234,7 +234,7 @@ public class SamesiesApi {
     public List<User> searchUsers(@Named("string") String string) throws ServiceException {
         DatastoreService ds = DS.getDS();
         // first, lets check if they straight entered an email
-        User user = DS.getUser(DS.getDS(), string, User.Relation.STRANGER, true);
+        User user = DS.getUser(DS.getDS(), string, User.STRANGER, true);
         if (isValid(user)) { // ignore banned users
             return Collections.singletonList(user);
         } else {
@@ -246,7 +246,7 @@ public class SamesiesApi {
                 User u = new User(e);
                 if (!u.getIsBanned() && (u.getName() != null && pattern.matcher(u.getName().toLowerCase()).matches()
                         || u.getAlias() != null && pattern.matcher(u.getAlias().toLowerCase()).matches())) {
-                    users.add(new User(e, User.Relation.STRANGER));
+                    users.add(new User(e, User.STRANGER));
                     if (users.size() == 10) {
                         return users;
                     }
@@ -278,7 +278,7 @@ public class SamesiesApi {
         if (isBanned == null) {
             isBanned = true;
         }
-        User user = DS.getUser(ds, uid, User.Relation.ADMIN, false);
+        User user = DS.getUser(ds, uid, User.ADMIN, false);
         user.setIsBanned(isBanned);
         DS.put(ds, user);
         sendEmail(user, "Samesies Account Banned",
@@ -307,7 +307,7 @@ public class SamesiesApi {
             Friend friend = new Friend(e);
             if (!friend.getStatus().isDeleted()) {
                 long theirUid = friend.getOtherUid(uid);
-                User.Relation relation = friend.getStatus().getRelation();
+                int relation = friend.getStatus().getRelation();
                 User user = DS.getUser(ds, theirUid, relation, true);
                 if (isValid(user)) {
                     friend.setUser(user);
@@ -410,7 +410,7 @@ public class SamesiesApi {
                 new Query.FilterPredicate("isValidated", Query.FilterOperator.EQUAL, true)));
         PreparedQuery pq = ds.prepare(query);
         for (Entity e : pq.asIterable()) {
-            User user = DS.getUser(ds, new CommunityUser(e).getUid(), User.Relation.STRANGER, true);
+            User user = DS.getUser(ds, new CommunityUser(e).getUid(), User.STRANGER, true);
             if (isValid(user)) {
                 users.add(user);
             }
@@ -436,7 +436,7 @@ public class SamesiesApi {
         PreparedQuery pq = ds.prepare(query);
         List<User> users = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
-            User user = new User(e, User.Relation.STRANGER);
+            User user = new User(e, User.STRANGER);
             if (user.hasLocation() && distance(user.getLocation(), location) <= 10) {
                 users.add(user);
             }
@@ -705,7 +705,7 @@ public class SamesiesApi {
             episode.setStatus(Episode.Status.IN_PROGRESS);
             episode.setUid2(myUid);
             episode.setQids(DS.getQids(ds, mode));
-            episode.setUser(DS.getUser(ds, episode.getUid1(), User.Relation.STRANGER, true));
+            episode.setUser(DS.getUser(ds, episode.getUid1(), User.STRANGER, true));
             episode.modify();
             sendPush(episode.getUid1(), "Connected!", "You have a new connection!");
         }
@@ -814,7 +814,7 @@ public class SamesiesApi {
                 if (otherUid == null) {
                     connections.add(episode);
                 } else {
-                    User user = DS.getUser(ds, episode.getOtherUid(uid), User.Relation.STRANGER, true);
+                    User user = DS.getUser(ds, episode.getOtherUid(uid), User.STRANGER, true);
                     if (isValid(user)) {
                         episode.setUser(user);
                         connections.add(episode);
@@ -833,8 +833,8 @@ public class SamesiesApi {
         Episode episode = DS.getEpisode(ds, eid);
         List<Question> questions = new ArrayList<>();
         if (episode.isPersonal()) {
-            User u1 = DS.getUser(ds, episode.getUid1(), User.Relation.ADMIN, false);
-            User u2 = DS.getUser(ds, episode.getUid2(), User.Relation.ADMIN, false);
+            User u1 = DS.getUser(ds, episode.getUid1(), User.ADMIN, false);
+            User u2 = DS.getUser(ds, episode.getUid2(), User.ADMIN, false);
             try {
                 for (int i=0; i<5; i++) {
                     questions.add(new Question(u1.getQuestions().get(i)));
@@ -893,7 +893,7 @@ public class SamesiesApi {
         List<Chat> chats = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
             Chat chat = new Chat(e);
-            User user = DS.getUser(ds, chat.getOtherUid(myUid), User.Relation.STRANGER, true);
+            User user = DS.getUser(ds, chat.getOtherUid(myUid), User.STRANGER, true);
             if (isValid(user)) {
                 chat.setUser(user);
                 chats.add(chat);
@@ -982,7 +982,7 @@ public class SamesiesApi {
         for (String s : messageLines) {
             sb.append(s).append('\n');
         }
-        sendEmail(DS.getUser(DS.getDS(), uid, User.Relation.ADMIN, false), subject, sb.toString());
+        sendEmail(DS.getUser(DS.getDS(), uid, User.ADMIN, false), subject, sb.toString());
     }
 
     @ApiMethod(name = "samesiesApi.registerPush",
@@ -1074,8 +1074,8 @@ public class SamesiesApi {
         }
 
         // finally check that genders are acceptable to each other
-        return checkGender(DS.getUser(ds, uid1, User.Relation.ADMIN, false).getGender(), settings2)
-                && checkGender(DS.getUser(ds, uid2, User.Relation.ADMIN, false).getGender(), settings1);
+        return checkGender(DS.getUser(ds, uid1, User.ADMIN, false).getGender(), settings2)
+                && checkGender(DS.getUser(ds, uid2, User.ADMIN, false).getGender(), settings1);
     }
 
     private static boolean checkGender(String gender, Settings settings) {
@@ -1121,7 +1121,7 @@ public class SamesiesApi {
     }
 
     private static void sendPairingPush(DatastoreService ds, long myUid, long theirUid, String title, String messagePredicate) throws ServiceException {
-        User me = DS.getUser(ds, myUid, User.Relation.SELF, false);
+        User me = DS.getUser(ds, myUid, User.SELF, false);
         sendPush(ds, theirUid, title, me.getDisplayName() + " " + messagePredicate);
     }
 

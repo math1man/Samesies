@@ -14,12 +14,13 @@ import java.util.List;
  */
 public class User extends Storable {
 
+    public static final int STRANGER = 0;
+    public static final int FRIEND = 10;
+    public static final int SELF = 20;
+    public static final int ADMIN = 30;
+
     public static enum Status {
         PENDING, ACTIVATED, DELETED
-    }
-
-    public static enum Relation {
-        STRANGER, FRIEND, SELF, ADMIN
     }
 
     private String email;
@@ -43,12 +44,11 @@ public class User extends Storable {
     }
 
     public User(Entity entity) {
-        this(entity, Relation.ADMIN);
+        this(entity, ADMIN);
     }
 
-    public User(Entity e, Relation relation) {
+    public User(Entity e, int relation) {
         super(e);
-        int ordinal = relation.ordinal();
         // public
         this.alias = (String) e.getProperty("alias");
         this.avatar = (Text) e.getProperty("z_avatar");
@@ -59,12 +59,12 @@ public class User extends Storable {
         this.status = EntityUtils.getEnumProp(e, "status", Status.class);
         this.isBanned = (Boolean) e.getProperty("isBanned");
         // protected
-        if (ordinal >= Relation.FRIEND.ordinal()) {
+        if (relation >= FRIEND) {
             this.name = (String) e.getProperty("name");
             this.age = (Long) e.getProperty("age");
         }
         // private
-        if (ordinal >= Relation.SELF.ordinal()) {
+        if (relation >= SELF) {
             this.email = (String) e.getProperty("email");
             this.hashedPw = (String) e.getProperty("hashedPw");
         }
