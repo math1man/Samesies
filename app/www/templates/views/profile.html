@@ -6,19 +6,21 @@
 				<h1>{{dispName(data('tempUser'))}}</h1>
 				<p ng-show="data('tempUser').name">{{data('tempUser').alias}}</p>
 			</div>
-			<div class="item item-body">
+			<div class="item item-body" ng-show="hasBody()">
 				<span ng-show="data('tempUser').aboutMe">{{data('tempUser').aboutMe}}</span>
 				<p>
-					<span ng-show="data('tempUser').age">Age: {{data('tempUser').age}}</span>
-					<span class="float-right">{{data('tempUser').community}}</span>
+					<span ng-show="data('tempUser').gender">Gender: {{data('tempUser').gender}}</span>
+					<span class="float-right" ng-show="data('tempUser').age">Age: {{data('tempUser').age}}</span>
 				</p>
-				<p><span ng-show="data('tempUser').gender">Gender: {{data('tempUser').gender}}</span></p>
 			</div>
 			<div class="item item-body" ng-show="hasQuestions()">
 				Personal Questions:
 				<p ng-repeat="question in data('tempUser').questions track by $index" ng-show="question">{{question}}</p>
 			</div>
-			<div class="row padding-horizontal" ng-show="!isMe(data('tempUser'))">
+			<div class="item" ng-show="showOneButton()">
+				<button class="button button-block button-royal" ng-click="connect(data('tempUser'))">Connect!</button>
+			</div>
+			<div class="row padding-horizontal" ng-show="showTwoButtons()">
 				<div class="col">
 					<button class="button button-block button-stable" ng-click="message()">Message</button>
 				</div>

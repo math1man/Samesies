@@ -71,32 +71,6 @@
             }
         };
 
-        $scope.hasQuestions = function(user) {
-            if (user && user.questions) {
-                for (var i = 0; i < 5; i++) {
-                    if (user.questions[i]) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        };
-
-        $scope.connect = function(user) {
-            API.connectEpisode(Data.user.id, user.id, Data.settings).then(function(resp) {
-                var episode = resp.result;
-                episode.data = Utils.getData(episode);
-                episode.user = user;
-                Data.connections.push(episode);
-            });
-            $ionicPopup.alert({
-                title: 'Connection Sent',
-                template: 'You have sent a connection to ' + $scope.dispName(user) + '.',
-                okText: 'Okay',
-                okType: 'button-royal'
-            });
-        };
-
         $scope.data = function (field) {
             return Data[field];
         };
@@ -808,6 +782,11 @@
             $scope.selectPopup.hide();
         };
 
+        $scope.profile = function(user) {
+            Data.tempUser = user;
+            $scope.go('profile');
+        };
+
         $scope.flag = function(user) {
             $scope.reason = [''];
             $ionicPopup.show({
@@ -1213,10 +1192,29 @@
 
     });
 
-    app.controller('ProfileCtrl', function($scope, API, Data) {
+    app.controller('ProfileCtrl', function($scope, API, Data, Utils) {
 
-        $scope.isMe = function() {
-            return Data.user.id === Data.tempUser.id;
+        $scope.showOneButton = function() {
+            return !$scope.showTwoButtons() && Data.tempUser.id != Data.user.id;
+        };
+
+        $scope.showTwoButtons = function() {
+            return Utils.containsById(Data.friends, Data.tempUser, 'user');
+        };
+
+        $scope.hasBody = function() {
+            return Data.tempUser.aboutMe || Data.tempUser.gender || Data.tempUser.age;
+        };
+
+        $scope.hasQuestions = function() {
+            if (Data.tempUser.questions && Data.tempUser.questions.length === 5) {
+                for (var i = 0; i < 5; i++) {
+                    if (Data.tempUser.questions[i]) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         };
 
         $scope.message = function() {
@@ -1227,6 +1225,22 @@
                 $scope.go('chat');
             });
         };
+
+        $scope.connect = function(user) {
+            API.connectEpisode(Data.user.id, user.id, Data.settings).then(function(resp) {
+                var episode = resp.result;
+                episode.data = Utils.getData(episode);
+                episode.user = user;
+                Data.connections.push(episode);
+            });
+            $ionicPopup.alert({
+                title: 'Connection Sent',
+                template: 'You have sent a connection to ' + $scope.dispName(user) + '.',
+                okText: 'Okay',
+                okType: 'button-royal'
+            });
+        };
+
     });
 
     app.controller('CommunitiesCtrl', function($scope, $ionicPopover, API, Data, Utils) {

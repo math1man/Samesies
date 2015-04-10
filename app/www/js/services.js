@@ -4,77 +4,77 @@
 
     app.factory('API', function() {
 
-        var API = null;
+        var api = null;
 
         return {
-            init: function(api) {
-                API = api;
+            init: function(apiInit) {
+                api = apiInit;
             },
             login: function(user) {
-                return API.login(user);
+                return api.login(user);
             },
             createUser: function(user) {
-                return API.createUser(user);
+                return api.createUser(user);
             },
             recoverUser: function(email) {
-                return API.recoverUser({email: email});
+                return api.recoverUser({email: email});
             },
             getUser: function(id) {
-                return API.getUser({id: id});
+                return api.getUser({id: id});
             },
             updateUser: function(user) {
-                return API.updateUser(user);
+                return api.updateUser(user);
             },
             searchUsers: function(string) {
-                return API.searchUsers({string: string});
+                return api.searchUsers({string: string});
             },
             flagUser: function(flaggedId, flaggerId, reason) {
-                API.flagUser({flaggedId: flaggedId, flaggerId: flaggerId, reason: reason}).then();
+                api.flagUser({flaggedId: flaggedId, flaggerId: flaggerId, reason: reason}).then();
             },
             getFriends: function(id) {
-                return API.getFriends({id: id});
+                return api.getFriends({id: id});
             },
             checkFriend: function(myId, theirId) {
-                return API.checkFriend({myId: myId, theirId: theirId});
+                return api.checkFriend({myId: myId, theirId: theirId});
             },
             addFriend: function(myId, theirId) {
-                return API.addFriend({myId: myId, theirId: theirId});
+                return api.addFriend({myId: myId, theirId: theirId});
             },
             removeFriend: function(id, myId) {
-                API.removeFriend({id: id, myId: myId}).then();
+                api.removeFriend({id: id, myId: myId}).then();
             },
             getCommunity: function(id) {
-                return API.getCommunity({id: id});
+                return api.getCommunity({id: id});
             },
             getUserCommunities: function(id) {
-                return API.getUserCommunities({id: id});
+                return api.getUserCommunities({id: id});
             },
             searchCommunities: function(string) {
-                return API.searchCommunities({string: string});
+                return api.searchCommunities({string: string});
             },
             joinCommunity: function(id, myId, string) {
-                return API.joinCommunity({id: id, myId: myId, string: string});
+                return api.joinCommunity({id: id, myId: myId, string: string});
             },
             leaveCommunity: function(id, myId) {
-                API.leaveCommunity({id: id, myId: myId}).then();
+                api.leaveCommunity({id: id, myId: myId}).then();
             },
             getQuestion: function(id) {
-                return API.getQuestion({id: id});
+                return api.getQuestion({id: id});
             },
             getQuestions: function() {
-                return API.getQuestions();
+                return api.getQuestions();
             },
             getCategories: function() {
-                return API.getCategories();
+                return api.getCategories();
             },
             suggestQuestion: function(question) {
-                API.suggestQuestion({question: question}).then();
+                api.suggestQuestion({question: question}).then();
             },
             getModes: function() {
-                return API.getModes();
+                return api.getModes();
             },
             findEpisode: function(myId, settings, params) {
-                return API.findEpisode({
+                return api.findEpisode({
                     myId: myId,
                     isPersistent: !settings.isNotPersistent,
                     mode: settings.mode.mode,
@@ -87,56 +87,56 @@
                 });
             },
             connectEpisode: function(myId, theirId, settings) {
-                return API.connectEpisode({
+                return api.connectEpisode({
                     myId: myId,
                     theirId: theirId,
                     mode: settings.mode.mode
                 });
             },
             acceptEpisode: function(id) {
-                API.acceptEpisode({id: id}).then();
+                api.acceptEpisode({id: id}).then();
             },
             getEpisode: function(id) {
-                return API.getEpisode({id: id});
+                return api.getEpisode({id: id});
             },
             answerEpisode: function(id, myId, answer) {
-                return API.answerEpisode({id: id, myId: myId, answer: answer});
+                return api.answerEpisode({id: id, myId: myId, answer: answer});
             },
             endEpisode: function(id) {
-                API.endEpisode({id: id}).then();
+                api.endEpisode({id: id}).then();
             },
             getConnections: function(id) {
-                return API.getConnections({id: id});
+                return api.getConnections({id: id});
             },
             getEpisodeQuestions: function(eid) {
-                return API.getEpisodeQuestions({eid: eid});
+                return api.getEpisodeQuestions({eid: eid});
             },
             startChat: function(eofid, isEpisode, myId, theirId) {
-                return API.startChat({eofid: eofid, isEpisode: isEpisode, myId: myId, theirId: theirId});
+                return api.startChat({eofid: eofid, isEpisode: isEpisode, myId: myId, theirId: theirId});
             },
             getChat: function(id) {
-                return API.getChat({id: id});
+                return api.getChat({id: id});
             },
             getChats: function(myId) {
-                return API.getChats({myId: myId});
+                return api.getChats({myId: myId});
             },
             updateChat: function(id, eofid, isEpisode) {
-                API.updateChat({id: id, eofid: eofid, isEpisode: isEpisode}).then();
+                api.updateChat({id: id, eofid: eofid, isEpisode: isEpisode}).then();
             },
             closeChat: function(id) {
-                API.closeChat({id: id}).then();
+                api.closeChat({id: id}).then();
             },
             sendMessage: function(chatId, myId, message, random) {
-                return API.sendMessage({chatId: chatId, myId: myId, message: message, random: random});
+                return api.sendMessage({chatId: chatId, myId: myId, message: message, random: random});
             },
             getMessages: function(chatId, after, myId) {
-                return API.getMessages({chatId: chatId, after: after, myId: myId});
+                return api.getMessages({chatId: chatId, after: after, myId: myId});
             },
             sendFeedback: function(feedback) {
-                API.sendFeedback(feedback).then();
+                api.sendFeedback(feedback).then();
             },
             registerPush: function(id, type, deviceToken) {
-                API.registerPush({id: id, type: type, deviceToken: deviceToken}).then();
+                api.registerPush({id: id, type: type, deviceToken: deviceToken}).then();
             }
         };
     });
@@ -299,23 +299,12 @@
     app.factory('Refresh', function(API, Data, Utils, Loading) {
         var all = function($scope) {
             communities($scope);
-            if (Data.user) {
-                API.getFriends(Data.user.id).then(function (resp) {
-                    var friends = resp.result.items;
-                    if (friends && friends.length) {
-                        Data.friends = friends;
-                    }
-                    Loading.friends = false;
-                    if ($scope) {
-                        $scope.$apply();
-                    }
-                    // nested so that it can pull from friends
-                    chats($scope);
-                    connections($scope);
-                });
-            }
+            friends($scope, function() {
+                chats($scope);
+                connections($scope);
+            });
         };
-        var communities = function($scope) {
+        var communities = function($scope, fn) {
             if (Data.user) {
                 API.getUserCommunities(Data.user.id).then(function(resp) {
                     var communities = resp.result.items;
@@ -326,10 +315,13 @@
                     if ($scope) {
                         $scope.$apply();
                     }
+                    if (angular.isFunction(fn)) {
+                        fn();
+                    }
                 });
             }
         };
-        var friends = function($scope) {
+        var friends = function($scope, fn) {
             API.getFriends(Data.user.id).then(function (resp) {
                 var friends = resp.result.items;
                 if (friends && friends.length) {
@@ -339,9 +331,12 @@
                 if ($scope) {
                     $scope.$apply();
                 }
+                if (angular.isFunction(fn)) {
+                    fn();
+                }
             });
         };
-        var chats = function($scope) {
+        var chats = function($scope, fn) {
             if (Data.user) { // need to add a second check in case they immediately log out
                 API.getChats(Data.user.id).then(function (resp) {
                     var chats = resp.result.items;
@@ -358,10 +353,13 @@
                     if ($scope) {
                         $scope.$apply();
                     }
+                    if (angular.isFunction(fn)) {
+                        fn();
+                    }
                 });
             }
         };
-        var connections = function($scope) {
+        var connections = function($scope, fn) {
             if (Data.user) { // need to add a second check in case they immediately log out
                 API.getConnections(Data.user.id).then(function (resp) {
                     var cxns = resp.result.items;
@@ -385,6 +383,9 @@
                     Loading.connections = false;
                     if ($scope) {
                         $scope.$apply();
+                    }
+                    if (angular.isFunction(fn)) {
+                        fn();
                     }
                 });
             }
