@@ -118,7 +118,7 @@ public class SamesiesApi {
                     throw new BadRequestException("Incorrect Password");
                 }
             case DELETED:
-                // TODO: what to do here?
+                // TODO: what to do here? Send new activation email?
                 throw new ForbiddenException("Account has been deleted");
             default:
                 throw new ForbiddenException("Account is not active");
