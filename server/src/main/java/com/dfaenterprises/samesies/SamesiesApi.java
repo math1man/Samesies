@@ -729,6 +729,7 @@ public class SamesiesApi {
             episode.setQids(DS.getQids(ds, mode));
             episode.setUser(DS.getUser(ds, episode.getUid1(), User.Relation.STRANGER, true));
             episode.modify();
+            sendPush(episode.getUid1(), "Connected!", "You have a new connection!");
         }
         DS.put(ds, episode);
         return episode;
@@ -1144,9 +1145,12 @@ public class SamesiesApi {
     }
 
     private static void sendPairingPush(DatastoreService ds, long myUid, long theirUid, String title, String messagePredicate) throws ServiceException {
-        Push push = DS.getPush(ds, theirUid);
         User me = DS.getUser(ds, myUid, User.Relation.SELF, false);
-        sendPush(push, title, me.getDisplayName() + " " + messagePredicate);
+        sendPush(ds, theirUid, title, me.getDisplayName() + " " + messagePredicate);
+    }
+
+    private static void sendPush(DatastoreService ds, long uid, String title, String message) throws InternalServerErrorException {
+        sendPush(DS.getPush(ds, uid), title, message);
     }
 
     private static void sendPush(Push push, String title, String message) throws InternalServerErrorException {
