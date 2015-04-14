@@ -950,18 +950,20 @@ public class SamesiesApi {
         chat.setIsUpToDate(myUid, true);
         DS.put(ds, chat);
 
-        Query query = new Query("Message").setFilter(Query.CompositeFilterOperator.and(
-                new Query.FilterPredicate("chatId", Query.FilterOperator.EQUAL, cid),
-                new Query.FilterPredicate("sentDate", Query.FilterOperator.GREATER_THAN, after)))
-                .addSort("sentDate", Query.SortDirection.ASCENDING);
-        PreparedQuery pq = ds.prepare(query);
         List<Message> messages = new ArrayList<>();
-        for (Entity e : pq.asIterable()) {
-            messages.add(new Message(e));
-        }
-        int size = messages.size();
-        if (size > 100) {
-            messages = messages.subList(size - 100, size);
+        if (chat.getLastModified().compareTo(after) > 0) { // there are new messages
+            Query query = new Query("Message").setFilter(Query.CompositeFilterOperator.and(
+                    new Query.FilterPredicate("chatId", Query.FilterOperator.EQUAL, cid),
+                    new Query.FilterPredicate("sentDate", Query.FilterOperator.GREATER_THAN, after)))
+                    .addSort("sentDate", Query.SortDirection.ASCENDING);
+            PreparedQuery pq = ds.prepare(query);
+            for (Entity e : pq.asIterable()) {
+                messages.add(new Message(e));
+            }
+            int size = messages.size();
+            if (size > 100) {
+                messages = messages.subList(size - 100, size);
+            }
         }
         return messages;
     }
