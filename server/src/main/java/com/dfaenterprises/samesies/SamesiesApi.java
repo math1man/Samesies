@@ -606,9 +606,7 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Question> getQuestions() throws ServiceException {
         DatastoreService ds = DS.getDS();
-        Query query = new Query("Question")
-                .addProjection(new PropertyProjection("q", String.class))
-                .addProjection(new PropertyProjection("category", String.class));
+        Query query = new Query("Question");
         PreparedQuery pq = ds.prepare(query);
         List<Question> questions = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
@@ -690,7 +688,7 @@ public class SamesiesApi {
                 if (isPersistent && temp.getUid1() == myUid) {
                     return temp; // only 1 persistent random match per person per mode
                 }
-                // check that the episode was last modified less than a minutes ago
+                // check that the episode was last modified less than a minutes ago (or isPersistent)
                 if (isPersistent || new Date().getTime() - temp.getLastModified().getTime() < 1000 * 60) {
                     if (isMatch(ds, myUid, settings, temp.getUid1(), temp.getSettings())) {
                         episode = temp;
@@ -710,7 +708,7 @@ public class SamesiesApi {
             episode.setQids(DS.getQids(ds, mode));
             episode.setUser(DS.getUser(ds, episode.getUid1(), User.STRANGER, true));
             episode.modify();
-            sendPush(episode.getUid1(), "Connected!", "You have a new connection!");
+            sendPush(ds, episode.getUid1(), "Connected!", "You have a new connection!");
         }
         DS.put(ds, episode);
         return episode;
@@ -805,8 +803,7 @@ public class SamesiesApi {
                 Query.CompositeFilterOperator.or(
                         new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, uid),
                         new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, uid)),
-                new Query.FilterPredicate("isPersistent", Query.FilterOperator.EQUAL, true)))
-                .addSort("startDate", Query.SortDirection.ASCENDING);
+                new Query.FilterPredicate("isPersistent", Query.FilterOperator.EQUAL, true)));
         PreparedQuery pq = ds.prepare(query);
 
         List<Episode> connections = new ArrayList<>();
@@ -817,7 +814,7 @@ public class SamesiesApi {
                 if (otherUid == null) {
                     connections.add(episode);
                 } else {
-                    User user = DS.getUser(ds, episode.getOtherUid(uid), User.STRANGER, true);
+                    User user = DS.getUser(ds, otherUid, User.STRANGER, true);
                     if (isValid(user)) {
                         episode.setUser(user);
                         connections.add(episode);
@@ -950,18 +947,20 @@ public class SamesiesApi {
         chat.setIsUpToDate(myUid, true);
         DS.put(ds, chat);
 
-        Query query = new Query("Message").setFilter(Query.CompositeFilterOperator.and(
-                new Query.FilterPredicate("chatId", Query.FilterOperator.EQUAL, cid),
-                new Query.FilterPredicate("sentDate", Query.FilterOperator.GREATER_THAN, after)))
-                .addSort("sentDate", Query.SortDirection.ASCENDING);
-        PreparedQuery pq = ds.prepare(query);
         List<Message> messages = new ArrayList<>();
-        for (Entity e : pq.asIterable()) {
-            messages.add(new Message(e));
-        }
-        int size = messages.size();
-        if (size > 100) {
-            messages = messages.subList(size - 100, size);
+        if (chat.getLastModified().compareTo(after) > 0) { // there might be new messages
+            Query query = new Query("Message").setFilter(Query.CompositeFilterOperator.and(
+                    new Query.FilterPredicate("chatId", Query.FilterOperator.EQUAL, cid),
+                    new Query.FilterPredicate("sentDate", Query.FilterOperator.GREATER_THAN, after)))
+                    .addSort("sentDate", Query.SortDirection.DESCENDING);
+            PreparedQuery pq = ds.prepare(query);
+            for (Entity e : pq.asIterable(FetchOptions.Builder.withLimit(100))) {
+                messages.add(new Message(e));
+            }
+            if (messages.size() > 100) {
+                messages = messages.subList(0, 100);
+            }
+            Collections.reverse(messages);
         }
         return messages;
     }
