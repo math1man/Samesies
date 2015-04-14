@@ -606,9 +606,7 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Question> getQuestions() throws ServiceException {
         DatastoreService ds = DS.getDS();
-        Query query = new Query("Question")
-                .addProjection(new PropertyProjection("q", String.class))
-                .addProjection(new PropertyProjection("category", String.class));
+        Query query = new Query("Question");
         PreparedQuery pq = ds.prepare(query);
         List<Question> questions = new ArrayList<>();
         for (Entity e : pq.asIterable()) {
@@ -805,8 +803,7 @@ public class SamesiesApi {
                 Query.CompositeFilterOperator.or(
                         new Query.FilterPredicate("uid1", Query.FilterOperator.EQUAL, uid),
                         new Query.FilterPredicate("uid2", Query.FilterOperator.EQUAL, uid)),
-                new Query.FilterPredicate("isPersistent", Query.FilterOperator.EQUAL, true)))
-                .addSort("startDate", Query.SortDirection.ASCENDING);
+                new Query.FilterPredicate("isPersistent", Query.FilterOperator.EQUAL, true)));
         PreparedQuery pq = ds.prepare(query);
 
         List<Episode> connections = new ArrayList<>();
@@ -817,7 +814,7 @@ public class SamesiesApi {
                 if (otherUid == null) {
                     connections.add(episode);
                 } else {
-                    User user = DS.getUser(ds, episode.getOtherUid(uid), User.STRANGER, true);
+                    User user = DS.getUser(ds, otherUid, User.STRANGER, true);
                     if (isValid(user)) {
                         episode.setUser(user);
                         connections.add(episode);
@@ -951,19 +948,19 @@ public class SamesiesApi {
         DS.put(ds, chat);
 
         List<Message> messages = new ArrayList<>();
-        if (chat.getLastModified().compareTo(after) > 0) { // there are new messages
+        if (chat.getLastModified().compareTo(after) > 0) { // there might be new messages
             Query query = new Query("Message").setFilter(Query.CompositeFilterOperator.and(
                     new Query.FilterPredicate("chatId", Query.FilterOperator.EQUAL, cid),
                     new Query.FilterPredicate("sentDate", Query.FilterOperator.GREATER_THAN, after)))
-                    .addSort("sentDate", Query.SortDirection.ASCENDING);
+                    .addSort("sentDate", Query.SortDirection.DESCENDING);
             PreparedQuery pq = ds.prepare(query);
-            for (Entity e : pq.asIterable()) {
+            for (Entity e : pq.asIterable(FetchOptions.Builder.withLimit(100))) {
                 messages.add(new Message(e));
             }
-            int size = messages.size();
-            if (size > 100) {
-                messages = messages.subList(size - 100, size);
+            if (messages.size() > 100) {
+                messages = messages.subList(0, 100);
             }
+            Collections.reverse(messages);
         }
         return messages;
     }
