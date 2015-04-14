@@ -688,7 +688,7 @@ public class SamesiesApi {
                 if (isPersistent && temp.getUid1() == myUid) {
                     return temp; // only 1 persistent random match per person per mode
                 }
-                // check that the episode was last modified less than a minutes ago
+                // check that the episode was last modified less than a minutes ago (or isPersistent)
                 if (isPersistent || new Date().getTime() - temp.getLastModified().getTime() < 1000 * 60) {
                     if (isMatch(ds, myUid, settings, temp.getUid1(), temp.getSettings())) {
                         episode = temp;
@@ -708,7 +708,7 @@ public class SamesiesApi {
             episode.setQids(DS.getQids(ds, mode));
             episode.setUser(DS.getUser(ds, episode.getUid1(), User.STRANGER, true));
             episode.modify();
-            sendPush(episode.getUid1(), "Connected!", "You have a new connection!");
+            sendPush(ds, episode.getUid1(), "Connected!", "You have a new connection!");
         }
         DS.put(ds, episode);
         return episode;
