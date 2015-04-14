@@ -38,57 +38,6 @@ import java.util.regex.Pattern;
         audiences = {Constants.ANDROID_AUDIENCE})
 public class SamesiesApi {
 
-    public void initQuestions() throws ServiceException {
-        DatastoreService ds = DS.getDS();
-
-        Question[] questions = {
-                new Question("What do you like to do on a first date?"),
-                new Question("What is your go-to conversation starter?"),
-                new Question("If you had to take a date to dinner, where would you go?"),
-                new Question("If you could have a superpower, what would it be and why?"),
-                new Question("Given the choice of anyone in the world, whom would you want as a dinner guest?"),
-                new Question("Would you like to be famous? In what way?"),
-                new Question("Before making a telephone call, do you ever rehearse what you are going to say and why?"),
-                new Question("What would constitute a \"perfect\" day for you?"),
-                new Question("When did you last sing to yourself? To someone else?"),
-                new Question("If you were able to live to the age of 90 and retain either the mind or body of a " +
-                        "30-year-old for the last 60 years of your life, which would you want and why?"),
-                new Question("For what in your life do you feel most grateful?"),
-                new Question("If you could change anything about the way you were raised, what would it be?"),
-                new Question("If you could wake up tomorrow having gained any one quality or ability, what would it be?"),
-                new Question("If a crystal ball could tell you the truth about yourself, your life, the future " +
-                        "or any one thing, what would you want to know?"),
-                new Question("Is there something that you've dreamed of doing for a long time? Why haven't you done it?"),
-                new Question("What is the greatest accomplishment of your life?"),
-                new Question("What do you value most in a friendship?"),
-                new Question("What is your most treasured memory?"),
-                new Question("What is your most terrible memory?"),
-                new Question("If you knew that in one year you would die suddenly, would you change anything " +
-                        "about the way you are now living and why?"),
-                new Question("When did you last cry in front of another person? By yourself?"),
-                new Question("What, if anything, is too serious to be joked about?"),
-                new Question("If you were to die this evening with no opportunity to communicate with anyone, " +
-                        "what would you most regret not having told someone? Why haven't you told them yet?"),
-                new Question("Your house, containing everything you own, catches fire. After saving your loved ones and " +
-                        "pets, you have time to safely make a final dash to save any one item. What would it be and why?"),
-                new Question("What is the most important thing your close friends should know about you?"),
-                new Question("What is one of your most embarrassing moments?")
-        };
-        for (Question q : questions) {
-            q.setCategory("Random");
-        }
-        DS.put(ds, questions);
-
-        ds.put(Arrays.asList(new Entity("Category", "All"),
-                new Entity("Category", "Random")));
-    }
-
-    public void initModes() throws ServiceException {
-        DatastoreService ds = DS.getDS();
-        DS.put(ds, new Mode("Random", "Answer 10 random questions from our database."),
-                new Mode("Personal", "Answer each of your and your partner's 5 personal questions."));
-    }
-
     //----------------------------
     //        User Calls
     //----------------------------
