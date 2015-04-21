@@ -90,7 +90,13 @@ public class SamesiesApi {
         if (DS.getUser(ds, email, User.STRANGER, true) == null) {
             newUser.initNewUser();
             DS.put(ds, newUser);
-            DS.put(ds, new CommunityUser(Constants.EVERYONE_CID, newUser.getId(), true));
+            List<CommunityUser> cus = new ArrayList<>();
+            cus.add(new CommunityUser(Constants.EVERYONE_CID, newUser.getId(), true));
+            for (Community c : DS.getCommunitiesFromEmailSuffix(ds, email)) {
+                cus.add(new CommunityUser(c.getId(), newUser.getId(), true));
+            }
+            DS.put(ds, cus);
+
             sendEmail(newUser, "Activate your Samesies Account",
                     "Click the link below to activate your account:\n" +
                             "https://samesies-app.appspot.com/_ah/spi/activate?user_id=" + newUser.getId() + "\n\n" +

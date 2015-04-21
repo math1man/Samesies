@@ -76,6 +76,20 @@ public class DS {
         }
     }
 
+    public static List<Community> getCommunitiesFromEmailSuffix(DatastoreService ds, String email) {
+        String emailSuffix = email.substring(email.indexOf('@'));
+        Query query = new Query("Community").setFilter(Query.CompositeFilterOperator.and(
+                new Query.FilterPredicate("type", Query.FilterOperator.EQUAL, Community.Type.EMAIL.name()),
+                new Query.FilterPredicate("utilityString", Query.FilterOperator.EQUAL, emailSuffix)
+        ));
+        PreparedQuery pq = ds.prepare(query);
+        List<Community> communities = new ArrayList<>();
+        for (Entity e : pq.asIterable()) {
+            communities.add(new Community(e));
+        }
+        return communities;
+    }
+
     public static CommunityUser getCommunityUser(DatastoreService ds, long cid, long uid) {
         Query query = new Query("CommunityUser").setFilter(Query.CompositeFilterOperator.and(
                 new Query.FilterPredicate("cid", Query.FilterOperator.EQUAL, cid),
