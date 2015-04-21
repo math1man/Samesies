@@ -102,8 +102,8 @@ public class Community extends Storable {
         Entity e = getEntity("Community");
         e.setProperty("name", name);
         e.setUnindexedProperty("description", description);
-        e.setUnindexedProperty("type", type.name());
-        e.setUnindexedProperty("utilityString", utilityString);
+        e.setProperty("type", type.name());
+        e.setProperty("utilityString", utilityString);
         e.setProperty("state", state.name());
         return e;
     }
