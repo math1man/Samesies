@@ -670,7 +670,7 @@
             if ($scope.episodeData.questions) {
                 return $scope.episodeData.questions[$scope.episodeData.stage - 1].q;
             } else {
-                return "";
+                return "Loading...";
             }
         };
 
