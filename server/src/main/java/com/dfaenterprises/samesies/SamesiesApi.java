@@ -59,7 +59,7 @@ public class SamesiesApi {
         }
         switch (dsUser.getStatus()) {
             case PENDING:
-                throw new ForbiddenException("Account has not been activated");
+                throw new ForbiddenException("Check your email to activate your account.");
             case ACTIVATED:
                 if (password != null && BCrypt.checkpw(password, dsUser.getHashedPw())) {
                     return dsUser;
@@ -171,18 +171,6 @@ public class SamesiesApi {
         DS.put(ds, user);
     }
 
-    @ApiMethod(name = "samesiesApi.findUser",
-            path = "user/find/{email}",
-            httpMethod = ApiMethod.HttpMethod.GET)
-    public User findUser(@Named("email") String email) throws ServiceException {
-        User user = DS.getUser(DS.getDS(), email, User.STRANGER, true);
-        if (isValid(user)) {
-            return user;
-        } else {
-            return null;
-        }
-    }
-
     @ApiMethod(name = "samesiesApi.searchUsers",
             path = "user/search/{string}",
             httpMethod = ApiMethod.HttpMethod.GET)
@@ -190,7 +178,7 @@ public class SamesiesApi {
         DatastoreService ds = DS.getDS();
         // first, lets check if they straight entered an email
         User user = DS.getUser(DS.getDS(), string, User.STRANGER, true);
-        if (isValid(user)) { // ignore banned users
+        if (isActive(user)) { // ignore banned users
             return Collections.singletonList(user);
         } else {
             Query query = new Query("User");
@@ -264,7 +252,7 @@ public class SamesiesApi {
                 long theirUid = friend.getOtherUid(uid);
                 int relation = friend.getStatus().getRelation();
                 User user = DS.getUser(ds, theirUid, relation, true);
-                if (isValid(user)) {
+                if (isActive(user)) {
                     friend.setUser(user);
                     friends.add(friend);
                 }
@@ -366,7 +354,7 @@ public class SamesiesApi {
         PreparedQuery pq = ds.prepare(query);
         for (Entity e : pq.asIterable()) {
             User user = DS.getUser(ds, new CommunityUser(e).getUid(), User.STRANGER, true);
-            if (isValid(user)) {
+            if (isActive(user)) {
                 users.add(user);
             }
         }
@@ -1074,7 +1062,11 @@ public class SamesiesApi {
     }
 
     private static boolean isValid(User user) {
-        return user != null && !user.getIsBanned();
+        return user != null && !user.getIsBanned() && user.getStatus() != User.Status.DELETED;
+    }
+
+    private static boolean isActive(User user) {
+        return isValid(user) && user.getStatus() == User.Status.ACTIVATED;
     }
 
     private static void sendPairingPush(DatastoreService ds, long myUid, long theirUid, String title, String messagePredicate) throws ServiceException {
