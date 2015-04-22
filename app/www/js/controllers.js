@@ -828,9 +828,11 @@
         };
 
         $scope.play = function(cxn) {
-            Data.episode = cxn;
-            removeCxn(cxn);
-            $scope.go('play');
+            if (cxn.status === "IN_PROGRESS") {
+                Data.episode = cxn;
+                removeCxn(cxn);
+                $scope.go('play');
+            }
         };
 
         $scope.remove = function(cxn) {

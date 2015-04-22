@@ -53,22 +53,7 @@
             if (items) {
                 for (var i = 0; i < items.length; i++) {
                     var item = items[i];
-                    if (item.status === 'MATCHING' && item.data.is1) {
-                        filtered.push(item);
-                    }
-                }
-            }
-            return filtered;
-        };
-    });
-
-    app.filter('waitingConnections', function () {
-        return function (items) {
-            var filtered = [];
-            if (items) {
-                for (var i = 0; i < items.length; i++) {
-                    var item = items[i];
-                    if (item.status === 'IN_PROGRESS' && item.data.state === 'waiting') {
+                    if (item.status === 'MATCHING' && item.data.is1 || item.status === 'IN_PROGRESS' && item.data.state === 'waiting') {
                         filtered.push(item);
                     }
                 }

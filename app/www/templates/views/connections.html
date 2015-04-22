@@ -40,21 +40,6 @@
 		<ss-loading ng-show="loading('connections')"></ss-loading>
 		<div class="row hidden-grid" ng-repeat="cxn in data('connections') | pendingConnections | orderBy:'lastModified':true">
 			<div class="col col-90">
-				<div class="item item-avatar">
-					<img ng-src="{{cxn.user.avatar}}">
-					{{dispName(cxn.user)}}
-					<span class="item-note">{{dispStage(cxn)}}</span>
-					<p>Mode: {{cxn.settings.mode}}</p>
-				</div>
-			</div>
-			<div class="col col-10">
-				<div class="item" ng-click="remove(cxn)">
-					<button class="button button-clear button-small button-icon small-icon ion-close-round"></button>
-				</div>
-			</div>
-		</div>
-		<div class="row hidden-grid" ng-repeat="cxn in data('connections') | waitingConnections | orderBy:'data.stage'">
-			<div class="col col-90">
 				<div class="item item-avatar" ng-click="play(cxn)">
 					<img ng-src="{{cxn.user.avatar}}">
 					{{dispName(cxn.user)}}
