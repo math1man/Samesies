@@ -867,7 +867,7 @@
         };
     });
 
-    app.controller('MessagesCtrl', function($scope, API, Data, Utils, Refresh) {
+    app.controller('MessagesCtrl', function($scope, $ionicPopup, API, Data, Utils, Refresh) {
 
         $scope.$on('$ionicView.beforeEnter', function() {
             Refresh.chats($scope);
@@ -889,7 +889,7 @@
             if (chat.isEpisode) { // episode chats cannot be recovered
                 $ionicPopup.confirm({
                     title: 'Close Chat',
-                    template: 'Are you sure you want to close your chat with ' + $scope.dispName(chat.user) + '?' +
+                    template: 'Are you sure you want to close your chat with ' + $scope.dispName(chat.user) + '? ' +
                             'You will not be able to return to it.',
                     okText: 'Close Chat',
                     okType: 'button-assertive',

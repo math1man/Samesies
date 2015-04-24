@@ -7,7 +7,7 @@
 	</ion-nav-buttons>
 	<ion-content>
 		<div class="item item-text-wrap chat" ng-repeat="message in history track by $index | orderBy:'sentDate'"
-			 ng-class="{'item-avatar-left': isMine(message), 'item-avatar-right align-right': !isMine(message)}">
+			 ng-class="{'item-avatar-left': isMine(message), 'item-avatar-right': !isMine(message)}">
 			<img ng-src="{{getAvatar(message)}}">
 			{{message.message}}
 			<h6 ng-show="message.sentDate">{{dispDate(message)}}</h6>
