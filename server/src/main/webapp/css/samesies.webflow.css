@@ -50,7 +50,7 @@ h6 {
 }
 p {
   display: block;
-  padding-bottom: 23px;
+  margin-bottom: 23px;
   font-family: Bitter, serif;
   color: #a1a1a1;
   font-size: 15px;
@@ -125,6 +125,11 @@ ul {
 .samesies-iphone {
   margin-top: -90px;
   margin-bottom: -90px;
+}
+.samesies-avatar {
+  width: 360px;
+  border: 1px solid #5c5c5c;
+  margin-bottom: 23px;
 }
 .app-name {
   margin-top: 3px;
