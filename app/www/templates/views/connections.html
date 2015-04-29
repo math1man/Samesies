@@ -21,7 +21,7 @@
 		<ss-loading ng-show="loading('connections')"></ss-loading>
 		<div class="row hidden-grid" ng-repeat="cxn in data('connections') | yourTurnConnections | orderBy:'lastModified':true">
 			<div class="col col-90">
-				<div class="item item-avatar" ng-click="play(cxn)">
+				<div class="item item-avatar" ng-click="play(cxn)" on-swipe-left="play(cxn)">
 					<img ng-src="{{cxn.user.avatar}}">
 					{{dispName(cxn.user)}}
 					<span class="item-note">{{dispStage(cxn)}}</span>
@@ -40,7 +40,7 @@
 		<ss-loading ng-show="loading('connections')"></ss-loading>
 		<div class="row hidden-grid" ng-repeat="cxn in data('connections') | pendingConnections | orderBy:'lastModified':true">
 			<div class="col col-90">
-				<div class="item item-avatar" ng-click="play(cxn)">
+				<div class="item item-avatar" ng-click="play(cxn)" on-swipe-left="play(cxn)">
 					<img ng-src="{{cxn.user.avatar}}">
 					{{dispName(cxn.user)}}
 					<span class="item-note">{{dispStage(cxn)}}</span>

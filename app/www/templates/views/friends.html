@@ -34,7 +34,7 @@
 			<ss-loading ng-show="loading('friends')"></ss-loading>
 			<div class="row hidden-grid" ng-repeat="friend in data('friends') | friends | checkName:search">
 				<div class="col col-90">
-					<div class="item item-avatar" ng-click="profile(friend)">
+					<div class="item item-avatar" ng-click="profile(friend)" on-swipe-left="profile(friend)">
 						<img ng-src="{{friend.user.avatar}}">
 						{{dispName(friend.user)}}
 						<p ng-show="friend.user.name">{{friend.user.alias}}</p>
@@ -52,7 +52,7 @@
 			<ss-loading ng-show="loading('friends')"></ss-loading>
 			<div class="row hidden-grid" ng-repeat="friend in data('friends') | pendingFriends | checkName:search">
 				<div class="col col-90">
-					<div class="item item-avatar" ng-click="profile(friend)">
+					<div class="item item-avatar" ng-click="profile(friend)" on-swipe-left="profile(friend)">
 						<img ng-src="{{friend.user.avatar}}">
 						{{dispName(friend.user)}}
 						<p ng-show="friend.user.name">{{friend.user.alias}}</p>

@@ -10,7 +10,7 @@
             <ss-loading ng-show="loading('chats')"></ss-loading>
             <div class="row hidden-grid" ng-repeat="chat in data('chats') | checkName:search | orderBy:'lastModified':true">
                 <div class="col col-90">
-                    <div class="item item-avatar" ng-click="goChat(chat)">
+                    <div class="item item-avatar" ng-click="goChat(chat)" on-swipe-left="goChat(chat)">
                         <img ng-src="{{chat.user.avatar}}">
                         {{dispName(chat.user)}}
                         <p ng-show="chat.user.name">{{chat.user.alias}}</p>
