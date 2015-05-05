@@ -110,6 +110,7 @@
             $scope.loginData = {
                 error: false,
                 email: $window.localStorage['email'],
+                password: $window.localStorage['password'],
                 avatar: 'img/lone_icon.png'
             };
             $scope.loginCheck = {};
@@ -121,6 +122,7 @@
                 API.registerPush(user.id, ionic.Platform.platform(), $window.localStorage['deviceToken']);
             }
             $window.localStorage['email'] = $scope.loginData.email;
+            $window.localStorage['password'] = $scope.loginData.password;
             $scope.loginData = null;
             $scope.loginCheck = {};
             Data.user = user;
