@@ -19,7 +19,8 @@
 
 		<!-- question -->
 		<div class="card" ng-show="!is('matching')">
-			<div class="item item-text-wrap">
+			<ss-loading ng-show="!getQuestion()"></ss-loading>
+			<div class="item item-text-wrap" ng-show="getQuestion()">
 				{{getQuestion()}}
 			</div>
 		</div>
