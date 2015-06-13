@@ -1194,7 +1194,7 @@
 
     });
 
-    app.controller('ProfileCtrl', function($scope, API, Data, Utils) {
+    app.controller('ProfileCtrl', function($scope, $ionicPopup, API, Data, Utils) {
 
         $scope.showOneButton = function() {
             return !$scope.showTwoButtons() && Data.tempUser.id != Data.user.id;
