@@ -38,6 +38,9 @@ import java.util.regex.Pattern;
         audiences = {Constants.ANDROID_AUDIENCE})
 public class SamesiesApi {
 
+    public static final int USER_SEARCH_LIMIT = 10;
+    public static final int COMMUNITY_SEARCH_LIMIT = 5;
+
     //----------------------------
     //        User Calls
     //----------------------------
@@ -185,12 +188,13 @@ public class SamesiesApi {
             PreparedQuery pq = ds.prepare(query);
             List<User> users = new ArrayList<>();
             Pattern pattern = getSearchPattern(string);
+            // TODO: implement a more efficient search algorithm
             for (Entity e : pq.asIterable()) {
                 User u = new User(e);
                 if (!u.getIsBanned() && (u.getName() != null && pattern.matcher(u.getName().toLowerCase()).matches()
                         || u.getAlias() != null && pattern.matcher(u.getAlias().toLowerCase()).matches())) {
                     users.add(new User(e, User.STRANGER));
-                    if (users.size() == 10) {
+                    if (users.size() == USER_SEARCH_LIMIT) {
                         return users;
                     }
                 }
@@ -418,11 +422,12 @@ public class SamesiesApi {
         PreparedQuery pq = ds.prepare(query);
         List<Community> communities = new ArrayList<>();
         Pattern pattern = getSearchPattern(string);
+        // TODO: implement a more efficient search algorithm
         for (Entity e : pq.asIterable()) {
             Community c = new Community(e);
             if (c.getName() != null && pattern.matcher(c.getName().toLowerCase()).matches()) {
                 communities.add(c);
-                if (communities.size() == 10) {
+                if (communities.size() == COMMUNITY_SEARCH_LIMIT) {
                     return communities;
                 }
             }
