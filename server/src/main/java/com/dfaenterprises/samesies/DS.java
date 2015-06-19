@@ -4,10 +4,7 @@ import com.dfaenterprises.samesies.model.*;
 import com.google.api.server.spi.response.NotFoundException;
 import com.google.appengine.api.datastore.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Ari Weiland
@@ -28,6 +25,31 @@ public class DS {
                 throw new NotFoundException("User not found", e);
             }
         }
+    }
+
+    /**
+     * Retrieves all the specified users, excluding inactive users (unless ADMIN priority is invoked)
+     * @param ds
+     * @param ids
+     * @param relation
+     * @return
+     */
+    public static List<User> getUsers(DatastoreService ds, Set<Long> ids, int relation) {
+        List<Key> keys = new ArrayList<>();
+        for (Long id : ids) {
+            if (id != null) {
+                keys.add(KeyFactory.createKey("User", id));
+            }
+        }
+        Map<Key, Entity> map = ds.get(keys);
+        List<User> users = new ArrayList<>();
+        for (Entity e : map.values()) {
+            User u = new User(e, relation);
+            if (relation == User.ADMIN || User.isActive(u)) {
+                users.add(u);
+            }
+        }
+        return users;
     }
 
     public static User getUser(DatastoreService ds, String email, int relation, boolean returnNull) throws NotFoundException {

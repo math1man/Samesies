@@ -14,4 +14,8 @@
         <property name="chatId" direction="asc"/>
         <property name="sentDate" direction="desc"/>
     </datastore-index>
+    <datastore-index kind="Community" ancestor="false" source="manual">
+        <property name="state" direction="asc"/>
+        <property name="name" direction="asc"/>
+    </datastore-index>
 </datastore-indexes>

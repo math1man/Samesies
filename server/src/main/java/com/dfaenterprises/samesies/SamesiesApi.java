@@ -13,6 +13,8 @@ import com.google.api.server.spi.response.ForbiddenException;
 import com.google.api.server.spi.response.InternalServerErrorException;
 import com.google.api.server.spi.response.NotFoundException;
 import com.google.appengine.api.datastore.*;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.mindrot.jbcrypt.BCrypt;
 
 import javax.inject.Named;
@@ -24,7 +26,6 @@ import javax.mail.internet.MimeMessage;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * @author Ari Weiland
@@ -40,6 +41,7 @@ public class SamesiesApi {
 
     public static final int USER_SEARCH_LIMIT = 10;
     public static final int COMMUNITY_SEARCH_LIMIT = 5;
+    public static final int OVERFLOW_LIMIT = 5;
 
     //----------------------------
     //        User Calls
@@ -93,12 +95,13 @@ public class SamesiesApi {
         if (DS.getUser(ds, email, User.STRANGER, true) == null) {
             newUser.initNewUser();
             DS.put(ds, newUser);
-            List<CommunityUser> cus = new ArrayList<>();
-            cus.add(new CommunityUser(Constants.EVERYONE_CID, newUser.getId(), true));
+            List<Storable> secondaries = new ArrayList<>();
+            secondaries.add(new CommunityUser(Constants.EVERYONE_CID, newUser.getId(), true));
             for (Community c : DS.getCommunitiesFromEmailSuffix(ds, email)) {
-                cus.add(new CommunityUser(c.getId(), newUser.getId(), true));
+                secondaries.add(new CommunityUser(c.getId(), newUser.getId(), true));
             }
-            DS.put(ds, cus);
+            secondaries.addAll(Nominal.getNominals(newUser));
+            DS.put(ds, secondaries);
 
             sendEmail(newUser, "Activate your Samesies Account",
                     "Click the link below to activate your account:\n" +
@@ -138,16 +141,7 @@ public class SamesiesApi {
             path = "users",
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<User> getUsers(@Named("ids") long[] uids) throws ServiceException {
-        List<Key> keys = new ArrayList<>();
-        for (long uid : uids) {
-            keys.add(KeyFactory.createKey("User", uid));
-        }
-        Map<Key, Entity> map = DS.getDS().get(keys);
-        List<User> users = new ArrayList<>();
-        for (Key key : keys) {
-            users.add(new User(map.get(key), User.STRANGER));
-        }
-        return users;
+        return DS.getUsers(DS.getDS(), new HashSet<>(Arrays.asList(ArrayUtils.toObject(uids))), User.STRANGER);
     }
 
     @ApiMethod(name = "samesiesApi.updateUser",
@@ -171,7 +165,10 @@ public class SamesiesApi {
         user.setLocation(dsUser.getLocation());
         user.setStatus(dsUser.getStatus());
         user.setIsBanned(dsUser.getIsBanned());
-        DS.put(ds, user);
+        List<Storable> storables = new ArrayList<>();
+        storables.add(user);
+        storables.addAll(Nominal.getNominals(user));
+        DS.put(ds, storables);
     }
 
     @ApiMethod(name = "samesiesApi.searchUsers",
@@ -179,27 +176,32 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<User> searchUsers(@Named("string") String string) throws ServiceException {
         DatastoreService ds = DS.getDS();
+        string = StringUtils.lowerCase(string);
         // first, lets check if they straight entered an email
         User user = DS.getUser(DS.getDS(), string, User.STRANGER, true);
-        if (isActive(user)) { // ignore banned users
+        if (User.isActive(user)) { // ignore inactive users
             return Collections.singletonList(user);
         } else {
-            Query query = new Query("User");
+            // otherwise, search nominals
+            Query query = new Query("Nominal").setFilter(new Query.FilterPredicate(
+                    "nominal", Query.FilterOperator.GREATER_THAN_OR_EQUAL, string));
             PreparedQuery pq = ds.prepare(query);
-            List<User> users = new ArrayList<>();
-            Pattern pattern = getSearchPattern(string);
-            // TODO: implement a more efficient search algorithm
-            for (Entity e : pq.asIterable()) {
-                User u = new User(e);
-                if (!u.getIsBanned() && (u.getName() != null && pattern.matcher(u.getName().toLowerCase()).matches()
-                        || u.getAlias() != null && pattern.matcher(u.getAlias().toLowerCase()).matches())) {
-                    users.add(new User(e, User.STRANGER));
-                    if (users.size() == USER_SEARCH_LIMIT) {
-                        return users;
+            Set<Long> ids = new HashSet<>();
+            for (Entity e : pq.asIterable(FetchOptions.Builder.withLimit(USER_SEARCH_LIMIT + OVERFLOW_LIMIT))) {
+                ids.add(new Nominal(e).getId());
+            }
+            List<User> users = DS.getUsers(ds, ids, User.STRANGER);
+            List<User> output = new ArrayList<>();
+            for (User u : users) {
+                if (StringUtils.startsWithIgnoreCase(u.getName(), string)
+                        || StringUtils.startsWithIgnoreCase(u.getAlias(), string)) {
+                    output.add(u);
+                    if (output.size() == USER_SEARCH_LIMIT) {
+                        return output;
                     }
                 }
             }
-            return users;
+            return output;
         }
     }
 
@@ -256,7 +258,7 @@ public class SamesiesApi {
                 long theirUid = friend.getOtherUid(uid);
                 int relation = friend.getStatus().getRelation();
                 User user = DS.getUser(ds, theirUid, relation, true);
-                if (isActive(user)) {
+                if (User.isActive(user)) {
                     friend.setUser(user);
                     friends.add(friend);
                 }
@@ -358,7 +360,7 @@ public class SamesiesApi {
         PreparedQuery pq = ds.prepare(query);
         for (Entity e : pq.asIterable()) {
             User user = DS.getUser(ds, new CommunityUser(e).getUid(), User.STRANGER, true);
-            if (isActive(user)) {
+            if (User.isActive(user)) {
                 users.add(user);
             }
         }
@@ -417,16 +419,15 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.GET)
     public List<Community> searchCommunities(@Named("string") String string) throws ServiceException {
         DatastoreService ds = DS.getDS();
-        Query query = new Query("Community").setFilter(new Query.FilterPredicate(
-                "state", Query.FilterOperator.EQUAL, Community.State.ACTIVE.name()));
+        Query query = new Query("Community").setFilter(Query.CompositeFilterOperator.and(
+                new Query.FilterPredicate("state", Query.FilterOperator.EQUAL, Community.State.ACTIVE.name()),
+                new Query.FilterPredicate("name", Query.FilterOperator.GREATER_THAN_OR_EQUAL, string)));
         PreparedQuery pq = ds.prepare(query);
         List<Community> communities = new ArrayList<>();
-        Pattern pattern = getSearchPattern(string);
-        // TODO: implement a more efficient search algorithm
-        for (Entity e : pq.asIterable()) {
-            Community c = new Community(e);
-            if (c.getName() != null && pattern.matcher(c.getName().toLowerCase()).matches()) {
-                communities.add(c);
+        for (Entity e : pq.asIterable(FetchOptions.Builder.withLimit(COMMUNITY_SEARCH_LIMIT + OVERFLOW_LIMIT))) {
+            Community community = new Community(e);
+            if (StringUtils.startsWithIgnoreCase(community.getName(), string)) {
+                communities.add(community);
                 if (communities.size() == COMMUNITY_SEARCH_LIMIT) {
                     return communities;
                 }
@@ -763,7 +764,7 @@ public class SamesiesApi {
                     connections.add(episode);
                 } else {
                     User user = DS.getUser(ds, otherUid, User.STRANGER, true);
-                    if (isValid(user)) {
+                    if (User.isValid(user)) {
                         episode.setUser(user);
                         connections.add(episode);
                     }
@@ -842,7 +843,7 @@ public class SamesiesApi {
         for (Entity e : pq.asIterable()) {
             Chat chat = new Chat(e);
             User user = DS.getUser(ds, chat.getOtherUid(myUid), User.STRANGER, true);
-            if (isValid(user)) {
+            if (User.isValid(user)) {
                 chat.setUser(user);
                 chats.add(chat);
             }
@@ -940,7 +941,7 @@ public class SamesiesApi {
             httpMethod = ApiMethod.HttpMethod.POST)
     public Push registerPush(@Named("id") long uid, @Named("type") String type, @Named("deviceToken") String deviceToken) throws ServiceException {
         DatastoreService ds = DS.getDS();
-        type = type.toLowerCase();
+        type = StringUtils.lowerCase(type);
         Push devicePush = DS.getPush(ds, type, deviceToken);
         Push userPush = DS.getPush(ds, uid);
         if (devicePush == null && userPush == null) {
@@ -1060,18 +1061,6 @@ public class SamesiesApi {
 
     private static double haversin(double radians) {
         return Math.sin(radians / 2) * Math.sin(radians / 2);
-    }
-
-    private static Pattern getSearchPattern(String string) {
-        return Pattern.compile(".*" + Pattern.quote(string.toLowerCase()) + ".*");
-    }
-
-    private static boolean isValid(User user) {
-        return user != null && !user.getIsBanned() && user.getStatus() != User.Status.DELETED;
-    }
-
-    private static boolean isActive(User user) {
-        return isValid(user) && user.getStatus() == User.Status.ACTIVATED;
     }
 
     private static void sendPairingPush(DatastoreService ds, long myUid, long theirUid, String title, String messagePredicate) throws ServiceException {

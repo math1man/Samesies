@@ -19,6 +19,14 @@ public class User extends Storable {
     public static final int SELF = 20;
     public static final int ADMIN = 30;
 
+    public static boolean isValid(User user) {
+        return user != null && !user.getIsBanned() && user.getStatus() != Status.DELETED;
+    }
+
+    public static boolean isActive(User user) {
+        return isValid(user) && user.getStatus() == Status.ACTIVATED;
+    }
+
     public static enum Status {
         PENDING, ACTIVATED, DELETED
     }
